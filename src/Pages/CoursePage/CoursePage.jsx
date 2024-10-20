@@ -27,7 +27,7 @@ const CoursePage = () => {
           <img
             src={courseBanner}
             alt="Course Preview"
-            className="absolute top-8 right-40 w-[410px] h-[250px] object-contain  rounded-lg shadow-lg"
+            className="w-[410px] h-[250px] object-contain  rounded-lg shadow-lg"
           />
         </div>
       </div>
