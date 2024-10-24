@@ -1,0 +1,31 @@
+@keyframes pulse-scale {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+  }
+  
+  @keyframes loading-bar {
+    0% {
+      left: 0;
+      width: 0;
+    }
+    50% {
+      width: 100%;
+    }
+    100% {
+      left: 100%;
+      width: 0;
+    }
+  }
+  
+  .animate-pulse-scale {
+    animation: pulse-scale 1.5s infinite;
+  }
+  
+  .animate-loading-bar {
+    animation: loading-bar 2s infinite;
+  }
+  
