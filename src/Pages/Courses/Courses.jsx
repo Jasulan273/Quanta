@@ -51,7 +51,7 @@ export default function Courses() {
                 </div>
 
                 <div className="border-t border-gray-300 mt-2 pt-2 flex justify-end">
-                <NavLink to="/CoursePage" className="text-orange-500 hover:underline">
+                <NavLink to="/CoursePages" className="text-orange-500 hover:underline">
                 <button className="text-black font-semibold hover:underline">View More</button>
           </NavLink>
                   
