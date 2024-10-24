@@ -48,7 +48,7 @@ function App() {
 
 export default function WrappedApp() {
   return (
-    <Router>
+    <Router basename="/Home">
       <App />
     </Router>
   );
