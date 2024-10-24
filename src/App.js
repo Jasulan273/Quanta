@@ -9,7 +9,8 @@ import About from "./Pages/About/About";
 import FAQ from "./Pages/FAQ/FAQ";
 import Auth from "./Pages/Auth/Auth";
 import Registration from "./Pages/Auth/Registration";
-import CoursePage from "./Pages/CoursePage/CoursePage";
+import CoursePage from "./Pages/CoursePages/CoursePage";
+import LessonPage from "./Pages/CoursePages/LessonPage";
 
 function App() {
   return (
@@ -24,7 +25,8 @@ function App() {
           <Route path="/FAQ" element={<FAQ />} />
           <Route path="/Auth" element={<Auth />} />
           <Route path="/Registration" element={<Registration />} />
-          <Route path="/CoursePage" element={<CoursePage />} />
+          <Route path="/CoursePages" element={<CoursePage />} />
+          <Route path="/Lesson" element={<LessonPage />} />
           <Route path="/" element={<Navigate to="/Home" replace />} />
         </Routes>
         <Footer />

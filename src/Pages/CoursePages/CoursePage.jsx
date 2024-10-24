@@ -89,9 +89,33 @@ const Curriculum = () => {
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">Curriculum</h2>
       {[
-        { id: 1, title: 'Module 1 - Basics of WordPress', lessons: ['Introduction', 'Setting Up WordPress', 'Plugins'] },
-        { id: 2, title: 'Module 2 - WordPress Themes', lessons: ['Choosing a Theme', 'Installing Themes', 'Customizing'] },
-        { id: 3, title: 'Module 3 - Advanced Features', lessons: ['SEO Optimization', 'Security Plugins', 'Backups'] }
+        { 
+          id: 1, 
+          title: 'Module 1 - Basics of WordPress', 
+          lessons: [
+            { title: 'Introduction', link: '/Lesson' },
+            { title: 'Setting Up WordPress', link: '/Lesson' },
+            { title: 'Plugins', link: '/Lesson' }
+          ]
+        },
+        { 
+          id: 2, 
+          title: 'Module 2 - WordPress Themes', 
+          lessons: [
+            { title: 'Choosing a Theme', link: '/Lesson' },
+            { title: 'Installing Themes', link: '/Lesson' },
+            { title: 'Customizing', link: '/Lesson' }
+          ]
+        },
+        { 
+          id: 3, 
+          title: 'Module 3 - Advanced Features', 
+          lessons: [
+            { title: 'SEO Optimization', link: '/Lesson' },
+            { title: 'Security Plugins', link: '/Lesson' },
+            { title: 'Backups', link: '/Lesson' }
+          ]
+        }
       ].map((module) => (
         <div key={module.id} className="border rounded-lg p-4">
           <button onClick={() => toggleModule(module.id)} className="flex justify-between w-full text-left font-bold text-lg">
@@ -109,7 +133,9 @@ const Curriculum = () => {
               >
                 {module.lessons.map((lesson, index) => (
                   <li key={index} className="flex justify-between py-4 border-t border-gray-300">
-                    <span>{lesson}</span>
+                    <a href={lesson.link} className="text-blue-500 hover:underline">
+                      {lesson.title}
+                    </a>
                     <p className="text-orange-500">25:32</p>
                   </li>
                 ))}
@@ -121,6 +147,8 @@ const Curriculum = () => {
     </div>
   );
 };
+
+
 
 const Reviews = () => (
   <div>
