@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import BlogImage from '../../Materials/Images/banner.png';
+import { NavLink } from 'react-router-dom';
 
 const Blog = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -111,7 +112,9 @@ const Blog = () => {
                       <p>{post.reads} Reads | {post.comments} Comments | {post.likes} Likes</p>
                     </div>
                   </div>
-                  <a href="/" className="text-orange-500 font-semibold hover:underline mt-4 transition-colors duration-300">Read</a>
+                  <NavLink to="/BlogPage" className="text-orange-500 hover:underline">
+                <button className="text-orange-500 font-semibold hover:underline mt-4 transition-colors duration-300">Read</button>
+          </NavLink>
                 </div>
               </div>
             </div>
