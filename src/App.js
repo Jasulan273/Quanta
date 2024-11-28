@@ -12,6 +12,7 @@ import Registration from "./Pages/Auth/Registration";
 import CoursePage from "./Pages/CoursePages/CoursePage";
 import LessonPage from "./Pages/CoursePages/LessonPage";
 import Loader from "./Components/Loader"; 
+import BlogPage from "./Pages/Blog/BlogPage";
 
 function App() {
   const [loading, setLoading] = useState(false); 
@@ -39,6 +40,7 @@ function App() {
         <Route path="/Registration" element={<Registration />} />
         <Route path="/CoursePages" element={<CoursePage />} />
         <Route path="/Lesson" element={<LessonPage />} />
+        <Route path="/BlogPage" element={<BlogPage />} />
         <Route path="/" element={<Navigate to="/Home" replace />} />
       </Routes>
       <Footer />

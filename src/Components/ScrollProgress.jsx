@@ -23,7 +23,7 @@ export default function ScrollProgress() {
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 w-full h-2 bg-gray-200">
+    <div className="fixed top-0 left-0 w-full h-2 bg-gray-200 z-999">
       <div
         style={{ width: `${scrollPercentage}%` }}
         className="h-full bg-orange-500 transition-width duration-200 ease-in-out"
