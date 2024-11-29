@@ -84,6 +84,7 @@ const Blog = () => {
   const filteredPosts = posts.filter(post => 
     post.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+ 
 
   return (
     <div className="w-container mx-auto py-10 flex">
