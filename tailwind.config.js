@@ -23,7 +23,7 @@ module.exports = {
         info: "#2580D5",
         success: "#55BE24",
         warning: "#F51A1A",
-        primary: "#FFAB2D",
+        primary: "#FF782D",
       },
       spacing: {
         "large-padding": "0.625rem 1.5rem", // 10px 24px
@@ -32,6 +32,14 @@ module.exports = {
       },
       lineHeight: {
         150: "1.5",
+      },
+      container: {
+        center: true, 
+        padding: {
+          DEFAULT: "30rem", 
+          sm: "2rem", 
+          lg: "4rem", 
+        },
       },
     },
   },
