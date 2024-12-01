@@ -26,6 +26,13 @@ function App() {
     return () => clearTimeout(timer);
   }, [location]);
 
+  useEffect(() => {
+    document.body.style.zoom = '75%';
+    return () => {
+    document.body.style.zoom = '100%'; 
+    };
+  }, []);
+
   return (
     <div className="App">
       {loading && <Loader />} 
@@ -52,7 +59,7 @@ function App() {
 
 export default function WrappedApp() {
   return (
-    <Router>
+    <Router  basename="/Quanta">
       <App />
     </Router>
   );

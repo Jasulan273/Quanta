@@ -5,7 +5,7 @@ const Banner = () => {
   return (
     <div className={`flex items-center justify-between w-full min-h-[500px]`}>
     <div className={`w-full h-[700px] ${styles.banner}`}>
-      <div className="w-container mx-auto mt-[220px] h-full">
+      <div className="w-container mx-auto mt-[220px] h-auto">
         <h1 className="font-bold text-[48px]">Build Skills With <br/> Online Course</h1>
         <p className="text-[18px]">
           We denounce with righteous indignation and dislike men who are <br /> so

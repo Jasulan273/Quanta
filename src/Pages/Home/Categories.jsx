@@ -55,12 +55,12 @@ const Categories = () => {
           {categoriesToShow.map((category) => (
             <div
               key={category.id}
-              className="flex flex-col items-center justify-center w-[234px] h-[234px] p-4 border border-lightgrey rounded-lg hover:shadow-lg transition"
+              className="flex flex-col items-center justify-center w-[234px] h-[234px] p-4 border border-lightgrey rounded-[24px] hover:shadow-lg hover:cursor-pointer transition"
             >
               <img
                 src={category.icon}
                 alt={category.title}
-                className="w-[32px] h-[32px]"
+                className="w-[32px] h-[32px] mb-4"
               />
               <h3 className="mt-2 text-lg font-bold text-darkgrey">
                 {category.title}

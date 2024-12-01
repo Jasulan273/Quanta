@@ -1,5 +1,8 @@
 import React from 'react'
 import courseBanner from '../../Materials/Images/course_banner.png'
+import duration from '../../Materials/Icons/Watchlater.png'
+import student from '../../Materials/Icons/Student.png'
+import { NavLink } from 'react-router-dom'
 
 const cardData = [
     {
@@ -54,13 +57,15 @@ const cardData = [
 
 const Featured = () => {
   return (
-      <div className="w-container mx-auto my-40">
+      <div className="w-container mx-auto mt-40">
          <div className="flex justify-between mb-16">
           <div>
             <h2 className="text-2xl font-exo font-bold">Featured courses</h2>
             <p className="text-grey">Explore our Popular Courses</p>
           </div>
-          <button className="w-[161px] h-[48px] bg-white text-black border-2 border-grey rounded-[24px] hover:bg-gray-200 transition"> All Courses</button>
+          <NavLink to="/Courses">
+     <button className="w-[161px] h-[48px] bg-white text-black border-2 border-grey rounded-[24px] hover:bg-gray-200 transition"> All Courses </button>
+     </NavLink>
         </div>
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
       {cardData.map((card) => (
@@ -78,7 +83,7 @@ const Featured = () => {
 
      
             <div className="mt-4 text-left">
-              <p className="text-sm text-gray-600">{card.duration} | {card.students}</p>
+              <p className="flex flex-row items-center text-[16px] text-gray-600"><img src={duration} className='mr-1 w-[18px]' alt="" />{card.duration} | <img src={student} className='mx-1 w-[18px]' alt="" />{card.students}</p>
             </div>
 
         
