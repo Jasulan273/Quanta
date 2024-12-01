@@ -1,17 +1,18 @@
 {
   "files": {
-    "main.css": "/Quanta/static/css/main.a3e8a12b.css",
-    "main.js": "/Quanta/static/js/main.761f4592.js",
-    "static/media/banner.png": "/Quanta/static/media/banner.6b3ae9fee9b45522a641.png",
-    "static/media/course_banner.png": "/Quanta/static/media/course_banner.a42b6f91e32db532151e.png",
-    "static/media/Logo.png": "/Quanta/static/media/Logo.98d0794ed4917de3197c.png",
-    "static/media/Logo_art.png": "/Quanta/static/media/Logo_art.e06f813cf4b6d8be3147.png",
-    "index.html": "/Quanta/index.html",
-    "main.a3e8a12b.css.map": "/Quanta/static/css/main.a3e8a12b.css.map",
-    "main.761f4592.js.map": "/Quanta/static/js/main.761f4592.js.map"
+    "main.css": "/static/css/main.7d9a5bfa.css",
+    "main.js": "/static/js/main.5d8b5814.js",
+    "static/media/banner.png": "/static/media/banner.6b3ae9fee9b45522a641.png",
+    "static/media/BlogImage.png": "/static/media/BlogImage.4fdd2dbe8139e3e2b081.png",
+    "static/media/course_banner.png": "/static/media/course_banner.a42b6f91e32db532151e.png",
+    "static/media/Logo.png": "/static/media/Logo.98d0794ed4917de3197c.png",
+    "static/media/Logo_art.png": "/static/media/Logo_art.e06f813cf4b6d8be3147.png",
+    "index.html": "/index.html",
+    "main.7d9a5bfa.css.map": "/static/css/main.7d9a5bfa.css.map",
+    "main.5d8b5814.js.map": "/static/js/main.5d8b5814.js.map"
   },
   "entrypoints": [
-    "static/css/main.a3e8a12b.css",
-    "static/js/main.761f4592.js"
+    "static/css/main.7d9a5bfa.css",
+    "static/js/main.5d8b5814.js"
   ]
 }
