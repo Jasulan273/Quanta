@@ -1,7 +1,114 @@
-
-
-.banner{
+.banner {
     background-image: url('../../Materials/Images/banner.png');
     background-size: cover;
     background-position: center;
-}
+    transition: transform 0.5s ease, opacity 0.5s ease;
+  }
+  
+  .initial {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  
+  .fadeIn {
+    transform: translateY(0);
+    opacity: 1;
+    transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .fadeInText {
+    animation: fadeInTextAnimation 1s ease-out forwards;
+  }
+  
+  @keyframes fadeInTextAnimation {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .fadeInLeft {
+    transform: translateX(150%);
+    opacity: 0;
+  }
+  
+  .fadeInLeftActive {
+    transform: translateX(0);
+    opacity: 1;
+    transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .cardFadeIn {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  
+  .cardFadeInActive {
+    transform: translateY(0);
+    opacity: 1;
+    transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .featuredSection {
+    opacity: 0;
+    transform: translateY(100px);
+    transition: opacity 1s ease-out, transform 1s ease-out;
+  }
+  
+  .featuredSectionVisible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .animate__fadeIn {
+    animation: fadeIn 1s ease-out;
+  }
+  
+  .transition-all {
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .scale-95 {
+    transform: scale(0.95);
+  }
+  
+  .scale-100 {
+    transform: scale(1);
+  }
+  
+  .opacity-0 {
+    opacity: 0;
+  }
+  
+  .opacity-100 {
+    opacity: 1;
+  }
+  
+
+  .imageLeft {
+    transform: translateX(-150%);
+    opacity: 0;
+  }
+  
+  .imageLeftActive {
+    transform: translateX(0);
+    opacity: 1;
+    transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+
+  .textRight {
+    transform: translateX(150%);
+    opacity: 0;
+  }
+  
+  .textRightActive {
+    transform: translateX(0);
+    opacity: 1;
+    transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
