@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Palette from "../../Materials/Icons/palette.png";
 import Development from "../../Materials/Icons/web-development.png";
 import Communication from "../../Materials/Icons/community.png";
@@ -9,6 +9,7 @@ import Content from "../../Materials/Icons/content-writing.png";
 import Finance from "../../Materials/Icons/finance.png";
 import Science from "../../Materials/Icons/Signalcellular alt.png";
 import Cloud from "../../Materials/Icons/cloud.png";
+import styles from "./Home.module.css"; 
 
 const fakeCategories = [
   { id: 1, icon: Palette, title: "Art & Design", courses: 38 },
@@ -27,50 +28,69 @@ const fakeCategories = [
 
 const Categories = () => {
   const [showAll, setShowAll] = useState(false);
-  const categoriesToShow = showAll
-    ? fakeCategories
-    : fakeCategories.slice(0, 10);
+  const [loaded, setLoaded] = useState(false);
+  const categoriesRef = useRef(null);
+  const categoriesToShow = showAll ? fakeCategories : fakeCategories.slice(0, 10);
+
+  const handleScroll = () => {
+    const categoriesPosition = categoriesRef.current.getBoundingClientRect().top;
+    if (categoriesPosition <= window.innerHeight) {
+      setLoaded(true);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-   
-      <div className="w-container mx-auto mt-16">
-        <div className="flex justify-between mb-16">
-          <div>
-            <h2 className="text-2xl font-exo font-bold">Top Categories</h2>
-            <p className="text-grey">Explore our Popular Categories</p>
-          </div>
-          <button
-            className="w-[161px] h-[48px] bg-white text-black border-2 border-grey rounded-[24px] hover:bg-gray-200 transition"
-            onClick={() => setShowAll((prev) => !prev)}
-          >
-            {showAll ? "Show Less" : "All Categories"}
-          </button>
+    <div className="w-container mx-auto mt-16">
+      <div className="flex justify-between mb-16">
+        <div>
+          <h2 className="text-2xl font-exo font-bold">Top Categories</h2>
+          <p className="text-grey">Explore our Popular Categories</p>
         </div>
-
-        <div
-          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 transition-all ${
-            showAll ? "max-h-full" : "max-h-[600px]"
-          }`}
+        <button
+          className="w-[161px] h-[48px] bg-white text-black border-2 border-grey rounded-[24px] hover:bg-gray-200 transition"
+          onClick={() => setShowAll((prev) => !prev)}
         >
-          {categoriesToShow.map((category) => (
-            <div
-              key={category.id}
-              className="flex flex-col items-center justify-center w-[234px] h-[234px] p-4 border border-lightgrey rounded-[24px] hover:shadow-lg hover:cursor-pointer transition"
-            >
-              <img
-                src={category.icon}
-                alt={category.title}
-                className="w-[32px] h-[32px] mb-4"
-              />
-              <h3 className="mt-2 text-lg font-bold text-darkgrey">
-                {category.title}
-              </h3>
-              <p className="text-grey">{category.courses} Courses</p>
-            </div>
-          ))}
-        </div>
+          {showAll ? "Show Less" : "All Categories"}
+        </button>
       </div>
-  
+
+      <div
+        ref={categoriesRef}
+        className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 transition-all ${
+          showAll ? "max-h-full" : "max-h-[600px]"
+        }`}
+      >
+        {categoriesToShow.map((category) => (
+          <div
+            key={category.id}
+            className={`flex flex-col items-center justify-center w-[234px] h-[234px] p-4 border border-lightgrey rounded-[24px] hover:shadow-lg hover:cursor-pointer transition ${
+              loaded ? styles.fadeIn : styles.initial
+            }`}
+          >
+            <img
+              src={category.icon}
+              alt={category.title}
+              className="w-[32px] h-[32px] mb-4"
+            />
+            <h3
+              className={`mt-2 text-lg font-bold text-darkgrey ${
+                loaded ? styles.fadeInText : styles.initial
+              }`}
+            >
+              {category.title}
+            </h3>
+            <p className={`text-grey ${loaded ? styles.fadeInText : styles.initial}`}>
+              {category.courses} Courses
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 
