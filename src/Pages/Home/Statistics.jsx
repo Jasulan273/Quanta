@@ -32,7 +32,7 @@ const Statistics = () => {
     if (isVisible) {
       stats.forEach((stat, index) => {
         let current = 0;
-        const step = Math.ceil(stat.value / 100); // Плавность увеличения (с шагом)
+        const step = Math.ceil(stat.value / 100); 
         const interval = setInterval(() => {
           current += step;
           if (current >= stat.value) {
@@ -44,7 +44,7 @@ const Statistics = () => {
             updatedValues[index] = current;
             return updatedValues;
           });
-        }, 20); // Обновляем каждую секунду
+        }, 20);
       });
     }
   }, [isVisible]);
