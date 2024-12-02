@@ -93,27 +93,27 @@ const Curriculum = () => {
           id: 1, 
           title: 'Module 1 - Basics of WordPress', 
           lessons: [
-            { title: 'Introduction', link: '/Lesson' },
-            { title: 'Setting Up WordPress', link: '/Lesson' },
-            { title: 'Plugins', link: '/Lesson' }
+            { title: 'Introduction', link: '/Quanta/Lesson' },
+            { title: 'Setting Up WordPress', link: '/Quanta/Lesson' },
+            { title: 'Plugins', link: '/Quanta/Lesson' }
           ]
         },
         { 
           id: 2, 
           title: 'Module 2 - WordPress Themes', 
           lessons: [
-            { title: 'Choosing a Theme', link: '/Lesson' },
-            { title: 'Installing Themes', link: '/Lesson' },
-            { title: 'Customizing', link: '/Lesson' }
+            { title: 'Choosing a Theme', link: '/Quanta/Lesson' },
+            { title: 'Installing Themes', link: '/Quanta/Lesson' },
+            { title: 'Customizing', link: '/Quanta/Lesson' }
           ]
         },
         { 
           id: 3, 
           title: 'Module 3 - Advanced Features', 
           lessons: [
-            { title: 'SEO Optimization', link: '/Lesson' },
-            { title: 'Security Plugins', link: '/Lesson' },
-            { title: 'Backups', link: '/Lesson' }
+            { title: 'SEO Optimization', link: '/Quanta/Lesson' },
+            { title: 'Security Plugins', link: '/Quanta/Lesson' },
+            { title: 'Backups', link: '/Quanta/Lesson' }
           ]
         }
       ].map((module) => (
