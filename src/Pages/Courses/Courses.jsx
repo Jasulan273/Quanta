@@ -33,6 +33,7 @@ export default function Courses() {
                 <div>
                   <p className="text-sm text-gray-500">by Author Name</p>
                   <h2 className="text-xl font-bold mt-2">Course Title</h2>
+                  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Veniam repellendus non doloribus animi quidem cupiditate alias porro, saepe enim delectus!</p>
                 </div>
 
                 <div className="flex items-center border-t border-gray-300 pt-2">
@@ -62,15 +63,17 @@ export default function Courses() {
         </div>
       </div>
 
-      <div className="w-[350px] bg-gray-100 p-6 rounded-lg">
+      <div className="w-[300px] p-6 rounded-lg">
         <h2 className="font-bold text-xl mt-4 mb-6">Filter Courses</h2>
         
         <div className="mb-6">
           <h3 className="font-semibold text-lg mb-2">Programming Languages</h3>
           <ul className="space-y-2">
-            <li><input type="checkbox" id="python" /> <label htmlFor="python">Python</label></li>
-            <li><input type="checkbox" id="javascript" /> <label htmlFor="javascript">JavaScript</label></li>
-            <li><input type="checkbox" id="java" /> <label htmlFor="java">Java</label></li>
+            <li className='flex justify-between items-center'><div><input type="checkbox" id="python" /> <label htmlFor="python">Python</label></div><p>15</p></li>
+            <li className='flex justify-between items-center'><div><input type="checkbox" id="JavaScript" /> <label htmlFor="python">JavaScript</label></div><p>15</p></li>
+            <li className='flex justify-between items-center'><div><input type="checkbox" id="Java" /> <label htmlFor="python">Java</label></div><p>15</p></li>
+            <li className='flex justify-between items-center'><div><input type="checkbox" id="C#" /> <label htmlFor="python">C#</label></div><p>15</p></li>
+            <li className='flex justify-between items-center'><div><input type="checkbox" id="Golang" /> <label htmlFor="python">Golang</label></div><p>15</p></li>
           </ul>
         </div>
 
@@ -86,10 +89,10 @@ export default function Courses() {
         <div className="mb-6">
           <h3 className="font-semibold text-lg mt-16 mb-2">Reviews</h3>
           <ul className="space-y-2">
-            <li><input type="radio" name="reviews" id="4stars" /> <label htmlFor="4stars">4 stars & above</label></li>
-            <li><input type="radio" name="reviews" id="3stars" /> <label htmlFor="3stars">3 stars & above</label></li>
-            <li><input type="radio" name="reviews" id="2stars" /> <label htmlFor="2stars">2 stars & above</label></li>
-            <li><input type="radio" name="reviews" id="1stars" /> <label htmlFor="1stars">1 stars & above</label></li>
+            <li><input type="radio" name="reviews" id="4stars" /> <label htmlFor="4stars">4⭐ & above</label></li>
+            <li><input type="radio" name="reviews" id="3stars" /> <label htmlFor="3stars">3⭐ & above</label></li>
+            <li><input type="radio" name="reviews" id="2stars" /> <label htmlFor="2stars">2⭐ & above</label></li>
+            <li><input type="radio" name="reviews" id="1stars" /> <label htmlFor="1stars">1⭐ & above</label></li>
             <li><input type="radio" name="reviews" id="all" /> <label htmlFor="all">All reviews</label></li>
           </ul>
         </div>
@@ -101,20 +104,20 @@ export default function Courses() {
               type="date" 
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="border p-2 rounded w-full"
+              className="border p-2 rounded w-[115px]"
             />
             <span>-</span>
             <input 
               type="date" 
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="border p-2 rounded w-full"
+              className="border p-2 rounded w-[115px]"
             />
           </div>
 
           <button 
             onClick={handleDateFilter}
-            className="mt-4 w-full bg-blue-500 text-white p-2 rounded-lg"
+            className="mt-4 w-full bg-primary text-white p-2 rounded-lg hover:translate-y-[-2px] transition"
           >
             Apply
           </button>

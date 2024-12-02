@@ -10,9 +10,11 @@ import FAQ from "./Pages/FAQ/FAQ";
 import Auth from "./Pages/Auth/Auth";
 import Registration from "./Pages/Auth/Registration";
 import CoursePage from "./Pages/CoursePages/CoursePage";
-import LessonPage from "./Pages/CoursePages/LessonPage";
+import LessonPage from "./Pages/LessonPage/LessonPage";
 import Loader from "./Components/Loader"; 
 import BlogPage from "./Pages/Blog/BlogPage";
+import NotFound from "./Pages/NotFound/NotFound";
+
 
 function App() {
   const [loading, setLoading] = useState(false); 
@@ -27,7 +29,7 @@ function App() {
   }, [location]);
 
   useEffect(() => {
-    document.body.style.zoom = '75%';
+    document.body.style.zoom = '85%';
     return () => {
     document.body.style.zoom = '100%'; 
     };
@@ -49,6 +51,7 @@ function App() {
         <Route path="/Lesson" element={<LessonPage />} />
         <Route path="/BlogPage" element={<BlogPage />} />
         <Route path="/" element={<Navigate to="/Home" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
    
