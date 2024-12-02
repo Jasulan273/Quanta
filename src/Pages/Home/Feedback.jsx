@@ -40,7 +40,6 @@ const Feedback = () => {
   const [hoverStatus, setHoverStatus] = useState({});
   const [isVisible, setIsVisible] = useState(false);
 
-  // Функция для обработки события при прокрутке
   const handleScroll = () => {
     const element = document.getElementById("feedback-section");
     const rect = element.getBoundingClientRect();
@@ -85,7 +84,7 @@ const Feedback = () => {
           {FeedbackData.map((feedback) => (
             <div
               key={feedback.id}
-              className="relative w-[300px] h-[400px] rounded-[26px] overflow-hidden"
+              className="relative w-[300px] h-[400px] rounded-[26px] overflow-hidden hover:cursor-pointer"
               onMouseEnter={() => handleMouseEnter(feedback.id)}
               onMouseLeave={() => handleMouseLeave(feedback.id)}
             >
