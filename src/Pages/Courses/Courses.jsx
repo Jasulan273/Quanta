@@ -70,10 +70,10 @@ export default function Courses() {
           <h3 className="font-semibold text-lg mb-2">Programming Languages</h3>
           <ul className="space-y-2">
             <li className='flex justify-between items-center'><div><input type="checkbox" id="python" /> <label htmlFor="python">Python</label></div><p>15</p></li>
-            <li className='flex justify-between items-center'><div><input type="checkbox" id="JavaScript" /> <label htmlFor="python">JavaScript</label></div><p>15</p></li>
-            <li className='flex justify-between items-center'><div><input type="checkbox" id="Java" /> <label htmlFor="python">Java</label></div><p>15</p></li>
-            <li className='flex justify-between items-center'><div><input type="checkbox" id="C#" /> <label htmlFor="python">C#</label></div><p>15</p></li>
-            <li className='flex justify-between items-center'><div><input type="checkbox" id="Golang" /> <label htmlFor="python">Golang</label></div><p>15</p></li>
+            <li className='flex justify-between items-center'><div><input type="checkbox" id="JavaScript" /> <label htmlFor="JavaScript">JavaScript</label></div><p>15</p></li>
+            <li className='flex justify-between items-center'><div><input type="checkbox" id="Java" /> <label htmlFor="Java">Java</label></div><p>15</p></li>
+            <li className='flex justify-between items-center'><div><input type="checkbox" id="C#" /> <label htmlFor="C#">C#</label></div><p>15</p></li>
+            <li className='flex justify-between items-center'><div><input type="checkbox" id="Golang" /> <label htmlFor="Golang">Golang</label></div><p>15</p></li>
           </ul>
         </div>
 

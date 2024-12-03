@@ -9,7 +9,7 @@ export default function ScrollProgress() {
     const docHeight = document.body.offsetHeight;
 
     const totalDocScrollLength = docHeight - winHeight;
-    const scrollPosition = Math.floor((scrollTop / totalDocScrollLength) * 100);
+    const scrollPosition = Math.floor((scrollTop / totalDocScrollLength) * 130);
 
     setScrollPercentage(scrollPosition);
   };

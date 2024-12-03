@@ -80,7 +80,6 @@ export default function Footer() {
 
       <div className="container mx-auto mt-12 border-t border-gray-700 pt-8">
         <div className="flex flex-col md:flex-row justify-between text-sm text-gray-400">
-          <p>Contact us: support@quanta.com | +7 747 777 77 77</p>
           <p>Location: Astana EXPO C1</p>
         </div>
       </div>
