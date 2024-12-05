@@ -14,7 +14,7 @@ import LessonPage from "./Pages/LessonPage/LessonPage";
 import Loader from "./Components/Loader"; 
 import BlogPage from "./Pages/Blog/BlogPage";
 import NotFound from "./Pages/NotFound/NotFound";
-
+import Snowfall from 'react-snowfall';
 
 function App() {
   const [loading, setLoading] = useState(false); 
@@ -28,16 +28,14 @@ function App() {
     return () => clearTimeout(timer);
   }, [location]);
 
-  useEffect(() => {
-    document.body.style.zoom = '85%';
-    return () => {
-    document.body.style.zoom = '100%'; 
-    };
-  }, []);
-
   return (
-    <div className="App">
+    <div className="App relative overflow-hidden">
       {loading && <Loader />} 
+      <div className="absolute inset-0 pointer-events-none">
+        <Snowfall
+        snowflakeCount={800}
+        />
+      </div>
       <Header />
       <Routes>
         <Route path="/Home" element={<Home />} />
@@ -54,15 +52,13 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
-   
-
     </div>
   );
 }
 
 export default function WrappedApp() {
   return (
-    <Router  basename="/Quanta">
+    <Router basename="/Quanta">
       <App />
     </Router>
   );

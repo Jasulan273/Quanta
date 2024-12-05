@@ -28,7 +28,7 @@ module.exports = {
       spacing: {
         "large-padding": "0.625rem 1.5rem", // 10px 24px
         "small-padding": "0.625rem 0.9375rem", // 10px 15px
-        container: "81.25rem", // 1290px
+        container: "75rem", // 1290px
       },
       lineHeight: {
         150: "1.5",

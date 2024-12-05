@@ -16,7 +16,7 @@ export default function Courses() {
 
   return (
     <div className="flex w-container mx-auto">
-      <div className="w-[990px] bg-white p-4">
+      <div className="w-[75%] bg-white p-4">
         <h1 className="font-bold text-2xl mb-4">Courses</h1>
         <div className="">
           {[1, 2, 3, 4].map((_, index) => (
@@ -33,25 +33,25 @@ export default function Courses() {
                 <div>
                   <p className="text-sm text-gray-500">by Author Name</p>
                   <h2 className="text-xl font-bold mt-2">Course Title</h2>
-                  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Veniam repellendus non doloribus animi quidem cupiditate alias porro, saepe enim delectus!</p>
+                  <p className='text-p2 max-h-15 overflow-hidden'>Lorem ipsum dolor sit amet consectetur adipisicing elit. Veniam repellendus non doloribus animi Veniam repellendus non doloribus animiVeniam repellendus non doloribus animi ...</p>
                 </div>
 
-                <div className="flex items-center border-t border-gray-300 pt-2">
-                  <div className="flex flex-row items-center text-sm mr-6 text-gray-600">
-                    <img src={Time} className='mr-1' alt="Time Icon" /> <p>10 hours</p>
+                <div className="flex items-center justify-between border-t mt-2 border-gray-300 pt-2">
+                  <div className="flex flex-row items-center text-sm  text-gray-600">
+                    <img src={Time} className='mr-1' alt="Time Icon" /> <p className='text-p2'>10 hours</p>
                   </div>
-                  <div className="flex flex-row items-center text-sm mr-6 text-gray-600">
-                    <img src={Students} className='mr-1' alt="Students Icon" /><p>300 students</p>
+                  <div className="flex flex-row items-center text-sm  text-gray-600">
+                    <img src={Students} className='mr-1' alt="Students Icon" /><p className='text-p2'>300 students</p>
                   </div>
-                  <div className="flex flex-row items-center text-sm mr-6 text-gray-600">
-                    <img src={Level} className='mr-1' alt="Level Icon" /> <p>Beginner</p>
+                  <div className="flex flex-row items-center text-sm  text-gray-600">
+                    <img src={Level} className='mr-1' alt="Level Icon" /> <p className='text-p2'>Beginner</p>
                   </div>
-                  <div className="flex flex-row items-center text-sm mr-6 text-gray-600">
-                    <img src={Lessons} className='mr-1' alt="Lessons Icon" /><p>20 lessons</p>
+                  <div className="flex flex-row items-center text-sm  text-gray-600">
+                    <img src={Lessons} className='mr-1' alt="Lessons Icon" /><p className='text-p2'>20 lessons</p>
                   </div>
                 </div>
 
-                <div className="border-t border-gray-300 mt-2 pt-2 flex justify-end">
+                <div className="border-t border-gray-300 pt-2 flex justify-end">
                 <NavLink to="/CoursePages" className="text-orange-500 hover:underline">
                 <button className="text-black font-semibold hover:underline">View More</button>
           </NavLink>
@@ -63,7 +63,7 @@ export default function Courses() {
         </div>
       </div>
 
-      <div className="w-[300px] p-6 rounded-lg">
+      <div className="w-[25%] p-6 rounded-lg">
         <h2 className="font-bold text-xl mt-4 mb-6">Filter Courses</h2>
         
         <div className="mb-6">
