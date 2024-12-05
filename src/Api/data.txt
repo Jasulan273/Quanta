@@ -1,0 +1,147 @@
+Вот дополненный список всех эндпоинтов, включая операции с уроками:  
+
+---
+
+### Эндпоинты пользователя  
+1. Регистрация пользователя  
+   Метод: POST  
+   URL: /signup/  
+   Тело запроса:  
+      {
+       "username": "username",
+       "password": "password"
+   }
+   
+
+2. Авторизация пользователя  
+   Метод: POST  
+   URL: /login/  
+   Тело запроса:  
+      {
+       "username": "username",
+       "password": "password"
+   }
+   
+
+3. Обновление токена  
+   Метод: POST  
+   URL: /token/refresh/  
+   Тело запроса: Нет (токен обновляется с помощью cookies).
+
+---
+
+### Эндпоинты курсов  
+4. Список курсов  
+   Метод: GET  
+   URL: /courses/  
+   Тело запроса: Нет.
+
+5. Информация о курсе  
+   Метод: GET  
+   URL: /courses/{id}/{title}/  
+   Тело запроса: Нет.
+
+---
+
+### Эндпоинты уроков  
+6. Список уроков в курсе  
+   Метод: GET  
+   URL: /courses/{id}/{title}/lessons/  
+   Тело запроса: Нет.
+
+7. Информация о конкретном уроке  
+   Метод: GET  
+   URL: /courses/{id}/{title}/lesson/{lessonid}/{name}/  
+   Тело запроса: Нет.
+
+8. Создание нового урока  
+   Метод: POST  
+   URL: /courses/{id}/{title}/lessons/  
+   Тело запроса:  
+      {
+       "name": "Название урока",
+       "content": "Описание урока",
+       "video_url": "URL_видео_урока",
+       "course": 1
+   }
+   
+
+9. Обновление урока  
+   Метод: PUT  
+   URL: /courses/{id}/{title}/lesson/{lessonid}/  
+   Тело запроса:  
+      {
+       "name": "Обновленное название урока",
+       "content": "Обновленное описание урока",
+       "video_url": "Обновленный URL видео"
+   }
+   
+
+10. Удаление урока  
+    Метод: DELETE  
+    URL: /courses/{id}/{title}/lesson/{lessonid}/  
+    Тело запроса: Нет.
+
+11. Список всех уроков  
+    Метод: GET  
+    URL: /lessons/  
+    Тело запроса: Нет.  
+    Описание: Возвращает список всех уроков без привязки к курсу.
+
+12. Получение информации о конкретном уроке по ID  
+    Метод: GET  
+    URL: /lessons/{lessonid}/  
+    Тело запроса: Нет.
+
+13. Создание урока без привязки к курсу  
+    Метод: POST  
+    URL: /lessons/  
+    Тело запроса:  
+        {
+        "name": "Название урока",
+        "content": "Описание урока",
+        "video_url": "URL_видео_урока",
+        "course_id": 1
+    }
+    
+
+14. Обновление урока без привязки к курсу  
+    Метод: PUT  
+    URL: /lessons/{lessonid}/  
+    Тело запроса:  
+        {
+        "name": "Обновленное название урока",
+        "content": "Обновленное описание урока",
+        "video_url": "Обновленный URL видео"
+    }
+    
+
+15. Удаление урока без привязки к курсу  
+    Метод: DELETE  
+    URL: /lessons/{lessonid}/  
+    Тело запроса: Нет.  
+
+---
+
+### Резюме всех эндпоинтов:  
+- POST /signup/ — Регистрация пользователя.  
+- POST /login/ — Авторизация пользователя.  
+- POST /token/refresh/ — Обновление токена.  
+- GET /courses/ — Получение списка курсов.  
+- GET /courses/{id}/{title}/ — Получение информации о курсе.  
+- GET /courses/{id}/{title}/lessons/ — Получение списка уроков для курса.  
+- GET /courses/{id}/{title}/lesson/{lessonid}/{name}/ — Получение информации о конкретном уроке.  
+- POST /courses/{id}/{title}/lessons/ — Создание нового урока.  
+- PUT /courses/{id}/{title}/lesson/{lessonid}/ — Обновление информации об уроке.  
+- DELETE /courses/{id}/{title}/lesson/{lessonid}/ — Удаление урока.  
+- GET /lessons/ — Получение списка всех уроков.  
+- GET /lessons/{lessonid}/ — Получение информации о конкретном уроке по ID.  
+- POST /lessons/ — Создание урока без привязки к курсу.  
+- PUT /lessons/{lessonid}/ — Обновление урока без привязки к курсу.  
+- DELETE /lessons/{lessonid}/ — Удаление урока без привязки к курсу.
+
+урок https://quant.up.railway.app/courses/2/Python/lesson/1/lesson1/
+курс https://quant.up.railway.app/courses/2/Python
+регистрация https://quant.up.railway.app/signup
+логин https://quant.up.railway.app/login
+короче адрес бекенда https://quant.up.railway.app/

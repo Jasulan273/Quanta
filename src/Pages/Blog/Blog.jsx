@@ -108,7 +108,7 @@ const Blog = () => {
             className="border border-gray-300 rounded-lg p-2 w-1/3"
           />
         </div>
-        <div className="w-[990px] space-y-8">
+        <div className="w-[100%] space-y-8">
           {filteredPosts.map((post) => (
             <div key={post.id} className="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-lg transform transition-all duration-300 hover:shadow-xl hover:scale-105">
               <div className="flex">
@@ -131,7 +131,7 @@ const Blog = () => {
           ))}
         </div>
       </div>
-      <div className="w-[270px] h-full rounded-lg mt-6">
+      <div className="w-[25%] h-full rounded-lg mt-6">
       <div className="space-y-4 mb-8">
       <h2 className="font-bold text-xl mb-4">Category</h2>
       {categories.map((category)=> (
