@@ -13,9 +13,7 @@ const Reviews = () => (
         <p className="text-gray-500">(148,953 ratings)</p>
       </div>
     </div>
-    {/* Add the review breakdown */}
     <div className="bg-gray-100 my-8 py-8 px-8 rounded-[20px]">
-      {/* Repeatable star-based breakdown */}
       {[5, 4, 3, 2, 1].map((rating, index) => (
         <div key={index} className="flex flex-row items-center ml-4 my-8">
           {[...Array(rating)].map((_, i) => (
@@ -32,7 +30,6 @@ const Reviews = () => (
       ))}
     </div>
 
-    {/* Example individual review */}
     <div className="space-y-4">
       <div className="border rounded-lg p-4">
         <h4 className="font-bold">Laura Hipster</h4>

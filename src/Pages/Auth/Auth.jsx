@@ -1,12 +1,25 @@
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { loginUser } from '../../Api/api';
 
-export default function Auth() {
-  const [email, setEmail] = useState('');
+export default function Auth({ setUser }) {
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleLogin = () => {
-    console.log("Logging in with:", email, password);
+  const handleLogin = async () => {
+    try {
+      const data = await loginUser(username, password);
+      setError('');
+      
+      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('username', username);
+      setUser(username);
+      navigate('/Home');
+    } catch (err) {
+      setError('Invalid credentials. Please try again.');
+    }
   };
 
   return (
@@ -15,15 +28,15 @@ export default function Auth() {
         <h2 className="text-2xl font-bold text-center mb-6 text-orange-500">Login</h2>
         
         <div className="mb-4">
-          <label htmlFor="email" className="block text-sm font-semibold text-gray-700">Email</label>
+          <label htmlFor="username" className="block text-sm font-semibold text-gray-700">Username</label>
           <input 
-            type="email" 
-            id="email" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text" 
+            id="username" 
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-            placeholder='Enter email_'
-         />
+            placeholder='Enter username'
+          />
         </div>
 
         <div className="mb-4">
@@ -34,7 +47,7 @@ export default function Auth() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-            placeholder='Enter password_' 
+            placeholder='Enter password'
           />
         </div>
 
@@ -44,6 +57,8 @@ export default function Auth() {
         >
           Login
         </button>
+
+        {error && <p className="text-red-500 text-center mt-4">{error}</p>}
 
         <p className="mt-4 text-sm text-center">
           Don't have an account?{' '}

@@ -1,16 +1,24 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { registerUser } from '../../Api/api';
 
 export default function Registration() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (password === confirmPassword) {
-      console.log("Registering with:", email, password);
+      try {
+        await registerUser(username, password);
+        setError('');
+     
+      } catch (err) {
+        setError('Registration failed. Please try again.');
+      }
     } else {
-      console.log("Passwords do not match");
+      setError('Passwords do not match');
     }
   };
 
@@ -20,14 +28,14 @@ export default function Registration() {
         <h2 className="text-2xl font-bold text-center mb-6 text-orange-500">Register</h2>
 
         <div className="mb-4">
-          <label htmlFor="email" className="block text-sm font-semibold text-gray-700">Email</label>
+          <label htmlFor="username" className="block text-sm font-semibold text-gray-700">Username</label>
           <input 
-            type="email" 
-            id="email" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text" 
+            id="username" 
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-            placeholder='Enter email_'
+            placeholder='Enter username'
           />
         </div>
 
@@ -39,7 +47,7 @@ export default function Registration() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-            placeholder='Create password_'
+            placeholder='Create password'
           />
         </div>
 
@@ -51,7 +59,7 @@ export default function Registration() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-            placeholder='Confirm password_'
+            placeholder='Confirm password'
           />
         </div>
 
@@ -61,6 +69,8 @@ export default function Registration() {
         >
           Register
         </button>
+
+        {error && <p className="text-red-500 text-center mt-4">{error}</p>}
 
         <p className="mt-4 text-sm text-center">
           Already have an account?{' '}

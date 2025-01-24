@@ -27,7 +27,7 @@ const About = () => {
         <form action="POST">
           <h2 className='font-bold'>Contact Us</h2>
           <p className='text-grey'>Your email address will not be published. Required fields are marked *</p>
-          <div class="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
           <input className='h-[48px] border-2 border-grey rounded-lg pl-2' placeholder='Name*' type="text" />
           <input className='h-[48px] border-2 border-grey rounded-lg pl-2' placeholder='Email*' type="text" />
           <input className='col-span-2 border-2 border-grey h-[110px] rounded-lg pl-2 pb-[70px]' type="text" placeholder='Comment' />

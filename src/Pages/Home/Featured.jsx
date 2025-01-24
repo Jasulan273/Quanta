@@ -74,7 +74,7 @@ const Featured = () => {
   }, []);
 
   return (
-    <div className="w-container mx-auto h-[80vw] mt-40">
+    <div className="w-container mx-auto h-[1050px] mt-20">
       <div className="flex justify-between mb-16">
         <div>
           <h2 className="text-2xl font-exo font-bold">Featured courses</h2>
@@ -109,7 +109,7 @@ const Featured = () => {
             <div className="p-5 flex flex-col h-full">
               <div className="text-left">
                 <h5 className="text-sm font-medium text-gray-600">{course.author}</h5>
-                <h4 className="mt-2 text-xl font-bold text-gray-800">{course.title}</h4>
+                <h4 className="mt-2 h-[50px] text-xl font-bold text-gray-800">{course.title}</h4>
               </div>
 
               <div className="mt-4 text-left">

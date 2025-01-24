@@ -110,7 +110,7 @@ const Feedback = () => {
                 }`}
               >
                 <img src={Quote} className="mr-auto" alt="Quote" />
-                <p className="w-[240px] mt-8">{feedback.feedback}</p>
+                <p className="w-[240px] h-[200px] mt-8">{feedback.feedback}</p>
                 <h4 className="ml-0 font-bold mt-7">{feedback.name}</h4>
                 <p className="text-left mt-2">{feedback.profession}</p>
               </div>

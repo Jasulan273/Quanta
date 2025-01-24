@@ -5,7 +5,7 @@ const Banner = () => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoaded(true), 500);
+    const timer = setTimeout(() => setIsLoaded(true), 600);
     return () => clearTimeout(timer);
   }, []);
 

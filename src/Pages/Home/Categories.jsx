@@ -68,7 +68,7 @@ const Categories = () => {
         {categoriesToShow.map((category) => (
           <div
             key={category.id}
-            className={`flex flex-col items-center justify-center w-[234px] h-[234px] p-4 border border-lightgrey rounded-[24px] hover:shadow-lg hover:cursor-pointer transition ${
+            className={`flex flex-col items-center justify-center w-[220px] h-[234px] p-4 border border-lightgrey rounded-[24px] hover:shadow-lg hover:cursor-pointer transition ${
               loaded ? styles.fadeIn : styles.initial
             }`}
           >
