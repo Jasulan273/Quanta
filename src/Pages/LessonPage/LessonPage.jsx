@@ -1,84 +1,84 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import lessonImage1 from '../../Materials/Images/banner.png';
-import lessonImage2 from '../../Materials/Images/banner.png';
+import { API_URL } from '../../Api/api';
 import ScrollProgress from '../../Components/ScrollProgress';
+import LessonCompiler from '../../AI/Compiler/LessonCompiler';
 
 const LessonPage = () => {
-  const { lessonId } = useParams();
+  const { courseId, lessonId } = useParams();
+  const [lessonData, setLessonData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const lessonData = {
-    title: "Advanced Concepts in Programming",
-    content: [
-      "In this comprehensive lesson, you will explore advanced concepts in programming. We'll cover key principles that every developer should understand, including Object-Oriented Programming (OOP), functional programming, and algorithms. Each of these topics will deepen your understanding and help you write cleaner, more efficient code.",
-      "Object-Oriented Programming (OOP) allows you to structure your programs using objects and classes. This approach improves code reusability and maintainability. Understanding inheritance, encapsulation, and polymorphism is essential for mastering OOP.",
-      "Functional programming is another paradigm that treats computation as the evaluation of mathematical functions. We'll look at pure functions, immutability, and higher-order functions.",
-      "Lastly, we'll dive into algorithms, exploring sorting algorithms, searching techniques, and understanding their time complexities. Knowing the basics of algorithms can significantly optimize the performance of your programs.",
-      "We will also provide multiple visual aids like charts and diagrams to help explain the key ideas and ensure clarity in these advanced topics."
-    ],
-    extraContent: [
-      "Section 1: Understanding Object-Oriented Programming (OOP)",
-      "Section 2: Deep Dive into Functional Programming",
-      "Section 3: Introduction to Algorithms and Data Structures",
-      "Section 4: Best Practices in Software Development"
-    ],
-    images: [lessonImage1, lessonImage2],
-    lessonInfo: {
-      duration: "1 hour 30 minutes",
-      difficulty: "Intermediate",
-      topic: "Advanced Programming Techniques"
-    }
-  };
+  useEffect(() => {
+    const fetchLessonData = async () => {
+      try {
+        const response = await fetch(`${API_URL}/courses/${courseId}/${lessonId}`);
+        if (!response.ok) throw new Error('Failed to fetch lesson data');
+        const data = await response.json();
+        setLessonData(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLessonData();
+  }, [courseId, lessonId]);
+
+  if (loading) return <p>Loading lesson data...</p>;
+  if (error) return <p>Error: {error}</p>;
+  if (!lessonData) return <p>Lesson not found.</p>;
+
+  const { name, description, content, duration, video_url, uploaded_video } = lessonData;
 
   return (
     <div>
       <ScrollProgress />
       <div className="container mx-auto my-16 px-4">
         <div className="mb-8">
-          <h1 className="text-5xl font-bold mb-4">{lessonData.title} - {lessonId}</h1>
+          <h1 className="text-5xl font-bold mb-4">{name} - Lesson {lessonId}</h1>
           <div className="text-gray-600 text-lg">
-            <p><strong>Duration:</strong> {lessonData.lessonInfo.duration}</p>
-            <p><strong>Difficulty Level:</strong> {lessonData.lessonInfo.difficulty}</p>
-            <p><strong>Topic:</strong> {lessonData.lessonInfo.topic}</p>
+            <p><strong>Duration:</strong> {duration || 'N/A'}</p>
+            <p><strong>Description:</strong> {description || 'No description available.'}</p>
           </div>
         </div>
 
-        <div className="relative mb-12">
-          <img src={lessonImage1} alt="Visual representation of the programming lesson" className="w-full h-[600px] object-cover rounded-lg shadow-lg" />
-        </div>
-
-        <div className="bg-white p-10 rounded-lg shadow-xl">
-          {lessonData.content.map((paragraph, index) => (
-            <p key={index} className="mb-6 text-xl text-gray-800 leading-relaxed">
-              {paragraph}
-            </p>
-          ))}
-
-          <div className="flex flex-wrap gap-8 my-8">
-            {lessonData.images.map((image, index) => (
-              <img key={index} src={image} alt={`Visual representation ${index + 1}`} className="w-full max-w-[700px] h-auto rounded-lg shadow-lg" />
-            ))}
+        {video_url || uploaded_video ? (
+          <div className="relative mb-12">
+            <video
+              src={`${API_URL}${uploaded_video}` || video_url}
+              controls
+              className="w-full h-auto rounded-lg shadow-lg"
+            />
           </div>
+        ) : (
+          <p>No video available for this lesson.</p>
+        )}
 
-          <div className="mt-12">
-            <h2 className="text-4xl font-semibold mb-6">Lesson Sections</h2>
-            <ul className="list-disc pl-6 text-xl text-gray-700">
-              {lessonData.extraContent.map((section, index) => (
-                <li key={index} className="mb-4">
-                  {section}
-                </li>
-              ))}
-            </ul>
-          </div>
+        <div
+          className="bg-white p-10 rounded-lg shadow-xl"
+          dangerouslySetInnerHTML={{ __html: content || '<p>No content available.</p>' }}
+        />
+
+        <div className="mt-12">
+          <LessonCompiler />
         </div>
 
         <div className="flex justify-between my-8 text-xl">
           {parseInt(lessonId) > 1 && (
-            <Link to={`/lesson/${parseInt(lessonId) - 1}`} className="text-orange-500 font-bold">
+            <Link
+              to={`/courses/${courseId}/lesson/${parseInt(lessonId) - 1}`}
+              className="text-orange-500 font-bold"
+            >
               &larr; Previous Lesson
             </Link>
           )}
-          <Link to={`/lesson/${parseInt(lessonId) + 1}`} className="text-orange-500 font-bold">
+          <Link
+            to={`/courses/${courseId}/lesson/${parseInt(lessonId) + 1}`}
+            className="text-orange-500 font-bold"
+          >
             Next Lesson &rarr;
           </Link>
         </div>
