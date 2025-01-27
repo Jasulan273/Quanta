@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/Quanta/static/css/main.7aab58f5.css",
-    "main.js": "/Quanta/static/js/main.a2e5fb08.js",
+    "main.css": "/Quanta/static/css/main.398be776.css",
+    "main.js": "/Quanta/static/js/main.a92e63f7.js",
     "static/media/banner.png": "/Quanta/static/media/banner.6b3ae9fee9b45522a641.png",
     "static/media/404.png": "/Quanta/static/media/404.f7f198bbd1d76f164143.png",
     "static/media/BlogImage.png": "/Quanta/static/media/BlogImage.4fdd2dbe8139e3e2b081.png",
@@ -12,11 +12,11 @@
     "static/media/Logo.png": "/Quanta/static/media/Logo.98d0794ed4917de3197c.png",
     "static/media/Logo_art.png": "/Quanta/static/media/Logo_art.e06f813cf4b6d8be3147.png",
     "index.html": "/Quanta/index.html",
-    "main.7aab58f5.css.map": "/Quanta/static/css/main.7aab58f5.css.map",
-    "main.a2e5fb08.js.map": "/Quanta/static/js/main.a2e5fb08.js.map"
+    "main.398be776.css.map": "/Quanta/static/css/main.398be776.css.map",
+    "main.a92e63f7.js.map": "/Quanta/static/js/main.a92e63f7.js.map"
   },
   "entrypoints": [
-    "static/css/main.7aab58f5.css",
-    "static/js/main.a2e5fb08.js"
+    "static/css/main.398be776.css",
+    "static/js/main.a92e63f7.js"
   ]
 }
