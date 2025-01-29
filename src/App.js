@@ -14,7 +14,8 @@ import LessonPage from "./Pages/LessonPage/LessonPage";
 import Loader from "./Components/Loader";
 import BlogPage from "./Pages/Blog/BlogPage";
 import NotFound from "./Pages/NotFound/NotFound";
-import PrivateRoute from "./Components/PrivateRoute"; // Импорт компонента PrivateRoute
+import UserPanel from "./Pages/UserPanel/UserPanel"
+import PrivateRoute from "./Components/PrivateRoute"; 
 import Snowfall from "react-snowfall";
 
 function App() {
@@ -57,6 +58,7 @@ function App() {
           }
         /> 
         <Route path="/Blog" element={<Blog />} />
+        <Route path="UserPanel" element={<UserPanel />} />
         <Route path="/About" element={<About />} />
         <Route path="/FAQ" element={<FAQ />} />
         <Route path="/Auth" element={<Auth setUser={setUser} />} />
