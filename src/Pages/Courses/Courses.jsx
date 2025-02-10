@@ -7,6 +7,7 @@ import Students from '../../Materials/Icons/Student.png';
 import Level from '../../Materials/Icons/Signalcellular alt.png';
 import Lessons from '../../Materials/Icons/Filecopy.png';
 
+
 export default function Courses() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +55,7 @@ export default function Courses() {
 
                 <div className="flex flex-col justify-between w-[580px] p-4">
                   <div>
-                    <p className="text-sm text-gray-500">by {course.author || 'Unknown Author'}</p>
+                    <p className="text-sm text-gray-500">by {course.author_username || 'Unknown Author'}</p>
                     <h2 className="text-xl font-bold mt-2">{course.title || 'Untitled Course'}</h2>
                     <p className='text-p2 max-h-15 overflow-hidden'>{shortDescription}</p>
                   </div>

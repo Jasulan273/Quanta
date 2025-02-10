@@ -37,6 +37,7 @@ const About = () => {
           <input className='bg-primary text-white font-semibold mt-8 py-4 px-12 rounded-[24px] transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-lightgrey focus:ring-opacity-50' type="submit" value="Submit" />
         </form>
       </div>
+
     </div>
   );
 }

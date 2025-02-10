@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import Editor from '@monaco-editor/react';
 
 const LessonCompiler = () => {
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState('// Write your code here...');
   const [output, setOutput] = useState('');
   const [language, setLanguage] = useState('javascript');
   const [pyodide, setPyodide] = useState(null);
@@ -14,9 +15,8 @@ const LessonCompiler = () => {
         setPyodide(pyInstance);
       }
     };
-
     loadPyodide();
-  }, [language]);
+  }, [language, pyodide]);
 
   const handleRunCode = async () => {
     if (!code.trim()) {
@@ -24,12 +24,9 @@ const LessonCompiler = () => {
       return;
     }
 
-    const captureConsole = [];
+    let captureConsole = [];
     const originalConsoleLog = console.log;
-
-    console.log = (message) => {
-      captureConsole.push(message);
-    };
+    console.log = (message) => captureConsole.push(message);
 
     try {
       if (language === 'python') {
@@ -38,18 +35,10 @@ const LessonCompiler = () => {
           return;
         }
         const result = pyodide.runPython(code);
-        if (captureConsole.length > 0) {
-          setOutput(captureConsole.join('\n'));
-        } else {
-          setOutput(result !== undefined ? result.toString() : 'Code executed, but no output.');
-        }
+        setOutput(captureConsole.length ? captureConsole.join('\n') : result?.toString() || 'Code executed, but no output.');
       } else if (language === 'javascript') {
         const result = eval(code);
-        if (captureConsole.length > 0) {
-          setOutput(captureConsole.join('\n'));
-        } else {
-          setOutput(result !== undefined ? result.toString() : 'Code executed, but no output.');
-        }
+        setOutput(captureConsole.length ? captureConsole.join('\n') : result?.toString() || 'Code executed, but no output.');
       } else {
         setOutput(`Language ${language} is not supported yet.`);
       }
@@ -61,49 +50,49 @@ const LessonCompiler = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-e5e7eb text-black ">
-      <div className="w-full border-[2px] p-4 rounded-lg shadow-xl">
-        <h2 className="text-2xl font-bold mb-4 text-center border-b-[2px] pb-1">Universal Code Compiler</h2>
-        <div className="flex flex-col mb-4 ">
-          <label htmlFor="language" className="block text-sm font-medium mb-2 text-black">
-            Select Language
-          </label>
-          <select
-            id="language"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="w-1/4 p-2 bg-primary text-white rounded-lg hover:opacity-2 "
+    <div className="flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-5xl border border-gray-200 p-6 rounded-lg shadow-xl bg-white flex">
+        <div className="w-1/2 pr-4">
+          <h2 className="text-2xl font-bold mb-4 text-orange-500 text-center">Quanta Compiler</h2>
+          <label htmlFor="language" className="block text-sm font-medium mb-2 text-gray-700">Select Language</label>
+          <select 
+            id="language" 
+            value={language} 
+            onChange={(e) => setLanguage(e.target.value)} 
+            className="w-full p-2 bg-gray-100 border border-gray-300 text-gray-800 rounded-lg mb-4 focus:ring-2 focus:ring-orange-500"
           >
-            <option className='hover:bg-white' value="javascript">JavaScript</option>
+            <option value="javascript">JavaScript</option>
             <option value="python">Python</option>
           </select>
-        </div>
-        <div className="flex gap-4">
-          <div className="w-1/2 bg-white p-4 rounded-lg shadow-lg">
-            <label htmlFor="code" className="block text-sm font-medium mb-2 text-black">
-              Write Your Code
-            </label>
-            <textarea
-              id="code"
+
+          {/* Monaco Editor */}
+          <div className="border rounded-lg overflow-hidden">
+            <Editor 
+              height="300px"
+              defaultLanguage="javascript"
+              language={language}
+              theme="vs-light"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              rows="15"
-              className="w-full p-4 bg-e5e7eb rounded-lg text-sm font-mono outline-none shadow-lg border-[1px]  "
-              placeholder="Enter your code here..."
-            ></textarea>
-            <button
-              onClick={handleRunCode}
-              className="w-full bg-primary hover:bg-[#d57f34] p-3 rounded-lg font-medium mt-4 text-white transition"
-            >
-              Run Code
-            </button>
+              onChange={(newValue) => setCode(newValue)}
+              options={{
+                fontSize: 14,
+                minimap: { enabled: false },
+                automaticLayout: true,
+              }}
+            />
           </div>
-          <div className="w-1/2 bg-white p-4 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-2 text-black">Output:</h3>
-            <div className="w-full h-full bg-e5e7eb p-4 rounded-lg text-sm font-mono">
-              <pre>{output}</pre>
-            </div>
-          </div>
+
+          <button 
+            onClick={handleRunCode} 
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-medium mt-4 transition-all duration-200"
+          >
+            Run Code
+          </button>
+        </div>
+        
+        <div className="w-1/2 bg-gray-100 p-4 rounded-lg text-sm font-mono border border-gray-300">
+          <h3 className="text-lg font-semibold mb-2 text-gray-700">Output:</h3>
+          <pre className="p-2 bg-white rounded-md">{output}</pre>
         </div>
       </div>
     </div>

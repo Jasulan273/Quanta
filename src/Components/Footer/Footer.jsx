@@ -61,13 +61,13 @@ export default function Footer() {
         <div className="flex flex-col items-center md:items-end mt-8 md:mt-0">
           <h3 className="text-lg font-semibold mb-4">Follow Us</h3>
           <div className="flex space-x-4">
-            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="transition hover:scale-105 duration-200">
+            <a href="https://www.facebook.com/profile.php?id=61572994283521" target="_blank" rel="noopener noreferrer" className="transition hover:scale-105 duration-200">
               <img src={Facebook} alt="Facebook" className="w-[24px] h-[24px]" />
             </a>
             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="transition hover:scale-105 duration-200">
               <img src={Twitter} alt="Twitter" className="w-[24px] h-[24px]" />
             </a>
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="transition hover:scale-105 duration-200">
+            <a href="https://www.instagram.com/quanta.ast/" target="_blank" rel="noopener noreferrer" className="transition hover:scale-105 duration-200">
               <img src={Instagram} alt="Instagram" className="w-[24px] h-[24px]" />
             </a>
             <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="transition hover:scale-105 duration-200">

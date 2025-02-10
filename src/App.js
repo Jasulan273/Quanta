@@ -52,9 +52,9 @@ function App() {
         <Route
           path="/courses/:courseId/lesson/:lessonId"
           element={
-            <PrivateRoute user={user}>
+           // <PrivateRoute user={user}>
               <LessonPage />
-            </PrivateRoute>
+           // </PrivateRoute> 
           }
         /> 
         <Route path="/Blog" element={<Blog />} />

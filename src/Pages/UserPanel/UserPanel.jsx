@@ -26,7 +26,7 @@ const UserProfile = ({ user }) => (
   <div className="p-6">
     <div className="flex items-center gap-4">
       <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-xl font-bold">
-        {user?.name?.charAt(0) || 'U'}
+        {user?.title?.charAt(0) || 'U'}
       </div>
       <div>
         <h2 className="text-xl font-bold">{user?.name || 'User Name'}</h2>
@@ -57,14 +57,14 @@ const UserProfile = ({ user }) => (
 
 
 const CourseEditor = ({ course, onClose }) => {
-  const [name, setName] = useState(course.name);
+  const [title, setTitle] = useState(course.title);
   const [description, setDescription] = useState(course.description);
-  const [content, setContent] = useState(course.content);
+  const [level, setLevel] = useState(course.level);
 
   const handleSave = async () => {
     try {
       await axios.put(`${API_URL}/courses/${course.id}/`, {
-        name, description, content
+        title, description, level
       });
       alert('Course updated successfully!');
       onClose();
@@ -76,9 +76,9 @@ const CourseEditor = ({ course, onClose }) => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-lg">
       <h2 className="text-xl font-bold">Edit Course</h2>
-      <input type="text" className="w-full p-2 border mt-2" value={name} onChange={(e) => setName(e.target.value)} />
+      <input type="text" className="w-full p-2 border mt-2" value={title} onChange={(e) => setTitle(e.target.value)} />
       <textarea className="w-full p-2 border mt-2" value={description} onChange={(e) => setDescription(e.target.value)} />
-      <textarea className="w-full p-2 border mt-2" value={content} onChange={(e) => setContent(e.target.value)} />
+      <textarea className="w-full p-2 border mt-2" value={level} onChange={(e) => setLevel(e.target.value)} />
       <button onClick={handleSave} className="bg-green-500 text-white px-4 py-2 rounded mt-4">Save</button>
       <button onClick={onClose} className="bg-red-500 text-white px-4 py-2 rounded mt-4 ml-2">Cancel</button>
     </div>
@@ -99,7 +99,7 @@ const Courses = ({ courses }) => {
         <ul>
           {courses.map(course => (
             <li key={course.id} className="p-4 border rounded-lg mb-4 shadow">
-              <h3 className="text-lg font-semibold">{course.name}</h3>
+              <h3 className="text-lg font-semibold">{course.title}</h3>
               <p>{course.description}</p>
               <button onClick={() => setEditingCourse(course)} className="bg-blue-500 text-white px-4 py-2 rounded mt-2 flex items-center">
                 <Edit size={16} className="mr-2" /> Edit
