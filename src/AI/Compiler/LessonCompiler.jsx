@@ -65,7 +65,7 @@ const LessonCompiler = () => {
             <option value="python">Python</option>
           </select>
 
-          {/* Monaco Editor */}
+    
           <div className="border rounded-lg overflow-hidden">
             <Editor 
               height="300px"
