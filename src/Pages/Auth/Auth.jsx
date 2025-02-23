@@ -13,7 +13,7 @@ export default function Auth({ setUser }) {
       const data = await loginUser(username, password);
       setError('');
       
-      localStorage.setItem('authToken', data.token);
+      localStorage.setItem('accessToken', data.access); // Исправлено на accessToken
       localStorage.setItem('username', username);
       setUser(username);
       navigate('/Home');

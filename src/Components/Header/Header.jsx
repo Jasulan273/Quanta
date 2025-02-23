@@ -74,7 +74,7 @@ export default function Header({ user, setUser }) {
         {user ? (
           <>
             <span className="flex items-center justify-center h-full text-[16px] font-bold px-4 py-2">
-              {user}
+              <a href="/Quanta/UserPanel">{user}</a>
             </span>
             <button
               onClick={handleLogout}

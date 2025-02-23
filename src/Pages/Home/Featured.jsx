@@ -15,7 +15,7 @@ const Featured = () => {
     const loadCourses = async () => {
       try {
         const data = await fetchCourses();
-        const latestCourses = data.slice(-6).reverse(); // Получаем последние 6 курсов
+        const latestCourses = data.slice(-6).reverse(); 
         setCourses(latestCourses);
         setLoading(false);
       } catch (err) {

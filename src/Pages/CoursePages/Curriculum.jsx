@@ -19,16 +19,16 @@ const Curriculum = ({ modules, courseId }) => {
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">Curriculum</h2>
       {modules.map((module) => (
-        <div key={module.id} className="border rounded-lg p-4">
+        <div key={module.module_id} className="border rounded-lg p-4">
           <button
-            onClick={() => toggleModule(module.id)}
+            onClick={() => toggleModule(module.module_id)}
             className="flex justify-between w-full text-left font-bold text-lg"
           >
             {module.module} ({module.duration || 'Unknown duration'})
-            <span>{openModules.includes(module.id) ? '-' : '+'}</span>
+            <span>{openModules.includes(module.module_id) ? '-' : '+'}</span>
           </button>
           <AnimatePresence>
-            {openModules.includes(module.id) && (
+            {openModules.includes(module.module_id) && (
               <motion.ul
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
@@ -38,14 +38,14 @@ const Curriculum = ({ modules, courseId }) => {
               >
                 {module.lessons && module.lessons.length > 0 ? (
                   module.lessons.map((lesson) => (
-                    <li key={lesson.id} className="flex justify-between py-4 border-t border-gray-300">
+                    <li key={lesson.lesson_id} className="flex justify-between py-4 border-t border-gray-300">
                       <Link
-                        to={`/courses/${courseId}/lesson/${lesson.id}`} 
+                        to={`/courses/${courseId}/lesson/${lesson.lesson_id}`}
                         className="text-blue-500 hover:underline"
                       >
                         {lesson.name}
                       </Link>
-                      <span className="text-orange-500">{lesson.duration || 'N/A'}</span>
+
                     </li>
                   ))
                 ) : (
@@ -61,3 +61,4 @@ const Curriculum = ({ modules, courseId }) => {
 };
 
 export default Curriculum;
+

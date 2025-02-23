@@ -16,7 +16,7 @@ import BlogPage from "./Pages/Blog/BlogPage";
 import NotFound from "./Pages/NotFound/NotFound";
 import UserPanel from "./Pages/UserPanel/UserPanel"
 import PrivateRoute from "./Components/PrivateRoute"; 
-import Snowfall from "react-snowfall";
+
 
 function App() {
   const [loading, setLoading] = useState(false);
@@ -41,9 +41,6 @@ function App() {
   return (
     <div className="App relative overflow-hidden">
       {loading && <Loader />}
-      <div className="absolute inset-0 pointer-events-none">
-        <Snowfall snowflakeCount={800} />
-      </div>
       <Header user={user} setUser={setUser} />
       <Routes>
         <Route path="/Home" element={<Home />} />
@@ -52,13 +49,13 @@ function App() {
         <Route
           path="/courses/:courseId/lesson/:lessonId"
           element={
-           // <PrivateRoute user={user}>
+            <PrivateRoute user={user}>
               <LessonPage />
-           // </PrivateRoute> 
+            </PrivateRoute>
           }
         /> 
         <Route path="/Blog" element={<Blog />} />
-        <Route path="UserPanel" element={<UserPanel />} />
+        <Route path="/UserPanel" user={user} setUser={setUser} element={<UserPanel />} />
         <Route path="/About" element={<About />} />
         <Route path="/FAQ" element={<FAQ />} />
         <Route path="/Auth" element={<Auth setUser={setUser} />} />

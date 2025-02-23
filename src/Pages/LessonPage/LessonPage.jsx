@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { API_URL } from '../../Api/api';
 import ScrollProgress from '../../Components/ScrollProgress';
 import LessonCompiler from '../../AI/Compiler/LessonCompiler';
-import Chat from '../../AI/Сhat/Chat'
+import Chat from '../../AI/Сhat/Chat';
 
 const LessonPage = () => {
   const { courseId, lessonId } = useParams();
@@ -11,6 +11,18 @@ const LessonPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const contentRef = useRef(null);
+  
+  const tasks = [
+    {
+      id: 1,
+      name: "Sum of Two Numbers",
+      description: "Write a function that takes two numbers and returns their sum.",
+      input: "3, 5",
+      expected_output: "8"
+    },
+  ];
+
+  const task = tasks.find(task => task.id === Number(lessonId)) || null;
 
   useEffect(() => {
     const fetchLessonData = async () => {
@@ -66,7 +78,7 @@ const LessonPage = () => {
   if (error) return <p>Error: {error}</p>;
   if (!lessonData) return <p>Lesson not found.</p>;
 
-  const { name, description, duration, video_url, uploaded_video } = lessonData;
+  const { name, description, video_url, uploaded_video } = lessonData;
 
   return (
     <div>
@@ -75,28 +87,24 @@ const LessonPage = () => {
         <div className="mb-8">
           <h1 className="text-5xl font-bold mb-4">{name} - Lesson {lessonId}</h1>
           <div className="text-gray-600 text-lg">
-            <p><strong>Duration:</strong> {duration || 'N/A'}</p>
             <p><strong>Description:</strong> {description || 'No description available.'}</p>
           </div>
         </div>
 
-        {video_url || uploaded_video ? (
+        {(video_url || uploaded_video) && (
           <div className="relative mb-12">
             <video
-              src={`${API_URL}${uploaded_video}` || video_url}
+              src={uploaded_video ? `${API_URL}${uploaded_video}` : video_url}
               controls
               className="w-full h-auto rounded-lg shadow-lg"
             />
           </div>
-        ) : (
-          <p>No video available for this lesson.</p>
         )}
-
 
         <div ref={contentRef} className="bg-white p-10 rounded-lg shadow-xl content_block" />
 
         <div className="mt-12">
-          <LessonCompiler />
+          <LessonCompiler task={task} />
         </div>
 
         <Chat />
