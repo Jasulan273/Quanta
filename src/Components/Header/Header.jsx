@@ -69,6 +69,16 @@ export default function Header({ user, setUser }) {
         >
           FAQ
         </NavLink>
+         <NavLink
+          to="/Quiz"
+          className={({ isActive }) =>
+            `flex items-center justify-center h-full text-[16px] transition ease-in delay-150 hover:scale-105 duration-200 ${
+              isActive ? "bg-lightgrey text-black border border-gray-300 shadow-lg px-4 py-2" : "text-black px-4 py-2"
+            }`
+          }
+        >
+          QUIZ
+        </NavLink>
       </div>
       <div className="flex items-center">
         {user ? (

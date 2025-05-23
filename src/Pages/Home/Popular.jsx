@@ -32,8 +32,10 @@ const Popular = () => {
   if (!course) return null;
 
   const truncateDescription = (text, limit) => {
-    return text.split(" ").slice(0, limit).join(" ") + (text.split(" ").length > limit ? "..." : "");
-  };
+  if (!text) return '';
+  return text.split(" ").slice(0, limit).join(" ") + (text.split(" ").length > limit ? "..." : "");
+};
+
 
   return (
 

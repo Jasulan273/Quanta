@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { API_URL } from '../../Api/api';
+import axios from 'axios';
 import { motion } from 'framer-motion';
 import Overview from './Overview';
 import Curriculum from './Curriculum';
 import Reviews from './Reviews';
 import courseBannerPlaceholder from '../../Materials/Images/course_banner.png';
+import { API_URL } from '../../Api/api';
 
 const CoursePage = () => {
   const { courseId } = useParams();
@@ -17,12 +18,11 @@ const CoursePage = () => {
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const response = await fetch(`${API_URL}/courses/${courseId}`);
-        if (!response.ok) throw new Error('Failed to fetch course data');
-        const data = await response.json();
-        setCourseData(data);
+        const response = await axios.get(`${API_URL}/courses/${courseId}`);
+        console.log('Course data:', response.data);
+        setCourseData(response.data);
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.detail || 'Failed to fetch course data');
       } finally {
         setLoading(false);
       }
@@ -45,6 +45,7 @@ const CoursePage = () => {
     } = {},
     Curriculum: curriculumData = [],
     Author: { username = 'Unknown Author' } = {},
+    Reviews: { existing_reviews = [] } = {},
   } = courseData || {};
 
   return (
@@ -61,7 +62,7 @@ const CoursePage = () => {
             </div>
           </div>
           <img
-            src={`${API_URL}${course_image}`}
+            src={course_image.startsWith('http') ? course_image : `${API_URL}${course_image}`}
             alt="Course Preview"
             className="w-[410px] h-[250px] object-contain rounded-lg shadow-lg"
           />
@@ -90,7 +91,7 @@ const CoursePage = () => {
       >
         {activeTab === 'Overview' && <Overview description={description} />}
         {activeTab === 'Curriculum' && <Curriculum modules={curriculumData} courseId={courseId} />}
-        {activeTab === 'Reviews' && <Reviews reviews={Reviews} />}
+        {activeTab === 'Reviews' && <Reviews reviews={existing_reviews} />}
       </motion.div>
     </div>
   );

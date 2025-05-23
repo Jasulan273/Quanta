@@ -4,17 +4,36 @@ import { API_URL } from '../../Api/api';
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import BlogImage from '../../Materials/Images/banner.png'; // Default image
 
 const Advertisment = () => {
   const [loaded, setLoaded] = useState(false);
   const [ads, setAds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const bannerRef = useRef(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/advertisement/`)
-      .then(response => response.json())
-      .then(data => setAds(data))
-      .catch(error => console.error("Error fetching advertisement data:", error));
+    const fetchAds = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_URL}/advertisement/`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        // Extract results array or default to empty array
+        const adsArray = Array.isArray(data.results) ? data.results : [];
+        setAds(adsArray);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching advertisement data:", error);
+        setError("Failed to load advertisements. Please try again later.");
+        setAds([]); // Ensure ads is an array even on error
+        setLoading(false);
+      }
+    };
+    fetchAds();
   }, []);
 
   const handleScroll = () => {
@@ -31,51 +50,72 @@ const Advertisment = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const CustomPrevArrow = (props) => (
-    <button {...props} className="absolute left-[-40px] top-1/2 transform -translate-y-1/2 bg-primary text-white p-2 rounded-[80%] opacity-75 hover:opacity-100 z-10">
+  const CustomPrevArrow = ({ className, onClick, style }) => (
+    <button
+      className={`absolute left-[-40px] top-1/2 transform -translate-y-1/2 bg-primary text-white p-2 rounded-[80%] opacity-75 hover:opacity-100 z-10 ${className}`}
+      onClick={onClick}
+      style={style}
+      aria-label="Previous Slide"
+    >
       ◀
     </button>
   );
 
-  const CustomNextArrow = (props) => (
-    <button {...props} className="absolute right-[-40px] top-1/2 transform -translate-y-1/2 bg-primary text-white p-2 rounded-[80%] opacity-75 hover:opacity-100 z-10">
+  const CustomNextArrow = ({ className, onClick, style }) => (
+    <button
+      className={`absolute right-[-40px] top-1/2 transform -translate-y-1/2 bg-primary text-white p-2 rounded-[80%] opacity-75 hover:opacity-100 z-10 ${className}`}
+      onClick={onClick}
+      style={style}
+      aria-label="Next Slide"
+    >
       ▶
     </button>
   );
 
   const settings = {
     dots: true,
-    infinite: true,
+    infinite: ads.length > 1, // Disable infinite scroll if only one ad
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    autoplay: true,
+    autoplay: ads.length > 1, // Disable autoplay if only one ad
     autoplaySpeed: 5000,
     adaptiveHeight: true,
-    prevArrow: <CustomPrevArrow />, 
-    nextArrow: <CustomNextArrow />
+    prevArrow: ads.length > 1 ? <CustomPrevArrow /> : null, // Hide arrows if only one ad
+    nextArrow: ads.length > 1 ? <CustomNextArrow /> : null
   };
+
+  if (loading) return <div className="text-center py-10">Loading advertisements...</div>;
+  if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
+  if (!ads.length) return <div className="text-center py-10">No advertisements available</div>;
 
   return (
     <div ref={bannerRef} className={`w-container mx-auto max-h-[324px] overflow-hidden my-32 transition-all ${loaded ? styles.fadeIn : styles.initial}`}>
       <Slider {...settings}>
         {ads.map(ad => (
-            <div key={ad.id} className="w-container mx-auto h-[324px] rounded-[24px] transition-all flex items-center relative">
-              <img src={ad.image} alt={ad.name} className="absolute inset-0 w-full h-full object-cover rounded-[24px]" />
-              <div className="absolute pt-16 pl-16">
-              <h5>New Course</h5>
-                <h1 className="mt-4 font-bold">{ad.name}</h1>
-                <p className="mt-2 w-[70%]">{ad.content.replace(/<[^>]*>/g, '').split(" ").slice(0, 15).join(" ") + (ad.content.split(" ").length > 15 ? "..." : "")}</p>
-                {ad.url && (
-                  <a href={ad.url} target="_blank" rel="noopener noreferrer">
-                    <button className="bg-primary w-[177px] text-white font-semibold mt-4 py-3 px-4 rounded-[24px] transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-lightgrey focus:ring-opacity-50">
-                      Learn More
-                    </button>
-                  </a>
-                )}
-              </div>
+          <div key={ad.id} className="w-container mx-auto h-[324px] rounded-[24px] transition-all flex items-center relative">
+            <img 
+              src={ad.image || BlogImage} 
+              alt={ad.name} 
+              className="absolute inset-0 w-full h-full object-cover rounded-[24px]" 
+            />
+            <div className="absolute pt-16 pl-16">
+              <h5 className="text-white">New Course</h5>
+              <h1 className="mt-4 font-bold text-white">{ad.name}</h1>
+              <p className="mt-2 w-[70%] text-white">
+                {ad.content.replace(/<[^>]*>/g, '').split(" ").slice(0, 15).join(" ") + 
+                 (ad.content.split(" ").length > 15 ? "..." : "")}
+              </p>
+              {ad.url && (
+                <a href={ad.url} target="_blank" rel="noopener noreferrer">
+                  <button className="bg-primary w-[177px] text-white font-semibold mt-4 py-3 px-4 rounded-[24px] transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-lightgrey focus:ring-opacity-50">
+                    Learn More
+                  </button>
+                </a>
+              )}
             </div>
-          ))}
+          </div>
+        ))}
       </Slider>
     </div>
   );

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, BookOpen, User, Edit, Calendar } from 'lucide-react';
-import { fetchUserProfile, fetchCourses } from '../../Api/api';
-import { updateCourse } from '../../Api/api';
+import { fetchUserProfile, fetchCourses, updateCourse } from '../../Api/api';
 
 const Sidebar = ({ setActiveComponent }) => (
   <div className='bg-gray-900 text-white w-1/5 min-h-screen p-4 flex flex-col justify-between'>
@@ -44,7 +43,6 @@ const UserProfile = ({ user }) => (
         <p className="text-gray-600">Phone: {user?.phone_number || '+7 747 777 77 77'}</p>
       </div>
     </div>
-
     <div className="mt-6 grid grid-cols-2 gap-4">
       <div className="p-4 bg-white shadow rounded-lg">
         <h3 className="text-lg font-bold flex items-center gap-2">
@@ -62,7 +60,7 @@ const UserProfile = ({ user }) => (
         <h3 className="text-lg font-bold flex items-center gap-2">
           <BookOpen size={20} /> About Me
         </h3>
-        <p>{user?.about || 'Hello! My name is Bakhtyar, and I am a passionate author with a strong interest in quanta. I have 3 years of experience in [specific skills or areas of expertise], and I am always eager to learn and grow in my field.I specialize in [specific skills or technologies], and I enjoy working on projects that challenge me to think creatively and solve complex problems. Whether it, I strive to deliver high-quality results and make a positive impact.In my free time, I love [hobbies or interests, e.g., reading, traveling, coding, photography]. These activities help me stay inspired and bring fresh perspectives to my work.I believe in continuous learning and collaboration, and I am always open to new opportunities and challenges. Lets connect and create something amazing together!'}</p>
+        <p>{user?.about || 'Hello! My name is Bakhtyar, and I am a passionate author...'}</p>
       </div>
     </div>
   </div>
@@ -84,13 +82,12 @@ const Courses = ({ courses }) => {
 
   const handleSaveClick = async () => {
     if (!editingCourse) return;
-
     try {
       await updateCourse(editingCourse.id, updatedData);
       alert('Course updated successfully!');
       setEditingCourse(null);
+      window.location.reload();
     } catch (error) {
-      console.error('Failed to update course:', error.response?.data || error.message);
       alert(`Failed to update course: ${error.response?.data?.detail || error.message}`);
     }
   };
@@ -168,10 +165,15 @@ const AuthorPanel = () => {
     const fetchData = async () => {
       try {
         const profile = await fetchUserProfile();
+        console.log(profile.user)
         setUser(profile);
-
         const coursesData = await fetchCourses();
-        setCourses(coursesData);
+        const filteredCourses = coursesData.filter(course =>
+        course.author === profile.username
+);
+
+       setCourses(filteredCourses);
+
       } catch (error) {
         console.error("Failed to fetch data", error);
       }
@@ -187,7 +189,7 @@ const AuthorPanel = () => {
       <Sidebar setActiveComponent={setActiveComponent} />
       <div className='flex-1 bg-gray-100 p-6'>
         {activeComponent === 'info' && <UserProfile user={user} />}
-        {activeComponent === 'courses' && <Courses courses={courses} />}
+       {activeComponent === 'courses' && <Courses courses={courses} />}
       </div>
     </div>
   );

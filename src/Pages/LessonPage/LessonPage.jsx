@@ -1,45 +1,70 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { API_URL } from '../../Api/api';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import ScrollProgress from '../../Components/ScrollProgress';
 import LessonCompiler from '../../AI/Compiler/LessonCompiler';
 import Chat from '../../AI/Сhat/Chat';
+import { API_URL } from '../../Api/api';
 
 const LessonPage = () => {
-  const { courseId, lessonId } = useParams();
+  const { courseId, modulesId, lessonId } = useParams();
   const [lessonData, setLessonData] = useState(null);
+  const [courseData, setCourseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const contentRef = useRef(null);
-  
-  const tasks = [
-    {
-      id: 1,
-      name: "Sum of Two Numbers",
-      description: "Write a function that takes two numbers and returns their sum.",
-      input: "3, 5",
-      expected_output: "8"
-    },
-  ];
-
-  const task = tasks.find(task => task.id === Number(lessonId)) || null;
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchLessonData = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`${API_URL}/courses/${courseId}/${lessonId}`);
-        if (!response.ok) throw new Error('Failed to fetch lesson data');
-        const data = await response.json();
-        setLessonData(data);
+        // Check for accessToken
+        const accessToken = localStorage.getItem('accessToken');
+        if (!accessToken) {
+          console.warn('No access token found. Redirecting to Auth.');
+          navigate('/Auth');
+          return;
+        }
+
+        // Fetch course data for navigation
+        const courseResponse = await axios.get(`${API_URL}/courses/${courseId}`);
+        console.log('Course data:', courseResponse.data);
+        setCourseData(courseResponse.data);
+
+        // Fetch lesson data
+        const response = await axios.get(
+          `${API_URL}/courses/${courseId}/modules/${modulesId}/lessons/${lessonId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+        console.log('Lesson data:', response.data);
+        setLessonData(response.data);
       } catch (err) {
-        setError(err.message);
+        console.error('Fetch error:', {
+          status: err.response?.status,
+          data: err.response?.data,
+          message: err.message,
+        });
+        if (err.response?.status === 401) {
+          console.warn('Unauthorized. Redirecting to Auth.');
+          navigate('/Auth');
+        } else {
+          setError(
+            err.response?.data?.detail ||
+              err.message ||
+              'Failed to fetch lesson data. Please try again.'
+          );
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLessonData();
-  }, [courseId, lessonId]);
+    fetchData();
+  }, [courseId, modulesId, lessonId, navigate]);
 
   useEffect(() => {
     if (lessonData?.content && contentRef.current) {
@@ -74,11 +99,91 @@ const LessonPage = () => {
     return htmlContent.replace(/src="\/media\//g, `src="https://quant.up.railway.app/media/`);
   };
 
+  // Find previous and next lessons, respecting sorted order
+  const getLessonNavigation = () => {
+    if (!courseData?.Curriculum) {
+      console.warn('No curriculum data available for navigation.');
+      return { prev: null, next: null };
+    }
+
+    let prev = null;
+    let next = null;
+    let foundCurrent = false;
+
+    for (const module of courseData.Curriculum) {
+      // Sort lessons by lesson_id
+      const sortedLessons = [...module.lessons].sort((a, b) => a.lesson_id - b.lesson_id);
+      console.log('Sorted lessons for module', module.module_id, ':', sortedLessons);
+
+      for (let i = 0; i < sortedLessons.length; i++) {
+        const lesson = sortedLessons[i];
+        if (
+          lesson.lesson_id === parseInt(lessonId) &&
+          module.module_id === parseInt(modulesId)
+        ) {
+          foundCurrent = true;
+          // Previous lesson
+          if (i > 0) {
+            prev = {
+              moduleId: module.module_id,
+              lessonId: sortedLessons[i - 1].lesson_id,
+            };
+          } else if (courseData.Curriculum.indexOf(module) > 0) {
+            const prevModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) - 1];
+            const prevSortedLessons = [...prevModule.lessons].sort(
+              (a, b) => a.lesson_id - b.lesson_id
+            );
+            prev = {
+              moduleId: prevModule.module_id,
+              lessonId: prevSortedLessons[prevSortedLessons.length - 1].lesson_id,
+            };
+          }
+          // Next lesson
+          if (i < sortedLessons.length - 1) {
+            next = {
+              moduleId: module.module_id,
+              lessonId: sortedLessons[i + 1].lesson_id,
+            };
+          } else if (courseData.Curriculum.indexOf(module) < courseData.Curriculum.length - 1) {
+            const nextModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) + 1];
+            const nextSortedLessons = [...nextModule.lessons].sort(
+              (a, b) => a.lesson_id - b.lesson_id
+            );
+            next = {
+              moduleId: nextModule.module_id,
+              lessonId: nextSortedLessons[0].lesson_id,
+            };
+          }
+          break;
+        }
+      }
+      if (foundCurrent) break;
+    }
+
+    console.log('Navigation:', { prev, next });
+    return { prev, next };
+  };
+
+  const { prev, next } = getLessonNavigation();
+
   if (loading) return <p>Loading lesson data...</p>;
   if (error) return <p>Error: {error}</p>;
   if (!lessonData) return <p>Lesson not found.</p>;
 
   const { name, description, video_url, uploaded_video } = lessonData;
+
+  // Placeholder tasks
+  const tasks = [
+    {
+      id: 1,
+      name: "Sum of Two Numbers",
+      description: "Write a function that takes two numbers and returns their sum.",
+      input: "3, 5",
+      expected_output: "8",
+    },
+  ];
+
+  const task = tasks.find((task) => task.id === Number(lessonId)) || null;
 
   return (
     <div>
@@ -110,20 +215,22 @@ const LessonPage = () => {
         <Chat />
 
         <div className="flex justify-between my-8 text-xl">
-          {parseInt(lessonId) > 1 && (
+          {prev && (
             <Link
-              to={`/courses/${courseId}/lesson/${parseInt(lessonId) - 1}`}
+              to={`/courses/${courseId}/modules/${prev.moduleId}/lesson/${prev.lessonId}`}
               className="text-orange-500 font-bold"
             >
-              &larr; Previous Lesson
+              ← Previous Lesson
             </Link>
           )}
-          <Link
-            to={`/courses/${courseId}/lesson/${parseInt(lessonId) + 1}`}
-            className="text-orange-500 font-bold"
-          >
-            Next Lesson &rarr;
-          </Link>
+          {next && (
+            <Link
+              to={`/courses/${courseId}/modules/${next.moduleId}/lesson/${next.lessonId}`}
+              className="text-orange-500 font-bold"
+            >
+              Next Lesson →
+            </Link>
+          )}
         </div>
       </div>
     </div>

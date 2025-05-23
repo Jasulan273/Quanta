@@ -1,39 +1,81 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import ScrollProgress from '../../Components/ScrollProgress';
-import BlogImage from '../../Materials/Images/BlogImage.png'
+import BlogImage from '../../Materials/Images/BlogImage.png';
+import { fetchBlogPostById } from '../../Api/api';
+import Comments from './Comments';
 
 const BlogPage = () => {
+  const { id } = useParams();
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadPost = async () => {
+      try {
+        console.log('Attempting to fetch post with ID:', id);
+        
+        if (!id || isNaN(parseInt(id))) {
+          throw new Error('Invalid post ID');
+        }
+        
+        const postId = parseInt(id);
+        console.log('Formatted post ID:', postId);
+        
+        const postData = await fetchBlogPostById(postId);
+        console.log('Received post data:', postData);
+        
+        if (!postData) {
+          throw new Error(`Post with ID ${postId} not found`);
+        }
+        
+        setPost(postData);
+        setLoading(false);
+      } catch (err) {
+        console.error('Fetch error:', {
+          message: err.message,
+          response: err.response,
+          stack: err.stack
+        });
+        setError(`Failed to load post: ${err.response?.status === 404 ? 'Post not found' : err.message}`);
+        setLoading(false);
+      }
+    };
+    
+    loadPost();
+  }, [id]);
+
+  if (loading) return <div className="text-center py-10">Loading...</div>;
+  if (error) return <div className="text-center py-10 text-red-500">{error}</div>;
+  if (!post) return <div className="text-center py-10">Post not found</div>;
+
   return (
     <div>
-    <ScrollProgress />
-    <div className="container mx-auto my-16 px-4">
-      <div className="mb-8">
-        <h1 className="text-5xl font-bold mb-4">Best LearnPress WordPress Theme Collection for 2023</h1>
-        <div className="text-gray-600 text-lg">
-          <p><strong>Author:</strong> Determined-poitras</p>
-          <p><strong>Date:</strong> Jan 24, 22023</p>
-          <p><strong>Comments:</strong> 20 Comments</p>
+      <ScrollProgress />
+      <div className="container mx-auto my-16 px-4">
+        <div className="mb-8">
+          <h1 className="text-5xl font-bold mb-4">{post.title}</h1>
+          <div className="text-gray-600 text-lg">
+            <p><strong>Author:</strong> {post.author_username}</p>
+            <p><strong>Date:</strong> {new Date(post.created_at).toLocaleDateString('en-US')}</p>
+          </div>
         </div>
-      </div>
 
-      <div className="relative mb-12">
-        <img src={BlogImage} alt="Visual representation of the programming lesson" className="w-full h-[600px] object-cover rounded-lg shadow-lg" />
+        <div className="relative mb-12">
+          <img 
+            src={post.image || BlogImage} 
+            alt={post.title} 
+            className="w-full h-[600px] object-cover rounded-lg shadow-lg" 
+            onError={(e) => { e.target.src = BlogImage; }}
+          />
+        </div>
+        
+        <div dangerouslySetInnerHTML={{ __html: post.content }} />
       </div>
-      
-      <div>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras facilisis faucibus odio arcu duis dui, adipiscing facilisis. Urna, donec turpis egestas volutpat. Quisque nec non amet quis. Varius tellus justo odio parturient mauris curabitur lorem in. Pulvinar sit ultrices mi ut eleifend luctus ut. Id sed faucibus bibendum augue id cras purus. At eget euismod cursus non. Molestie dignissim sed volutpat feugiat vel enim eu turpis imperdiet. 
+      <Comments postId={post.id} />
+    </div>
+  );
+};
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras facilisis faucibus odio arcu duis dui, adipiscing facilisis. Urna, donec turpis egestas volutpat. Quisque nec non amet quis. Varius tellus justo odio parturient mauris curabitur lorem in. Pulvinar sit ultrices mi ut eleifend luctus ut. Id sed faucibus bibendum augue id cras purus.</p>
-      </div>
-    
-     
-      
-      </div>
-
-   
-   
-  </div>
-  )
-}
-
-export default BlogPage
+export default BlogPage;
