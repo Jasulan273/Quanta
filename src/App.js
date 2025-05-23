@@ -30,7 +30,7 @@ function App() {
       setUser(storedUser);
     }
   }, []);
-
+  console.log(user)
   useEffect(() => {
     setLoading(true);
     const timer = setTimeout(() => {
@@ -46,7 +46,7 @@ function App() {
       <Routes>
         <Route path="/Home" element={<Home />} />
         <Route path="/Courses" element={<Courses />} />
-        <Route path="/courses/:courseId" element={<CoursePage />} />
+    
         <Route
           path="/courses/:courseId/modules/:modulesId/lesson/:lessonId"
           element={
@@ -62,7 +62,8 @@ function App() {
         <Route path="/quiz" element={<LanguageQuiz />} />
         <Route path="/Auth" element={<Auth setUser={setUser} />} />
         <Route path="/Registration" element={<Registration />} />
-        <Route path="/CoursePages" element={<CoursePage />} />
+        <Route path="/courses/:courseId" element={<CoursePage user={user} />}/>
+
         <Route path="/Lesson" element={<LessonPage />} />
         <Route path="/BlogPage/:id" element={<BlogPage />} />
         <Route path="/" element={<Navigate to="/Home" replace />} />

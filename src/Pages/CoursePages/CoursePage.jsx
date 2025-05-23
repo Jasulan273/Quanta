@@ -7,20 +7,27 @@ import Curriculum from './Curriculum';
 import Reviews from './Reviews';
 import courseBannerPlaceholder from '../../Materials/Images/course_banner.png';
 import { API_URL } from '../../Api/api';
+import { enrollInCourse, unenrollFromCourse } from '../../Api/api';
 
-const CoursePage = () => {
+const CoursePage = ({user}) => {
   const { courseId } = useParams();
   const [courseData, setCourseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('Overview');
-
+  const [enrolled, setEnrolled] = useState(false);
+  const [enrollLoading, setEnrollLoading] = useState(false);
+  console.log(user)
   useEffect(() => {
     const fetchCourse = async () => {
       try {
         const response = await axios.get(`${API_URL}/courses/${courseId}`);
-        console.log('Course data:', response.data);
         setCourseData(response.data);
+
+        
+        if (response.data.is_enrolled) {
+          setEnrolled(true);
+        }
       } catch (err) {
         setError(err.response?.data?.detail || 'Failed to fetch course data');
       } finally {
@@ -30,6 +37,24 @@ const CoursePage = () => {
 
     fetchCourse();
   }, [courseId]);
+
+  const handleEnrollToggle = async () => {
+    setEnrollLoading(true);
+    try {
+      if (enrolled) {
+        await unenrollFromCourse(courseId);
+        setEnrolled(false);
+      } else {
+        await enrollInCourse(courseId);
+        setEnrolled(true);
+      }
+    } catch (err) {
+      console.error('Enrollment error:', err);
+      alert('Ошибка при изменении статуса подписки');
+    } finally {
+      setEnrollLoading(false);
+    }
+  };
 
   if (loading) return <p>Loading course data...</p>;
   if (error) return <p>Error: {error}</p>;
@@ -51,23 +76,34 @@ const CoursePage = () => {
   return (
     <div>
       <div className="bg-black text-white py-16 px-4 relative">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-5xl font-bold">{title}</h1>
-            <p className="text-lg text-gray-300 mt-4">Author: {username}</p>
-            <div className="flex space-x-6 text-sm text-gray-400 mt-4">
-              <span>{duration}</span>
-              <span>{students_count} Students</span>
-              <span>{level}</span>
-            </div>
-          </div>
-          <img
-            src={course_image.startsWith('http') ? course_image : `${API_URL}${course_image}`}
-            alt="Course Preview"
-            className="w-[410px] h-[250px] object-contain rounded-lg shadow-lg"
-          />
-        </div>
+  <div className="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+    <div className="flex-1">
+      <h1 className="text-5xl font-bold">{title}</h1>
+      <p className="text-lg text-gray-300 mt-4">Author: {username}</p>
+      <div className="flex flex-wrap gap-6 text-sm text-gray-400 mt-4">
+        <span>⏱ {duration}</span>
+        <span>👥 {students_count} Students</span>
+        <span>🎯 {level}</span>
       </div>
+
+      <button
+        onClick={handleEnrollToggle}
+        disabled={enrollLoading}
+        className={`mt-6 px-6 py-2 rounded-md text-white font-semibold transition 
+          ${enrolled ? 'bg-orange-600 hover:bg-orange-700' : 'bg-gray-600 hover:bg-gray-700'}`}
+      >
+        {enrollLoading ? 'Loading...' : enrolled ? 'Unenroll' : 'Enroll'}
+      </button>
+    </div>
+
+    <img
+      src={course_image.startsWith('http') ? course_image : `${API_URL}${course_image}`}
+      alt="Course Preview"
+      className="w-[410px] h-[250px] object-contain rounded-lg shadow-lg"
+    />
+  </div>
+</div>
+
 
       <div className="flex space-x-8 border-b max-w-7xl mx-auto px-4 py-4">
         {['Overview', 'Curriculum', 'Reviews'].map((tab) => (
@@ -91,7 +127,7 @@ const CoursePage = () => {
       >
         {activeTab === 'Overview' && <Overview description={description} />}
         {activeTab === 'Curriculum' && <Curriculum modules={curriculumData} courseId={courseId} />}
-        {activeTab === 'Reviews' && <Reviews reviews={existing_reviews} />}
+        {activeTab === 'Reviews' && <Reviews reviews={existing_reviews} user={user} />}
       </motion.div>
     </div>
   );

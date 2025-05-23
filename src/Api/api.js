@@ -163,3 +163,37 @@ export const handleRegister = async (username, email, password, confirmPassword,
     setError("Registration failed. Please check your details and try again.");
   }
 };
+
+export const enrollInCourse = async (courseId) => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
+
+    const response = await axios.post(`${API_URL}/courses/${courseId}/enroll/`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error enrolling in course:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const unenrollFromCourse = async (courseId) => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
+
+    const response = await axios.post(`${API_URL}/courses/${courseId}/unenroll/`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error unenrolling from course:', error.response?.data || error.message);
+    throw error;
+  }
+};
