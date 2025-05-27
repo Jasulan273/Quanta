@@ -11,18 +11,24 @@ export default function Registration() {
   const navigate = useNavigate();
 
   const handleRegister = async () => {
-    if (password === confirmPassword) {
-      try {
-        await registerUser(username, email, password, confirmPassword);
-        setError('');
-        navigate('/Auth');
-      } catch (err) {
-        setError('Registration failed. Please try again.');
-      }
-    } else {
-      setError('Passwords do not match');
+  if (password === confirmPassword) {
+    try {
+      await registerUser(username, email, password);
+      setError('');
+      navigate('/Auth');
+    } catch (err) {
+      const serverMsg =
+        err?.response?.data
+          ? Object.entries(err.response.data).map(
+              ([key, val]) => `${key}: ${val instanceof Array ? val.join(', ') : val}`
+            ).join('\n')
+          : 'Registration failed. Please try again.';
+      setError(serverMsg);
     }
-  };
+  } else {
+    setError('Passwords do not match');
+  }
+};
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
