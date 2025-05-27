@@ -10,6 +10,7 @@ const LessonPage = () => {
   const { courseId, modulesId, lessonId } = useParams();
   const [lessonData, setLessonData] = useState(null);
   const [courseData, setCourseData] = useState(null);
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const contentRef = useRef(null);
@@ -18,44 +19,32 @@ const LessonPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Check for accessToken
         const accessToken = localStorage.getItem('accessToken');
         if (!accessToken) {
-          console.warn('No access token found. Redirecting to Auth.');
           navigate('/Auth');
           return;
         }
 
-        // Fetch course data for navigation
-        const courseResponse = await axios.get(`${API_URL}/courses/${courseId}`);
-        console.log('Course data:', courseResponse.data);
+        const [courseResponse, lessonResponse, tasksResponse] = await Promise.all([
+          axios.get(`${API_URL}/courses/${courseId}`),
+          axios.get(`${API_URL}/courses/${courseId}/modules/${modulesId}/lessons/${lessonId}`, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          }),
+          axios.get(`${API_URL}/courses/${courseId}/modules/${modulesId}/lessons/${lessonId}/exercises`, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          })
+        ]);
         setCourseData(courseResponse.data);
-
-        // Fetch lesson data
-        const response = await axios.get(
-          `${API_URL}/courses/${courseId}/modules/${modulesId}/lessons/${lessonId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        console.log('Lesson data:', response.data);
-        setLessonData(response.data);
+        setLessonData(lessonResponse.data);
+        setTasks(tasksResponse.data || []);
       } catch (err) {
-        console.error('Fetch error:', {
-          status: err.response?.status,
-          data: err.response?.data,
-          message: err.message,
-        });
         if (err.response?.status === 401) {
-          console.warn('Unauthorized. Redirecting to Auth.');
           navigate('/Auth');
         } else {
           setError(
             err.response?.data?.detail ||
-              err.message ||
-              'Failed to fetch lesson data. Please try again.'
+            err.message ||
+            'Failed to fetch lesson data. Please try again.'
           );
         }
       } finally {
@@ -99,22 +88,11 @@ const LessonPage = () => {
     return htmlContent.replace(/src="\/media\//g, `src="https://quant.up.railway.app/media/`);
   };
 
-  // Find previous and next lessons, respecting sorted order
   const getLessonNavigation = () => {
-    if (!courseData?.Curriculum) {
-      console.warn('No curriculum data available for navigation.');
-      return { prev: null, next: null };
-    }
-
-    let prev = null;
-    let next = null;
-    let foundCurrent = false;
-
+    if (!courseData?.Curriculum) return { prev: null, next: null };
+    let prev = null, next = null, foundCurrent = false;
     for (const module of courseData.Curriculum) {
-      // Sort lessons by lesson_id
       const sortedLessons = [...module.lessons].sort((a, b) => a.lesson_id - b.lesson_id);
-      console.log('Sorted lessons for module', module.module_id, ':', sortedLessons);
-
       for (let i = 0; i < sortedLessons.length; i++) {
         const lesson = sortedLessons[i];
         if (
@@ -122,7 +100,6 @@ const LessonPage = () => {
           module.module_id === parseInt(modulesId)
         ) {
           foundCurrent = true;
-          // Previous lesson
           if (i > 0) {
             prev = {
               moduleId: module.module_id,
@@ -130,15 +107,12 @@ const LessonPage = () => {
             };
           } else if (courseData.Curriculum.indexOf(module) > 0) {
             const prevModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) - 1];
-            const prevSortedLessons = [...prevModule.lessons].sort(
-              (a, b) => a.lesson_id - b.lesson_id
-            );
+            const prevSortedLessons = [...prevModule.lessons].sort((a, b) => a.lesson_id - b.lesson_id);
             prev = {
               moduleId: prevModule.module_id,
               lessonId: prevSortedLessons[prevSortedLessons.length - 1].lesson_id,
             };
           }
-          // Next lesson
           if (i < sortedLessons.length - 1) {
             next = {
               moduleId: module.module_id,
@@ -146,9 +120,7 @@ const LessonPage = () => {
             };
           } else if (courseData.Curriculum.indexOf(module) < courseData.Curriculum.length - 1) {
             const nextModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) + 1];
-            const nextSortedLessons = [...nextModule.lessons].sort(
-              (a, b) => a.lesson_id - b.lesson_id
-            );
+            const nextSortedLessons = [...nextModule.lessons].sort((a, b) => a.lesson_id - b.lesson_id);
             next = {
               moduleId: nextModule.module_id,
               lessonId: nextSortedLessons[0].lesson_id,
@@ -159,8 +131,6 @@ const LessonPage = () => {
       }
       if (foundCurrent) break;
     }
-
-    console.log('Navigation:', { prev, next });
     return { prev, next };
   };
 
@@ -172,19 +142,6 @@ const LessonPage = () => {
 
   const { name, description, video_url, uploaded_video } = lessonData;
 
-  // Placeholder tasks
-  const tasks = [
-    {
-      id: 1,
-      name: "Sum of Two Numbers",
-      description: "Write a function that takes two numbers and returns their sum.",
-      input: "3, 5",
-      expected_output: "8",
-    },
-  ];
-
-  const task = tasks.find((task) => task.id === Number(lessonId)) || null;
-
   return (
     <div>
       <ScrollProgress />
@@ -195,7 +152,6 @@ const LessonPage = () => {
             <p><strong>Description:</strong> {description || 'No description available.'}</p>
           </div>
         </div>
-
         {(video_url || uploaded_video) && (
           <div className="relative mb-12">
             <video
@@ -205,12 +161,22 @@ const LessonPage = () => {
             />
           </div>
         )}
-
         <div ref={contentRef} className="bg-white p-10 rounded-lg shadow-xl content_block" />
 
-        <div className="mt-12">
-          <LessonCompiler task={task} />
-        </div>
+        {/* Динамическое отображение заданий */}
+        {tasks.length > 0 && (
+          <div className="mt-12">
+            {tasks.map((task) => (
+              <div key={task.id} className="mb-10">
+                {task.type === 'quiz' ? (
+                  <QuizTask task={task} />
+                ) : task.type === 'code' ? (
+                  <LessonCompiler task={task} />
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
 
         <Chat />
 
@@ -238,3 +204,63 @@ const LessonPage = () => {
 };
 
 export default LessonPage;
+
+// Dummy QuizTask component, замени на свой если нужно
+function QuizTask({ task }) {
+  const [selected, setSelected] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSelect = (id) => {
+    if (!submitted) setSelected(id);
+  };
+
+  const handleSubmit = () => {
+    setSubmitted(true);
+  };
+
+  return (
+    <div className="bg-gray-100 p-6 rounded-xl shadow">
+      <h3 className="text-lg font-bold mb-2">{task.title}</h3>
+      {task.description && <p className="mb-2">{task.description}</p>}
+      <div className="mb-4">
+        {task.options.map((option) => (
+          <button
+            key={option.id}
+            className={`block w-full text-left mb-2 p-3 rounded border 
+              ${submitted
+                ? option.is_correct
+                  ? 'bg-green-200 border-green-500'
+                  : selected === option.id
+                  ? 'bg-red-200 border-red-500'
+                  : ''
+                : selected === option.id
+                ? 'bg-blue-100 border-blue-400'
+                : 'border-gray-300'
+              }`}
+            onClick={() => handleSelect(option.id)}
+            disabled={submitted}
+          >
+            {option.text}
+          </button>
+        ))}
+      </div >
+      {!submitted && (
+        <button
+          onClick={handleSubmit}
+          disabled={selected == null}
+          className="bg-orange-500 text-white px-4 py-2 rounded font-bold"
+        >
+          Submit
+        </button>
+      )}
+      {submitted && (
+        <div>
+          {task.options.find((o) => o.is_correct)?.id === selected
+            ? <span className="text-green-600 font-bold">Correct!</span>
+            : <span className="text-red-600 font-bold">Incorrect</span>
+          }
+        </div>
+      )}
+    </div>
+  );
+}

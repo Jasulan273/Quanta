@@ -56,7 +56,11 @@ function App() {
           }
         /> 
         <Route path="/Blog" element={<Blog />} />
-        <Route path="/UserPanel" user={user} setUser={setUser} element={<UserPanel />} />
+        <Route
+  path="/UserPanel"
+  element={<UserPanel user={user} setUser={setUser} />}
+/>
+
         <Route path="/About" element={<About />} />
         <Route path="/FAQ" element={<FAQ />} />
         <Route path="/quiz" element={<LanguageQuiz />} />

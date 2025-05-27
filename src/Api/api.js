@@ -2,20 +2,20 @@ import axios from 'axios';
 
 export const API_URL = process.env.REACT_APP_API_URL;
 
-export const registerUser = async (username, email, password, confirmPassword) => {
-  try {
-    const response = await axios.post(`${API_URL}/signup/`, {
-      username,
-      email,
-      password1: password,
-      password2: confirmPassword,
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error during registration:', error);
-    throw error;
-  }
-};
+  export const registerUser = async (username, email, password) => {
+    try {
+      const response = await axios.post(`${API_URL}/signup/`, {
+        username,
+        email,
+        password,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error during registration:', error);
+      throw error;
+    }
+  };
+
 
 export const updateCourse = async (courseId, updatedData) => {
   try {
@@ -25,7 +25,7 @@ export const updateCourse = async (courseId, updatedData) => {
     }
     
     const response = await axios.patch(
-      `https://quant.up.railway.app/author/course/${courseId}/`,
+      `https://quant.up.railway.app/author/courses/${courseId}/`,
       updatedData,
       {
         headers: {
@@ -194,6 +194,66 @@ export const unenrollFromCourse = async (courseId) => {
     return response.data;
   } catch (error) {
     console.error('Error unenrolling from course:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+export const updateUserProfile = async (profileData) => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
+    const filteredData = Object.fromEntries(
+      Object.entries(profileData).filter(([_, v]) => v !== undefined)
+    );
+    const response = await axios.patch(
+      `${API_URL}/profile/edit/`,
+      filteredData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error updating profile:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
+export const fetchMyCourses = async () => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    console.log(token)
+    if (!token) throw new Error('No access token found');
+    const response = await axios.get(`${API_URL}/mycourses/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching my courses:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const fetchAuthorCourses = async () => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
+    const response = await axios.get(`${API_URL}/author/courses/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching author courses:', error.response?.data || error.message);
     throw error;
   }
 };
