@@ -7,9 +7,8 @@ import Curriculum from './Curriculum';
 import Reviews from './Reviews';
 import courseBannerPlaceholder from '../../Materials/Images/course_banner.png';
 import { API_URL } from '../../Api/api';
-import { enrollInCourse, unenrollFromCourse } from '../../Api/api';
 
-const CoursePage = ({user}) => {
+const CoursePage = ({ user }) => {
   const { courseId } = useParams();
   const [courseData, setCourseData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,40 +16,70 @@ const CoursePage = ({user}) => {
   const [activeTab, setActiveTab] = useState('Overview');
   const [enrolled, setEnrolled] = useState(false);
   const [enrollLoading, setEnrollLoading] = useState(false);
-  console.log(user)
-  useEffect(() => {
-    const fetchCourse = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/courses/${courseId}`);
-        setCourseData(response.data);
 
-        
-        if (response.data.is_enrolled) {
-          setEnrolled(true);
+  // Функция для проверки подписки через /mycourses/
+  const checkEnrollmentStatus = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return false;
+      
+      const response = await axios.get(`${API_URL}/mycourses/`, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
+      });
+      
+      // Проверяем есть ли текущий курс в списке подписок
+      const isEnrolled = response.data.some(course => course.id.toString() === courseId.toString());
+      return isEnrolled;
+    } catch (err) {
+      console.error('Error checking enrollment:', err);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Загружаем данные курса
+        const courseResponse = await axios.get(`${API_URL}/courses/${courseId}`);
+        setCourseData(courseResponse.data);
+        
+        // Проверяем статус подписки
+        const isEnrolled = await checkEnrollmentStatus();
+        setEnrolled(isEnrolled);
       } catch (err) {
-        setError(err.response?.data?.detail || 'Failed to fetch course data');
+        setError(err.response?.data?.detail || 'Failed to fetch data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCourse();
+    fetchData();
   }, [courseId]);
 
   const handleEnrollToggle = async () => {
     setEnrollLoading(true);
     try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) throw new Error('No access token');
+      
       if (enrolled) {
-        await unenrollFromCourse(courseId);
-        setEnrolled(false);
+        await axios.post(`${API_URL}/courses/${courseId}/unenroll/`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
       } else {
-        await enrollInCourse(courseId);
-        setEnrolled(true);
+        await axios.post(`${API_URL}/courses/${courseId}/enroll/`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
       }
+      
+      // После изменения подписки обновляем статус
+      const updatedStatus = await checkEnrollmentStatus();
+      setEnrolled(updatedStatus);
     } catch (err) {
       console.error('Enrollment error:', err);
-      alert('Ошибка при изменении статуса подписки');
+      alert(err.response?.data?.detail || 'Error updating enrollment');
     } finally {
       setEnrollLoading(false);
     }
@@ -76,34 +105,33 @@ const CoursePage = ({user}) => {
   return (
     <div>
       <div className="bg-black text-white py-16 px-4 relative">
-  <div className="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
-    <div className="flex-1">
-      <h1 className="text-5xl font-bold">{title}</h1>
-      <p className="text-lg text-gray-300 mt-4">Author: {username}</p>
-      <div className="flex flex-wrap gap-6 text-sm text-gray-400 mt-4">
-        <span>⏱ {duration}</span>
-        <span>👥 {students_count} Students</span>
-        <span>🎯 {level}</span>
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+          <div className="flex-1">
+            <h1 className="text-5xl font-bold">{title}</h1>
+            <p className="text-lg text-gray-300 mt-4">Author: {username}</p>
+            <div className="flex flex-wrap gap-6 text-sm text-gray-400 mt-4">
+              <span>⏱ {duration}</span>
+              <span>👥 {students_count} Students</span>
+              <span>🎯 {level}</span>
+            </div>
+
+            <button
+              onClick={handleEnrollToggle}
+              disabled={enrollLoading}
+              className={`mt-6 px-6 py-2 rounded-md text-white font-semibold transition 
+                ${enrolled ? 'bg-orange-600 hover:bg-orange-700' : 'bg-gray-600 hover:bg-gray-700'}`}
+            >
+              {enrollLoading ? 'Processing...' : enrolled ? 'Unenroll' : 'Enroll'}
+            </button>
+          </div>
+
+          <img
+            src={course_image.startsWith('http') ? course_image : `${API_URL}${course_image}`}
+            alt="Course Preview"
+            className="w-[410px] h-[250px] object-contain rounded-lg shadow-lg"
+          />
+        </div>
       </div>
-
-      <button
-        onClick={handleEnrollToggle}
-        disabled={enrollLoading}
-        className={`mt-6 px-6 py-2 rounded-md text-white font-semibold transition 
-          ${enrolled ? 'bg-orange-600 hover:bg-orange-700' : 'bg-gray-600 hover:bg-gray-700'}`}
-      >
-        {enrollLoading ? 'Loading...' : enrolled ? 'Unenroll' : 'Enroll'}
-      </button>
-    </div>
-
-    <img
-      src={course_image.startsWith('http') ? course_image : `${API_URL}${course_image}`}
-      alt="Course Preview"
-      className="w-[410px] h-[250px] object-contain rounded-lg shadow-lg"
-    />
-  </div>
-</div>
-
 
       <div className="flex space-x-8 border-b max-w-7xl mx-auto px-4 py-4">
         {['Overview', 'Curriculum', 'Reviews'].map((tab) => (

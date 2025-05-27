@@ -165,35 +165,38 @@ export const handleRegister = async (username, email, password, confirmPassword,
 };
 
 export const enrollInCourse = async (courseId) => {
-  try {
-    const token = localStorage.getItem('accessToken');
-    if (!token) throw new Error('No access token found');
+  const token = localStorage.getItem('accessToken');
+  if (!token) throw new Error('No access token found');
 
-    const response = await axios.post(`${API_URL}/courses/${courseId}/enroll/`, {}, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error enrolling in course:', error.response?.data || error.message);
-    throw error;
-  }
+  const response = await axios.post(`${API_URL}/courses/${courseId}/enroll/`, {}, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
 };
 
 export const unenrollFromCourse = async (courseId) => {
-  try {
-    const token = localStorage.getItem('accessToken');
-    if (!token) throw new Error('No access token found');
+  const token = localStorage.getItem('accessToken');
+  if (!token) throw new Error('No access token found');
 
-    const response = await axios.post(`${API_URL}/courses/${courseId}/unenroll/`, {}, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error unenrolling from course:', error.response?.data || error.message);
-    throw error;
-  }
+  const response = await axios.post(`${API_URL}/courses/${courseId}/unenroll/`, {}, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
+
+export const fetchEnrolledCourses = async () => {
+  const token = localStorage.getItem('accessToken');
+  if (!token) throw new Error('No access token found');
+
+  const response = await axios.get(`${API_URL}/mycourses/`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
 };

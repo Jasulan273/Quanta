@@ -18,7 +18,7 @@ const LessonPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Check for accessToken
+      
         const accessToken = localStorage.getItem('accessToken');
         if (!accessToken) {
           console.warn('No access token found. Redirecting to Auth.');
@@ -26,12 +26,12 @@ const LessonPage = () => {
           return;
         }
 
-        // Fetch course data for navigation
+       
         const courseResponse = await axios.get(`${API_URL}/courses/${courseId}`);
         console.log('Course data:', courseResponse.data);
         setCourseData(courseResponse.data);
 
-        // Fetch lesson data
+    
         const response = await axios.get(
           `${API_URL}/courses/${courseId}/modules/${modulesId}/lessons/${lessonId}`,
           {
