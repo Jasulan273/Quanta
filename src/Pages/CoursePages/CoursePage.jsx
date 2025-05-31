@@ -21,11 +21,11 @@ const CoursePage = ({ user }) => {
   useEffect(() => {
     const fetchCourseAndEnrollment = async () => {
       try {
-        // Получаем данные курса
+     
         const courseResponse = await axios.get(`${API_URL}/courses/${courseId}`);
         setCourseData(courseResponse.data);
 
-        // Проверяем статус подписки через /mycourses/
+     
         const myCourses = await fetchMyCourses();
         const isEnrolled = myCourses.some(course => course.id === parseInt(courseId));
         setEnrolled(isEnrolled);
@@ -65,7 +65,7 @@ const CoursePage = ({ user }) => {
       title = 'Untitled Course',
       description = 'No description available.',
       duration = 'Unknown duration',
-      students = 0, // Изменено с students_count на students
+      students = 0, 
       level = 'All Levels',
       course_image = courseBannerPlaceholder,
     } = {},
@@ -83,7 +83,7 @@ const CoursePage = ({ user }) => {
             <p className="text-lg text-gray-300 mt-4">Author: {username}</p>
             <div className="flex flex-wrap gap-6 text-sm text-gray-400 mt-4">
               <span>⏱ {duration}</span>
-              <span>👥 {students} Students</span> {/* Форматирование */}
+              <span>👥 {students} Students</span> 
               <span>🎯 {level}</span>
             </div>
 

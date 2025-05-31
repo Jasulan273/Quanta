@@ -70,29 +70,27 @@ const Feedback = () => {
   };
 
   return (
-    <div className="w-container mx-auto my-10">
+    <div className="w-full max-w-7xl mx-auto my-8 sm:my-10 px-4 pt-10">
       <div
         id="feedback-section"
-        className={`transition-opacity duration-1000 ${
-          isVisible ? "opacity-100" : "opacity-0"
-        }`}
+        className={`transition-opacity duration-1000 ${isVisible ? "opacity-100" : "opacity-0"}`}
       >
-        <h2>Student feedbacks</h2>
-        <p>What Students Say About Academy LMS</p>
+        <h2 className="text-xl sm:text-2xl text-center sm:text-left">Student feedbacks</h2>
+        <p className="text-grey text-sm sm:text-base text-center sm:text-left">What Students Say About Academy LMS</p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-6 sm:mt-10">
           {FeedbackData.map((feedback) => (
             <div
               key={feedback.id}
-              className="relative w-[300px] h-[400px] rounded-[26px] overflow-hidden hover:cursor-pointer"
+              className="relative w-full max-w-[280px] h-80 sm:h-96 rounded-3xl overflow-hidden hover:cursor-pointer mx-auto"
               onMouseEnter={() => handleMouseEnter(feedback.id)}
               onMouseLeave={() => handleMouseLeave(feedback.id)}
             >
               <div
-                className={`absolute top-0 left-0 w-[300px] h-[50px] flex justify-center items-center text-xl text-white transition-all duration-300 ease-in-out ${
+                className={`absolute top-0 left-0 w-full h-12 flex justify-center items-center text-base sm:text-lg text-white transition-all duration-300 ease-in-out ${
                   hoverStatus[feedback.id]
                     ? "translate-y-0"
-                    : "-translate-y-[50px]"
+                    : "-translate-y-12"
                 } ${feedback.status === "good" ? "bg-green-500" : "bg-red-500"}`}
               >
                 <h3>
@@ -103,16 +101,16 @@ const Feedback = () => {
               </div>
 
               <div
-                className={`flex justify-center flex-col w-[300px] h-[400px] pl-8 bg-gray-100 transition-all duration-300 ease-in-out ${
+                className={`flex justify-center flex-col w-full h-80 sm:h-96 p-6 bg-gray-100 transition-all duration-300 ease-in-out ${
                   hoverStatus[feedback.id]
-                    ? "translate-y-[50px] rounded-t-none"
-                    : "rounded-t-[26px]"
+                    ? "translate-y-12 rounded-t-none"
+                    : "rounded-t-3xl"
                 }`}
               >
-                <img src={Quote} className="mr-auto" alt="Quote" />
-                <p className="w-[240px] h-[200px] mt-8">{feedback.feedback}</p>
-                <h4 className="ml-0 font-bold mt-7">{feedback.name}</h4>
-                <p className="text-left mt-2">{feedback.profession}</p>
+                <img src={Quote} className="w-6 h-6 mb-4" alt="Quote" />
+                <p className="text-xs sm:text-sm h-40 sm:h-48">{feedback.feedback}</p>
+                <h4 className="font-bold text-sm sm:text-base mt-4">{feedback.name}</h4>
+                <p className="text-xs sm:text-sm mt-2">{feedback.profession}</p>
               </div>
             </div>
           ))}

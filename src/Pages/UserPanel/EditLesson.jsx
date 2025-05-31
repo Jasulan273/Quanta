@@ -1,8 +1,9 @@
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { API_URL } from '../../Api/api';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import { fetchLesson, updateLesson } from '../../Api/lesson';
+import { API_URL } from '../../Api/api';
 
 const EditLesson = () => {
   const { courseId, moduleId, lessonId } = useParams();
@@ -19,112 +20,32 @@ const EditLesson = () => {
   const [editorReady, setEditorReady] = useState(false);
 
   useEffect(() => {
-    const fetchLesson = async () => {
+    const loadLesson = async () => {
       try {
-        const response = await fetch(
-          `${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-            },
-          }
-        );
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.detail || 'Lesson not found');
-        }
-        const data = await response.json();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(data.content || '', 'text/html');
-        const images = doc.querySelectorAll('img');
-        images.forEach((img) => {
-          const src = img.getAttribute('src');
-          if (src && src.startsWith('/')) {
-            img.setAttribute('src', `${API_URL}${src}`);
-          }
-        });
-        const updatedContent = doc.body.innerHTML;
-
-        setLessonData({
-          name: data.name || '',
-          short_description: data.short_description || '',
-          video_url: data.video_url || '',
-          uploaded_video: null,
-          content: updatedContent,
-        });
+        const data = await fetchLesson(courseId, moduleId, lessonId);
+        setLessonData(data);
         setEditorReady(true);
       } catch (err) {
-        setError(`Failed to fetch lesson: ${err.message}`);
+        setError(err.message);
         navigate(`/edit-course/${courseId}`);
       }
     };
-    fetchLesson();
+    loadLesson();
   }, [courseId, moduleId, lessonId, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!lessonData.name.trim() || !lessonData.short_description.trim()) {
-      setError('Lesson name and short description are required');
+      setError('Название урока и описание обязательны');
       return;
     }
     try {
       setIsSubmitting(true);
-      
- 
-      const contentToSend = document.getElementById('content-fallback').value;
-      
-      const payload = {
-        lesson_id: parseInt(lessonId),
-        name: lessonData.name,
-        short_description: lessonData.short_description,
-        video_url: lessonData.video_url || null,
-        uploaded_video: null,
-        content: contentToSend,
-      };
-
-      let response;
-      if (lessonData.uploaded_video) {
-        const formData = new FormData();
-        formData.append('lesson_id', lessonId);
-        formData.append('name', lessonData.name);
-        formData.append('short_description', lessonData.short_description);
-        formData.append('content', contentToSend);
-        if (lessonData.video_url) formData.append('video_url', lessonData.video_url);
-        formData.append('uploaded_video', lessonData.uploaded_video);
-
-        response = await fetch(
-          `${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/`,
-          {
-            method: 'PATCH',
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-            },
-            body: formData,
-          }
-        );
-      } else {
-        response = await fetch(
-          `${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/`,
-          {
-            method: 'PATCH',
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-          }
-        );
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Failed to update lesson with status ${response.status}`);
-      }
-
+      await updateLesson(courseId, moduleId, lessonId, lessonData);
       setError(null);
       navigate(`/edit-course/${courseId}`);
     } catch (err) {
-      setError(`Failed to update lesson: ${err.message}`);
+      setError(`Ошибка обновления урока: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -132,7 +53,7 @@ const EditLesson = () => {
 
   return (
     <div className="max-w-[90%] mx-auto p-8 bg-gradient-to-b from-gray-50 to-white min-h-screen">
-      <h2 className="text-3xl font-extrabold text-gray-900 mb-8 text-center">Edit Lesson</h2>
+      <h2 className="text-3xl font-extrabold text-gray-900 mb-8 text-center">Редактировать урок</h2>
       {error && (
         <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg shadow-md">
           {error}
@@ -142,7 +63,7 @@ const EditLesson = () => {
       <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-xl shadow-lg">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-            Lesson Name
+            Название урока
           </label>
           <input
             type="text"
@@ -156,7 +77,7 @@ const EditLesson = () => {
         </div>
         <div>
           <label htmlFor="short_description" className="block text-sm font-medium text-gray-700 mb-2">
-            Description
+            Описание
           </label>
           <textarea
             id="short_description"
@@ -170,12 +91,12 @@ const EditLesson = () => {
         </div>
         <div>
           <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
-            Content
+            Контент
           </label>
           {editorReady && lessonData.content !== null ? (
             <>
               <div className="border border-gray-300 rounded-lg overflow-hidden shadow-sm">
-                <MemoizedCKEditor
+                <CKEditor
                   editor={ClassicEditor}
                   data={lessonData.content}
                   onReady={(editor) => {
@@ -191,7 +112,7 @@ const EditLesson = () => {
                   }}
                   onError={(error) => {
                     if (error.type === 'upload') {
-                      setError('Image upload failed. Please check server or insert image via URL.');
+                      setError('Ошибка загрузки изображения. Проверьте сервер или вставьте изображение по URL.');
                     }
                   }}
                   config={{
@@ -221,7 +142,43 @@ const EditLesson = () => {
                       'redo',
                     ],
                     image: {
-                      toolbar: ['imageTextAlternative', 'imageStyle:full', 'imageStyle:side'],
+                      toolbar: [
+                        'imageTextAlternative',
+                        'imageStyle:inline',
+                        'imageStyle:block',
+                        'imageStyle:side',
+                        '|',
+                        'resizeImage:100',
+                        'resizeImage:50',
+                        'resizeImage:original'
+                      ],
+                      resizeUnit: 'px',
+                      resizeOptions: [
+                        {
+                          name: 'resizeImage:original',
+                          value: null,
+                          label: 'Original',
+                          icon: 'original'
+                        },
+                        {
+                          name: 'resizeImage:50',
+                          value: '50',
+                          label: '50%',
+                          icon: 'medium'
+                        },
+                        {
+                          name: 'resizeImage:100',
+                          value: '100',
+                          label: '100%',
+                          icon: 'large'
+                        }
+                      ],
+                      styles: [
+                        'full',
+                        'side',
+                        'alignLeft',
+                        'alignRight'
+                      ],
                       upload: {
                         types: ['jpeg', 'png', 'gif', 'bmp', 'webp'],
                       },
@@ -241,13 +198,13 @@ const EditLesson = () => {
                                 loader.file.then((file) => {
                                   if (!file || file.size === 0) {
                                     console.error('No valid file selected for upload:', file);
-                                    setError('No valid file selected for upload');
-                                    reject(new Error('No valid file selected'));
+                                    setError('Не выбран корректный файл для загрузки');
+                                    reject(new Error('Не выбран корректный файл'));
                                     return;
                                   }
                                   const formData = new FormData();
                                   formData.append('upload', file);
-                                  console.log('Uploading image:', {
+                                  console.log('Загрузка изображения:', {
                                     name: file.name,
                                     type: file.type,
                                     size: file.size,
@@ -263,19 +220,19 @@ const EditLesson = () => {
                                     .then((response) => {
                                       if (!response.ok) {
                                         return response.json().then((errorData) => {
-                                          console.error('Image upload error response:', errorData);
+                                          console.error('Ошибка загрузки изображения:', errorData);
                                           throw new Error(
-                                            errorData.error || `Image upload failed with status ${response.status}`
+                                            errorData.error || `Ошибка загрузки с статусом ${response.status}`
                                           );
                                         });
                                       }
                                       return response.json();
                                     })
                                     .then((data) => {
-                                      console.log('Image upload response:', data);
+                                      console.log('Ответ загрузки изображения:', data);
                                       if (!data.url) {
-                                        console.error('No URL in response:', data);
-                                        throw new Error('Server did not return a valid URL');
+                                        console.error('Нет URL в ответе:', data);
+                                        throw new Error('Сервер не вернул корректный URL');
                                       }
                                       const imageUrl = data.url.startsWith('/')
                                         ? `${API_URL}${data.url}`
@@ -290,13 +247,13 @@ const EditLesson = () => {
                                         });
                                       };
                                       img.onerror = () => {
-                                        reject(new Error('Failed to load uploaded image'));
+                                        reject(new Error('Не удалось загрузить изображение'));
                                       };
                                     })
                                     .catch((err) => {
-                                      console.error('Image upload error:', err);
-                                      setError(`Image upload failed: ${err.message}`);
-                                      reject(new Error(`Image upload failed: ${err.message}`));
+                                      console.error('Ошибка загрузки:', err);
+                                      setError(`Ошибка загрузки изображения: ${err.message}`);
+                                      reject(new Error(`Ошибка загрузки изображения: ${err.message}`));
                                     });
                                 });
                               });
@@ -315,7 +272,7 @@ const EditLesson = () => {
                                 src: model.getAttribute('src'),
                                 width,
                                 height,
-                                style: `aspect-ratio:${aspectRatio}`,
+                                style: `aspect-ratio:${aspectRatio}; position: relative;`,
                               }),
                             ]);
                           },
@@ -330,7 +287,7 @@ const EditLesson = () => {
                               src: model.getAttribute('src'),
                               width,
                               height,
-                              style: `aspect-ratio:${aspectRatio}`,
+                              style: `aspect-ratio:${aspectRatio}; position: relative;`,
                             });
                           },
                         });
@@ -344,20 +301,20 @@ const EditLesson = () => {
                 value={lessonData.content}
                 onChange={(e) => setLessonData({ ...lessonData, content: e.target.value })}
                 className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-lg"
-                placeholder="Fallback content"
+                placeholder="Резервный контент"
                 rows="6"
                 disabled={isSubmitting}
               />
             </>
           ) : (
             <div className="flex items-center justify-center p-8 bg-gray-100 rounded-lg">
-              <p className="text-gray-600">Loading editor...</p>
+              <p className="text-gray-600">Загрузка редактора...</p>
             </div>
           )}
         </div>
         <div>
           <label htmlFor="video_url" className="block text-sm font-medium text-gray-700 mb-2">
-            Video URL (optional)
+            URL видео (опционально)
           </label>
           <input
             type="text"
@@ -370,7 +327,7 @@ const EditLesson = () => {
         </div>
         <div>
           <label htmlFor="uploaded_video" className="block text-sm font-medium text-gray-700 mb-2">
-            Upload Video (optional)
+            Загрузить видео (опционально)
           </label>
           <input
             type="file"
@@ -386,7 +343,7 @@ const EditLesson = () => {
             className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-md disabled:bg-gray-400"
             disabled={isSubmitting}
           >
-            Save Lesson
+            Сохранить урок
           </button>
           <button
             type="button"
@@ -394,14 +351,12 @@ const EditLesson = () => {
             className="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-all duration-300 shadow-md disabled:bg-gray-400"
             disabled={isSubmitting}
           >
-            Cancel
+            Отмена
           </button>
         </div>
       </form>
     </div>
   );
 };
-
-const MemoizedCKEditor = memo(CKEditor);
 
 export default EditLesson;

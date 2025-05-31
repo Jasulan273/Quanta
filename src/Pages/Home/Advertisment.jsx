@@ -4,7 +4,7 @@ import { API_URL } from '../../Api/api';
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import BlogImage from '../../Materials/Images/banner.png'; // Default image
+import BlogImage from '../../Materials/Images/banner.png';
 
 const Advertisment = () => {
   const [loaded, setLoaded] = useState(false);
@@ -22,14 +22,13 @@ const Advertisment = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        // Extract results array or default to empty array
         const adsArray = Array.isArray(data.results) ? data.results : [];
         setAds(adsArray);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching advertisement data:", error);
         setError("Failed to load advertisements. Please try again later.");
-        setAds([]); // Ensure ads is an array even on error
+        setAds([]);
         setLoading(false);
       }
     };
@@ -52,7 +51,7 @@ const Advertisment = () => {
 
   const CustomPrevArrow = ({ className, onClick, style }) => (
     <button
-      className={`absolute left-[-40px] top-1/2 transform -translate-y-1/2 bg-primary text-white p-2 rounded-[80%] opacity-75 hover:opacity-100 z-10 ${className}`}
+      className={`absolute left-[-32px] sm:left-[-40px] top-1/2 transform -translate-y-1/2 bg-primary text-white p-2 rounded-full opacity-75 hover:opacity-100 z-10 ${className}`}
       onClick={onClick}
       style={style}
       aria-label="Previous Slide"
@@ -63,7 +62,7 @@ const Advertisment = () => {
 
   const CustomNextArrow = ({ className, onClick, style }) => (
     <button
-      className={`absolute right-[-40px] top-1/2 transform -translate-y-1/2 bg-primary text-white p-2 rounded-[80%] opacity-75 hover:opacity-100 z-10 ${className}`}
+      className={`absolute right-[-32px] sm:right-[-40px] top-1/2 transform -translate-y-1/2 bg-primary text-white p-2 rounded-full opacity-75 hover:opacity-100 z-10 ${className}`}
       onClick={onClick}
       style={style}
       aria-label="Next Slide"
@@ -74,14 +73,14 @@ const Advertisment = () => {
 
   const settings = {
     dots: true,
-    infinite: ads.length > 1, // Disable infinite scroll if only one ad
+    infinite: ads.length > 1,
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    autoplay: ads.length > 1, // Disable autoplay if only one ad
+    autoplay: ads.length > 1,
     autoplaySpeed: 5000,
     adaptiveHeight: true,
-    prevArrow: ads.length > 1 ? <CustomPrevArrow /> : null, // Hide arrows if only one ad
+    prevArrow: ads.length > 1 ? <CustomPrevArrow /> : null,
     nextArrow: ads.length > 1 ? <CustomNextArrow /> : null
   };
 
@@ -90,25 +89,25 @@ const Advertisment = () => {
   if (!ads.length) return <div className="text-center py-10">No advertisements available</div>;
 
   return (
-    <div ref={bannerRef} className={`w-container mx-auto max-h-[324px] overflow-hidden my-32 transition-all ${loaded ? styles.fadeIn : styles.initial}`}>
+    <div ref={bannerRef} className={`w-full max-w-7xl mx-auto max-h-64 sm:max-h-80 overflow-hidden my-16 sm:my-24 px-4 transition-all ${loaded ? styles.fadeIn : styles.initial}`}>
       <Slider {...settings}>
         {ads.map(ad => (
-          <div key={ad.id} className="w-container mx-auto h-[324px] rounded-[24px] transition-all flex items-center relative">
+          <div key={ad.id} className="w-full h-64 sm:h-80 rounded-3xl transition-all flex items-center relative">
             <img 
               src={ad.image || BlogImage} 
               alt={ad.name} 
-              className="absolute inset-0 w-full h-full object-cover rounded-[24px]" 
+              className="absolute inset-0 w-full h-full object-cover rounded-3xl" 
             />
-            <div className="absolute pt-16 pl-16">
-              <h5 className="text-white">New Course</h5>
-              <h1 className="mt-4 font-bold text-white">{ad.name}</h1>
-              <p className="mt-2 w-[70%] text-white">
+            <div className="absolute pt-8 sm:pt-12 pl-4 sm:pl-8 text-center sm:text-left">
+              <h5 className="text-white text-sm sm:text-base">New Course</h5>
+              <h1 className="mt-2 sm:mt-4 font-bold text-lg sm:text-2xl text-white">{ad.name}</h1>
+              <p className="mt-2 text-sm sm:text-base text-white max-w-[90%] sm:max-w-[70%]">
                 {ad.content.replace(/<[^>]*>/g, '').split(" ").slice(0, 15).join(" ") + 
                  (ad.content.split(" ").length > 15 ? "..." : "")}
               </p>
               {ad.url && (
                 <a href={ad.url} target="_blank" rel="noopener noreferrer">
-                  <button className="bg-primary w-[177px] text-white font-semibold mt-4 py-3 px-4 rounded-[24px] transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-lightgrey focus:ring-opacity-50">
+                  <button className="bg-primary w-36 sm:w-44 text-white font-semibold mt-4 py-3 px-4 rounded-3xl transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-lightgrey focus:ring-opacity-50 text-sm sm:text-base">
                     Learn More
                   </button>
                 </a>

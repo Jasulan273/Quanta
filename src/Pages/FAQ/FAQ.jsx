@@ -24,73 +24,46 @@ export default function FAQ() {
   };
 
   return (
-    <div className="w-container mx-auto py-10 min-h-screen">
-      <h1 className="text-4xl font-bold text-center mb-8">Frequently Asked Questions</h1>
+    <div className="w-full max-w-[1290px] mx-auto py-10 min-h-screen px-4">
+      <h1 className="text-3xl md:text-4xl font-bold text-center mb-8 md:mb-12">
+        Frequently Asked Questions
+      </h1>
 
-      <div className="flex flex-wrap justify-between gap-6">
-        <div className="flex-1 min-w-[48%]">
-          {faqs.slice(0, Math.ceil(faqs.length / 2)).map((faq, index) => (
-            <div
-              key={index}
-              className={`relative mb-8 bg-gray-50 border border-gray-200 rounded-xl shadow-lg p-4 hover:border-warning transition-colors duration-200 ${
-                activeIndices.includes(index) ? 'border-warning' : ''
-              }`}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        {faqs.map((faq, index) => (
+          <div
+            key={index}
+            className={`bg-gray-50 border border-gray-200 rounded-xl shadow-lg p-4 md:p-6 hover:border-warning transition-colors duration-200 ${
+              activeIndices.includes(index) ? 'border-warning' : ''
+            }`}
+          >
+            <button
+              onClick={() => toggleAccordion(index)}
+              className="flex justify-between items-center w-full text-left font-semibold text-lg text-black hover:text-warning transition-colors duration-200"
             >
-              <button
-                onClick={() => toggleAccordion(index)}
-                className="flex justify-between w-full text-left font-semibold text-lg text-black hover:text-warning transition-colors duration-200"
-              >
-                {faq.question}
-                <span>{activeIndices.includes(index) ? '-' : '+'}</span>
-              </button>
-              <AnimatePresence>
-                {activeIndices.includes(index) && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden mt-2"
-                  >
-                    <p className="text-gray-600">{faq.answer}</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </div>
-  
-        <div className="flex-1 min-w-[48%]">
-          {faqs.slice(Math.ceil(faqs.length / 2)).map((faq, index) => (
-            <div
-              key={index + Math.ceil(faqs.length / 2)}
-              className={`relative mb-8 bg-gray-50 border border-gray-200 rounded-xl shadow-lg p-4 hover:border-warning transition-colors duration-200 ${
-                activeIndices.includes(index + Math.ceil(faqs.length / 2)) ? 'border-warning' : ''
-              }`}
-            >
-              <button
-                onClick={() => toggleAccordion(index + Math.ceil(faqs.length / 2))}
-                className="flex justify-between w-full text-left font-semibold text-lg text-black hover:text-warning transition-colors duration-200"
-              >
-                {faq.question}
-                <span>{activeIndices.includes(index + Math.ceil(faqs.length / 2)) ? '-' : '+'}</span>
-              </button>
-              <AnimatePresence>
-                {activeIndices.includes(index + Math.ceil(faqs.length / 2)) && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="overflow-hidden mt-2"
-                  >
-                    <p className="text-gray-600">{faq.answer}</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </div>
+              <span className="text-base md:text-lg pr-4">{faq.question}</span>
+              <span className="text-xl flex-shrink-0">
+                {activeIndices.includes(index) ? '-' : '+'}
+              </span>
+            </button>
+            
+            <AnimatePresence>
+              {activeIndices.includes(index) && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
+                >
+                  <p className="text-gray-600 mt-3 text-sm md:text-base">
+                    {faq.answer}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        ))}
       </div>
     </div>
   );

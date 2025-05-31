@@ -43,22 +43,22 @@ const LastArticles = () => {
   };
 
   return (
-    <div className="w-container mx-auto mt-40 mb-20">
-      <div className="flex justify-between mb-16">
-        <div>
-          <h2 className="text-2xl font-exo font-bold">Latest Articles</h2>
-          <p className="text-grey">Explore our Free Articles</p>
+    <div className="w-full max-w-7xl mx-auto mt-20 sm:mt-32 mb-12 sm:mb-16 px-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 sm:mb-12 gap-4">
+        <div className="text-center sm:text-left">
+          <h2 className="text-xl sm:text-2xl font-exo font-bold">Latest Articles</h2>
+          <p className="text-grey text-sm sm:text-base">Explore our Free Articles</p>
         </div>
         <NavLink
           to="/Blog"
-          className="inline-block w-[161px] h-[48px] bg-white text-black border-2 border-grey rounded-[24px] text-center leading-[48px] hover:bg-gray-200 transition"
+          className="inline-block w-36 sm:w-40 h-10 sm:h-12 bg-white text-black border-2 border-grey rounded-3xl text-center leading-10 sm:leading-12 hover:bg-gray-200 transition text-sm sm:text-base"
         >
           All Articles
         </NavLink>
       </div>
       <div
         ref={sectionRef}
-        className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10 transition-all`}
+        className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-all`}
       >
         {posts.map((post) => {
           const imageUrl = post.image ? `${API_URL}${post.image}` : BlogImage;
@@ -66,19 +66,19 @@ const LastArticles = () => {
             <Link
               to={`/BlogPage/${post.id}`}
               key={post.id}
-              className={`max-w-sm h-[474px] bg-white rounded-[24px] shadow-md overflow-hidden hover:scale-105 hover:shadow-xl transition duration-300 block ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+              className={`max-w-sm h-[450px] sm:h-[474px] bg-white rounded-3xl shadow-md overflow-hidden hover:scale-105 hover:shadow-xl transition duration-300 block ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
             >
               <div
-                className="h-[250px] bg-cover bg-center"
+                className="h-56 sm:h-60 bg-cover bg-center"
                 style={{ backgroundImage: `url(${imageUrl})` }}
               />
-              <div className="p-6">
-                <p className="text-sm text-gray-500 mb-2 flex items-center gap-2">
+              <div className="p-4 sm:p-6">
+                <p className="text-xs sm:text-sm text-gray-500 mb-2 flex items-center gap-2">
                   <img src={CalendarIcon} alt="calendar" className="w-4 h-4" />
                   {new Date(post.created_at).toLocaleDateString()}
                 </p>
-                <h3 className="font-bold font-exo text-lg mb-2">{post.title}</h3>
-                <p className="text-sm text-gray-600">{stripHtmlAndTruncate(post.content)}</p>
+                <h3 className="font-bold font-exo text-base sm:text-lg mb-2">{post.title}</h3>
+                <p className="text-xs sm:text-sm text-gray-600">{stripHtmlAndTruncate(post.content)}</p>
               </div>
             </Link>
           );

@@ -17,7 +17,6 @@ const Statistics = () => {
       try {
         const response = await fetch(`${API_URL}/site-stats/`);
         const data = await response.json();
-        console.log(data)
         setStats([
           { id: 1, title: 'Active Students', value: data.total_students },
           { id: 2, title: 'Courses', value: 899 },
@@ -66,15 +65,15 @@ const Statistics = () => {
   }, [isVisible, stats]);
 
   return (
-    <div ref={statsRef} className="w-container mx-auto">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
+    <div ref={statsRef} className="w-full max-w-7xl mx-auto px-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-8 sm:mt-10">
         {stats.map((stat, index) => (
           <div
             key={stat.id}
-            className="flex justify-center flex-col items-center w-[300px] h-[180px] bg-gray-100 rounded-[24px]"
+            className="flex justify-center flex-col items-center w-full max-w-[250px] h-36 sm:h-40 bg-gray-100 rounded-3xl mx-auto"
           >
-            <h2 className="text-primary font-bold">{countedValues[index]}</h2>
-            <p className="font-semibold">{stat.title}</p>
+            <h2 className="text-primary font-bold text-lg sm:text-xl">{countedValues[index]}</h2>
+            <p className="font-semibold text-sm sm:text-base">{stat.title}</p>
           </div>
         ))}
       </div>

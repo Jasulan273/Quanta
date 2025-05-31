@@ -15,8 +15,9 @@ export default function Courses() {
   const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [selectedLevels, setSelectedLevels] = useState([]);
   const [selectedRating, setSelectedRating] = useState(null);
-  const [sortBy, setSortBy] = useState(''); 
+  const [sortBy, setSortBy] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [showSidebar, setShowSidebar] = useState(false);
   const coursesPerPage = 3;
 
   useEffect(() => {
@@ -43,7 +44,6 @@ export default function Courses() {
       );
     }
 
-
     if (selectedLanguages.length > 0) {
       result = result.filter(course => selectedLanguages.includes(course.language));
     }
@@ -52,15 +52,10 @@ export default function Courses() {
       result = result.filter(course => selectedLevels.includes(course.level));
     }
 
-    
     if (selectedRating !== null) {
       result = result.filter(course => course.average_mark >= selectedRating);
     }
 
-
-
-
- 
     if (sortBy === 'rating') {
       result.sort((a, b) => (b.average_mark || 0) - (a.average_mark || 0));
     } else if (sortBy === 'date') {
@@ -68,9 +63,8 @@ export default function Courses() {
     }
 
     setFilteredCourses(result);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   }, [searchQuery, selectedLanguages, selectedLevels, selectedRating, sortBy, courses]);
-
 
   const indexOfLastCourse = currentPage * coursesPerPage;
   const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
@@ -101,8 +95,6 @@ export default function Courses() {
     setSelectedRating(rating === 'all' ? null : parseFloat(rating));
   };
 
-
-
   const handleSortChange = (type) => {
     setSortBy(type);
   };
@@ -111,17 +103,22 @@ export default function Courses() {
   if (error) return <p>{error}</p>;
 
   return (
-    <div className="flex w-container mx-auto">
-      <div className="w-[75%] bg-white p-4">
+    <div className="flex flex-col lg:flex-row w-full max-w-[1290px] mx-auto relative">
+      <div className="w-full lg:w-[75%] bg-white p-4">
         <div className="flex justify-between items-center mb-4">
           <h1 className="font-bold text-2xl">Courses</h1>
-          <input
-            type="text"
-            placeholder="Search by title..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="border p-2 rounded w-[300px]"
-          />
+          <div className="flex gap-2 items-center">
+            <input
+              type="text"
+              placeholder="Search by title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border p-2 rounded w-[200px] lg:w-[300px]"
+            />
+            <button className="lg:hidden bg-primary text-white p-2 rounded" onClick={() => setShowSidebar(true)}>
+              Filters
+            </button>
+          </div>
         </div>
         <div className="flex gap-2 mb-4">
           <button
@@ -142,35 +139,34 @@ export default function Courses() {
             const shortDescription = course.description
               ? course.description.split(' ').slice(0, 20).join(' ') + (course.description.split(' ').length > 20 ? '...' : '')
               : 'No description available.';
-
             return (
-              <div className="border flex w-full h-[250px] rounded-[20px] mb-16" key={course.id}>
-                <div className="w-[410px] h-[250px] bg-gray-300 rounded-l-[20px]">
+              <div className="border flex flex-col lg:flex-row w-full rounded-[20px] mb-10" key={course.id}>
+                <div className="w-full lg:w-[410px] h-[200px] lg:h-[250px] bg-gray-300 rounded-t-[20px] lg:rounded-l-[20px] lg:rounded-tr-none overflow-hidden">
                   <img
                     src={course.course_image ? 'https://quant.up.railway.app' + course.course_image : courseImagePlaceholder}
                     alt={course.title || 'Course Image'}
-                    className="w-full h-full object-cover bg-center rounded-l-[18px]"
+                    className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="flex flex-col justify-between w-[580px] p-4">
+                <div className="flex flex-col justify-between w-full lg:w-[580px] p-4">
                   <div>
                     <p className="text-sm text-gray-500">by {course.author || 'Unknown Author'}</p>
                     <h2 className="text-xl font-bold mt-2">{course.title || 'Untitled Course'}</h2>
                     <p className="text-p2 max-h-15 overflow-hidden">{shortDescription}</p>
                     <p className="text-sm text-gray-600">Rating: {course.average_mark || 'N/A'}</p>
                   </div>
-                  <div className="flex items-center justify-between border-t mt-2 border-gray-300 pt-2">
-                    <div className="flex flex-row items-center text-sm text-gray-600">
+                  <div className="flex items-center justify-between border-t mt-2 border-gray-300 pt-2 text-sm text-gray-600">
+                    <div className="flex items-center">
                       <img src={Time} className="mr-1" alt="Time Icon" />
-                      <p className="text-p2">{course.duration || 'Unknown duration'}</p>
+                      <p>{course.duration || 'Unknown duration'}</p>
                     </div>
-                    <div className="flex flex-row items-center text-sm text-gray-600">
+                    <div className="flex items-center">
                       <img src={Students} className="mr-1" alt="Students Icon" />
-                      <p className="text-p2">{course.students ?? 0} students</p>
+                      <p>{course.students ?? 0} students</p>
                     </div>
-                    <div className="flex flex-row items-center text-sm text-gray-600">
+                    <div className="flex items-center">
                       <img src={Level} className="mr-1" alt="Level Icon" />
-                      <p className="text-p2">{course.level || 'N/A'}</p>
+                      <p>{course.level || 'N/A'}</p>
                     </div>
                   </div>
                   <div className="border-t border-gray-300 pt-2 flex justify-end">
@@ -187,7 +183,6 @@ export default function Courses() {
             );
           })}
         </div>
-        {/* Pagination */}
         <div className="flex justify-center gap-2 mt-4">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
             <button
@@ -201,8 +196,14 @@ export default function Courses() {
         </div>
       </div>
 
-      <div className="w-[25%] p-6 rounded-lg">
-        <h2 className="font-bold text-xl mt-4 mb-6">Filter Courses</h2>
+      <div className={`fixed top-0 right-0 z-50 bg-white shadow-lg w-[90%] max-w-[300px] h-full p-6 transition-transform duration-300 ease-in-out transform ${showSidebar ? 'translate-x-0' : 'translate-x-full'} lg:static lg:translate-x-0 lg:w-[25%] lg:block`}>
+        <div className="flex justify-between items-center lg:hidden mb-4">
+          <h2 className="text-xl font-bold">Filters</h2>
+          <button onClick={() => setShowSidebar(false)} className="text-2xl">&times;</button>
+        </div>
+
+        <h2 className="font-bold text-xl mt-4 mb-6 hidden lg:block">Filter Courses</h2>
+
         <div className="mb-6">
           <h3 className="font-semibold text-lg mb-2">Programming Languages</h3>
           <ul className="space-y-2">
@@ -224,7 +225,7 @@ export default function Courses() {
         </div>
 
         <div className="mb-6">
-          <h3 className="font-semibold text-lg mt-16 mb-2">Difficulty Level</h3>
+          <h3 className="font-semibold text-lg mb-2">Difficulty Level</h3>
           <ul className="space-y-2">
             {['beginner', 'intermediate', 'advanced', 'all'].map(level => (
               <li key={level}>
@@ -241,7 +242,7 @@ export default function Courses() {
         </div>
 
         <div className="mb-6">
-          <h3 className="font-semibold text-lg mt-16 mb-2">Reviews</h3>
+          <h3 className="font-semibold text-lg mb-2">Reviews</h3>
           <ul className="space-y-2">
             {['4', '3', '2', '1', 'all'].map(rating => (
               <li key={rating}>
@@ -259,8 +260,6 @@ export default function Courses() {
             ))}
           </ul>
         </div>
-
-     
       </div>
     </div>
   );

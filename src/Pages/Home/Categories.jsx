@@ -9,7 +9,7 @@ import Content from "../../Materials/Icons/content-writing.png";
 import Finance from "../../Materials/Icons/finance.png";
 import Science from "../../Materials/Icons/Signalcellular alt.png";
 import Cloud from "../../Materials/Icons/cloud.png";
-import styles from "./Home.module.css"; 
+import styles from "./Home.module.css";
 
 const fakeCategories = [
   { id: 1, icon: Palette, title: "Art & Design", courses: 38 },
@@ -29,8 +29,18 @@ const fakeCategories = [
 const Categories = () => {
   const [showAll, setShowAll] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const categoriesRef = useRef(null);
-  const categoriesToShow = showAll ? fakeCategories : fakeCategories.slice(0, 10);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const categoriesToShow = showAll
+    ? fakeCategories
+    : fakeCategories.slice(0, windowWidth < 768 ? 3 : 10);
 
   const handleScroll = () => {
     const categoriesPosition = categoriesRef.current.getBoundingClientRect().top;
@@ -45,14 +55,14 @@ const Categories = () => {
   }, []);
 
   return (
-    <div className="w-container mx-auto mt-16">
-      <div className="flex justify-between mb-16">
-        <div>
-          <h2 className="text-2xl font-exo font-bold">Top Categories</h2>
-          <p className="text-grey">Explore our Popular Categories</p>
+    <div className="w-full max-w-7xl mx-auto mt-12 sm:mt-16 px-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 sm:mb-12 gap-4">
+        <div className="text-center sm:text-left">
+          <h2 className="text-xl sm:text-2xl font-exo font-bold">Top Categories</h2>
+          <p className="text-grey text-sm sm:text-base">Explore our Popular Categories</p>
         </div>
         <button
-          className="w-[161px] h-[48px] bg-white text-black border-2 border-grey rounded-[24px] hover:bg-gray-200 transition"
+          className="w-36 sm:w-40 h-10 sm:h-12 bg-white text-black border-2 border-grey rounded-3xl hover:bg-gray-200 transition text-sm sm:text-base"
           onClick={() => setShowAll((prev) => !prev)}
         >
           {showAll ? "Show Less" : "All Categories"}
@@ -61,30 +71,24 @@ const Categories = () => {
 
       <div
         ref={categoriesRef}
-        className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 transition-all ${
-          showAll ? "max-h-full" : "max-h-[600px]"
-        }`}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 transition-all"
       >
         {categoriesToShow.map((category) => (
           <div
             key={category.id}
-            className={`flex flex-col items-center justify-center w-[220px] h-[234px] p-4 border border-lightgrey rounded-[24px] hover:shadow-lg hover:cursor-pointer transition ${
-              loaded ? styles.fadeIn : styles.initial
-            }`}
+            className={`flex flex-col items-center justify-center w-full max-w-[200px] h-48 sm:h-56 p-4 border border-lightgrey rounded-3xl hover:shadow-lg hover:cursor-pointer transition mx-auto ${loaded ? styles.fadeIn : styles.initial}`}
           >
             <img
               src={category.icon}
               alt={category.title}
-              className="w-[32px] h-[32px] mb-4"
+              className="w-8 h-8 mb-4"
             />
             <h3
-              className={`mt-2 text-lg font-bold text-darkgrey ${
-                loaded ? styles.fadeInText : styles.initial
-              }`}
+              className={`text-base sm:text-lg font-bold text-darkgrey ${loaded ? styles.fadeInText : styles.initial}`}
             >
               {category.title}
             </h3>
-            <p className={`text-grey ${loaded ? styles.fadeInText : styles.initial}`}>
+            <p className={`text-grey text-sm ${loaded ? styles.fadeInText : styles.initial}`}>
               {category.courses} Courses
             </p>
           </div>
