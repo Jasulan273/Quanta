@@ -35,18 +35,8 @@ const LessonPage = () => {
           })
         ]);
         setCourseData(courseResponse.data);
-
-    
-        const response = await axios.get(
-          `${API_URL}/courses/${courseId}/modules/${modulesId}/lessons/${lessonId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        console.log('Lesson data:', response.data);
-        setLessonData(response.data);
+        setLessonData(lessonResponse.data);
+        setTasks(tasksResponse.data || []);
       } catch (err) {
         if (err.response?.status === 401) {
           navigate('/Auth');
@@ -98,51 +88,64 @@ const LessonPage = () => {
     return htmlContent.replace(/src="\/media\//g, `src="https://quant.up.railway.app/media/`);
   };
 
-  const getLessonNavigation = () => {
-    if (!courseData?.Curriculum) return { prev: null, next: null };
-    let prev = null, next = null, foundCurrent = false;
-    for (const module of courseData.Curriculum) {
-      const sortedLessons = [...module.lessons].sort((a, b) => a.lesson_id - b.lesson_id);
-      for (let i = 0; i < sortedLessons.length; i++) {
-        const lesson = sortedLessons[i];
-        if (
-          lesson.lesson_id === parseInt(lessonId) &&
-          module.module_id === parseInt(modulesId)
-        ) {
-          foundCurrent = true;
-          if (i > 0) {
-            prev = {
-              moduleId: module.module_id,
-              lessonId: sortedLessons[i - 1].lesson_id,
-            };
-          } else if (courseData.Curriculum.indexOf(module) > 0) {
-            const prevModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) - 1];
-            const prevSortedLessons = [...prevModule.lessons].sort((a, b) => a.lesson_id - b.lesson_id);
+ const getLessonNavigation = () => {
+  if (!Array.isArray(courseData?.Curriculum)) return { prev: null, next: null };
+  let prev = null, next = null, foundCurrent = false;
+
+  for (const module of courseData.Curriculum) {
+    if (!Array.isArray(module.lessons) || module.lessons.length === 0) continue;
+
+    const sortedLessons = [...module.lessons].sort((a, b) => a.lesson_id - b.lesson_id);
+    for (let i = 0; i < sortedLessons.length; i++) {
+      const lesson = sortedLessons[i];
+      if (
+        lesson.lesson_id === parseInt(lessonId) &&
+        module.module_id === parseInt(modulesId)
+      ) {
+        foundCurrent = true;
+
+        if (i > 0) {
+          prev = {
+            moduleId: module.module_id,
+            lessonId: sortedLessons[i - 1].lesson_id,
+          };
+        } else if (courseData.Curriculum.indexOf(module) > 0) {
+          const prevModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) - 1];
+          const prevSortedLessons = [...(prevModule.lessons || [])].sort((a, b) => a.lesson_id - b.lesson_id);
+          if (prevSortedLessons.length > 0) {
             prev = {
               moduleId: prevModule.module_id,
               lessonId: prevSortedLessons[prevSortedLessons.length - 1].lesson_id,
             };
           }
-          if (i < sortedLessons.length - 1) {
-            next = {
-              moduleId: module.module_id,
-              lessonId: sortedLessons[i + 1].lesson_id,
-            };
-          } else if (courseData.Curriculum.indexOf(module) < courseData.Curriculum.length - 1) {
-            const nextModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) + 1];
-            const nextSortedLessons = [...nextModule.lessons].sort((a, b) => a.lesson_id - b.lesson_id);
+        }
+
+        if (i < sortedLessons.length - 1) {
+          next = {
+            moduleId: module.module_id,
+            lessonId: sortedLessons[i + 1].lesson_id,
+          };
+        } else if (courseData.Curriculum.indexOf(module) < courseData.Curriculum.length - 1) {
+          const nextModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) + 1];
+          const nextSortedLessons = [...(nextModule.lessons || [])].sort((a, b) => a.lesson_id - b.lesson_id);
+          if (nextSortedLessons.length > 0) {
             next = {
               moduleId: nextModule.module_id,
               lessonId: nextSortedLessons[0].lesson_id,
             };
           }
-          break;
         }
+
+        break;
       }
-      if (foundCurrent) break;
     }
-    return { prev, next };
-  };
+
+    if (foundCurrent) break;
+  }
+
+  return { prev, next };
+};
+
 
   const { prev, next } = getLessonNavigation();
 
@@ -215,7 +218,7 @@ const LessonPage = () => {
 
 export default LessonPage;
 
-// Dummy QuizTask component, замени на свой если нужно
+
 function QuizTask({ task }) {
   const [selected, setSelected] = useState(null);
   const [submitted, setSubmitted] = useState(false);

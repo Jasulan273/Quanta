@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
-import { refreshToken } from '../../Api/api'; 
-
-const API_BASE = 'https://quant.up.railway.app';
+import { refreshToken } from '../../Api/auth'; 
+import { API_URL } from '../../Api/api';
 
 const Comments = ({ postId }) => {
   const [comments, setComments] = useState([]);
@@ -14,12 +13,12 @@ const Comments = ({ postId }) => {
   const [visibleComments, setVisibleComments] = useState(2);
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('accessToken'));
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken');
       const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
-      const response = await axios.get(`${API_BASE}/blog/posts/${postId}/comments/`, config);
+      const response = await axios.get(`${API_URL}/blog/posts/${postId}/comments/`, config);
       console.log('Fetch comments response:', response.data);
       setComments(response.data.comments || []);
     } catch (err) {
@@ -28,7 +27,7 @@ const Comments = ({ postId }) => {
           const refreshData = await refreshToken();
           localStorage.setItem('accessToken', refreshData.access);
           setIsAuthenticated(true);
-          fetchComments(); // Retry with new token
+          fetchComments();
         } catch (refreshErr) {
           setError('Session expired. Please log in again.');
           setIsAuthenticated(false);
@@ -40,7 +39,7 @@ const Comments = ({ postId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [postId, isAuthenticated]);
 
   const handleSubmit = async (e, parentId = null) => {
     e.preventDefault();
@@ -61,9 +60,9 @@ const Comments = ({ postId }) => {
       if (!token) throw new Error('No access token found');
 
       const payload = { post: postId, content: text, parent: parentId };
-      console.log('Posting comment:', { url: `${API_BASE}/blog/posts/${postId}/comments/`, payload });
+      console.log('Posting comment:', { url: `${API_URL}/blog/posts/${postId}/comments/`, payload });
       const response = await axios.post(
-        `${API_BASE}/blog/posts/${postId}/comments/`, // Changed to match GET endpoint
+        `${API_URL}/blog/posts/${postId}/comments/`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -85,7 +84,7 @@ const Comments = ({ postId }) => {
         try {
           const refreshData = await refreshToken();
           localStorage.setItem('accessToken', refreshData.access);
-          handleSubmit(e, parentId); // Retry with new token
+          handleSubmit(e, parentId);
         } catch (refreshErr) {
           setError('Session expired. Please log in again.');
           setIsAuthenticated(false);
@@ -107,7 +106,7 @@ const Comments = ({ postId }) => {
 
   useEffect(() => {
     fetchComments();
-  }, [postId]);
+  }, [fetchComments]);
 
   const renderComment = (comment, level = 0) => {
     const isReply = comment.parent !== null;

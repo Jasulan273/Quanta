@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import styles from './Home.module.css';
+import { NavLink } from "react-router-dom";
 import { API_URL } from '../../Api/api';
 import PopularBanner from '../../Materials/Images/PopularBannerFull.jpeg'
 
@@ -49,9 +50,15 @@ const Popular = () => {
         <h5 className={`transition-all ${loaded ? styles.fadeInText : ''}`}>Most Popular Course</h5>
         <h2 className={`font-bold mt-1 mb-4 transition-all ${loaded ? styles.fadeInText : ''}`}>{course.title}</h2>
         <p className={`text-center transition-all ${loaded ? styles.fadeInText : ''}`}>{truncateDescription(course.description, 50)}</p>
-        <button className="bg-primary w-[177px] text-white font-semibold mt-4 py-4 px-8 rounded-[24px] transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-lightgrey focus:ring-opacity-50">
-          Explore Course
-        </button>
+        
+        <NavLink
+  to={`/courses/${course.id}`}
+  className="bg-primary w-[177px] text-white font-semibold text-center mt-4 py-4 px-8 rounded-[24px] transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-lightgrey focus:ring-opacity-50"
+>
+  View More
+</NavLink>
+
+      
       </div>
     </div>
   );

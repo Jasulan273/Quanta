@@ -7,6 +7,7 @@ import Curriculum from './Curriculum';
 import Reviews from './Reviews';
 import courseBannerPlaceholder from '../../Materials/Images/course_banner.png';
 import { API_URL } from '../../Api/api';
+import { enrollInCourse, unenrollFromCourse, fetchMyCourses } from '../../Api/courses';
 
 const CoursePage = ({ user }) => {
   const { courseId } = useParams();
@@ -17,69 +18,40 @@ const CoursePage = ({ user }) => {
   const [enrolled, setEnrolled] = useState(false);
   const [enrollLoading, setEnrollLoading] = useState(false);
 
-  // Функция для проверки подписки через /mycourses/
-  const checkEnrollmentStatus = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return false;
-      
-      const response = await axios.get(`${API_URL}/mycourses/`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      
-      // Проверяем есть ли текущий курс в списке подписок
-      const isEnrolled = response.data.some(course => course.id.toString() === courseId.toString());
-      return isEnrolled;
-    } catch (err) {
-      console.error('Error checking enrollment:', err);
-      return false;
-    }
-  };
-
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCourseAndEnrollment = async () => {
       try {
-        // Загружаем данные курса
+        // Получаем данные курса
         const courseResponse = await axios.get(`${API_URL}/courses/${courseId}`);
         setCourseData(courseResponse.data);
-        
-        // Проверяем статус подписки
-        const isEnrolled = await checkEnrollmentStatus();
+
+        // Проверяем статус подписки через /mycourses/
+        const myCourses = await fetchMyCourses();
+        const isEnrolled = myCourses.some(course => course.id === parseInt(courseId));
         setEnrolled(isEnrolled);
       } catch (err) {
-        setError(err.response?.data?.detail || 'Failed to fetch data');
+        setError(err.response?.data?.detail || 'Failed to fetch course data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchCourseAndEnrollment();
   }, [courseId]);
 
   const handleEnrollToggle = async () => {
     setEnrollLoading(true);
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) throw new Error('No access token');
-      
       if (enrolled) {
-        await axios.post(`${API_URL}/courses/${courseId}/unenroll/`, {}, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await unenrollFromCourse(courseId);
+        setEnrolled(false);
       } else {
-        await axios.post(`${API_URL}/courses/${courseId}/enroll/`, {}, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await enrollInCourse(courseId);
+        setEnrolled(true);
       }
-      
-      // После изменения подписки обновляем статус
-      const updatedStatus = await checkEnrollmentStatus();
-      setEnrolled(updatedStatus);
     } catch (err) {
       console.error('Enrollment error:', err);
-      alert(err.response?.data?.detail || 'Error updating enrollment');
+      alert('Ошибка при изменении статуса подписки');
     } finally {
       setEnrollLoading(false);
     }
@@ -93,7 +65,7 @@ const CoursePage = ({ user }) => {
       title = 'Untitled Course',
       description = 'No description available.',
       duration = 'Unknown duration',
-      students_count = '0 Students',
+      students = 0, // Изменено с students_count на students
       level = 'All Levels',
       course_image = courseBannerPlaceholder,
     } = {},
@@ -111,7 +83,7 @@ const CoursePage = ({ user }) => {
             <p className="text-lg text-gray-300 mt-4">Author: {username}</p>
             <div className="flex flex-wrap gap-6 text-sm text-gray-400 mt-4">
               <span>⏱ {duration}</span>
-              <span>👥 {students_count} Students</span>
+              <span>👥 {students} Students</span> {/* Форматирование */}
               <span>🎯 {level}</span>
             </div>
 
@@ -121,12 +93,16 @@ const CoursePage = ({ user }) => {
               className={`mt-6 px-6 py-2 rounded-md text-white font-semibold transition 
                 ${enrolled ? 'bg-orange-600 hover:bg-orange-700' : 'bg-gray-600 hover:bg-gray-700'}`}
             >
-              {enrollLoading ? 'Processing...' : enrolled ? 'Unenroll' : 'Enroll'}
+              {enrollLoading ? 'Loading...' : enrolled ? 'Unenroll' : 'Enroll'}
             </button>
           </div>
 
           <img
-            src={course_image.startsWith('http') ? course_image : `${API_URL}${course_image}`}
+            src={
+              course_image && course_image.startsWith('http')
+                ? course_image
+                : `${API_URL}${course_image || courseBannerPlaceholder}`
+            }
             alt="Course Preview"
             className="w-[410px] h-[250px] object-contain rounded-lg shadow-lg"
           />

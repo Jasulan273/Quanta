@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { loginUser } from '../../Api/api';
+import { loginUser } from '../../Api/auth';
 
 export default function Auth({ setUser }) {
   const [username, setUsername] = useState('');
@@ -13,7 +13,7 @@ export default function Auth({ setUser }) {
       const data = await loginUser(username, password);
       setError('');
       
-      localStorage.setItem('accessToken', data.access); // Исправлено на accessToken
+      localStorage.setItem('accessToken', data.access); 
       localStorage.setItem('username', username);
       setUser(username);
       navigate('/Home');

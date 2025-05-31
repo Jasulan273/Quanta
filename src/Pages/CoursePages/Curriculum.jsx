@@ -19,8 +19,12 @@ const Curriculum = ({ modules, courseId }) => {
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Curriculum</h2>
       {modules.map((module) => {
-        // Sort lessons by lesson_id
-        const sortedLessons = [...(module.lessons || [])].sort((a, b) => a.lesson_id - b.lesson_id);
+        const lessons = Array.isArray(module.lessons) ? module.lessons : [];
+
+        // ✅ Удалим undefined/null и проверим lesson_id
+        const sortedLessons = lessons
+          .filter((lesson) => lesson && lesson.lesson_id !== undefined)
+          .sort((a, b) => a.lesson_id - b.lesson_id);
 
         return (
           <div key={module.module_id} className="border rounded-lg p-6 bg-white shadow-sm">
@@ -29,7 +33,9 @@ const Curriculum = ({ modules, courseId }) => {
               className="flex justify-between w-full text-left font-bold text-lg text-gray-800 hover:text-orange-500 transition duration-200"
             >
               <span>{module.module}</span>
-              <span className="text-gray-500">{openModules.includes(module.module_id) ? '−' : '+'}</span>
+              <span className="text-gray-500">
+                {openModules.includes(module.module_id) ? '−' : '+'}
+              </span>
             </button>
             <p className="text-sm text-gray-500 mt-1">
               Duration: {module.duration || 'Unknown duration'}
@@ -45,10 +51,7 @@ const Curriculum = ({ modules, courseId }) => {
                 >
                   {sortedLessons.length > 0 ? (
                     sortedLessons.map((lesson) => (
-                      <li
-                        key={lesson.lesson_id}
-                        className="flex flex-col py-4 border-t border-gray-200"
-                      >
+                      <li key={lesson.lesson_id} className="flex flex-col py-4 border-t border-gray-200">
                         <Link
                           to={`/courses/${courseId}/modules/${module.module_id}/lesson/${lesson.lesson_id}`}
                           className="text-blue-500 hover:underline text-base font-medium"

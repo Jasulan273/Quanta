@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import BlogImage from '../../Materials/Images/banner.png';
 import { NavLink } from 'react-router-dom';
-import { fetchBlogPosts } from '../../Api/api';
+import { fetchBlogPosts } from '../../Api/blog';
 
 const Blog = () => {
   const [searchTerm, setSearchTerm] = useState('');

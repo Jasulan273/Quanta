@@ -159,6 +159,27 @@ const Reviews = ({ reviews, user }) => {
           </form>
         )}
       </div>
+      <div>
+  <h3 className="text-xl font-bold mb-4">All Reviews</h3>
+  <div className="space-y-4">
+    {localReviews
+      .filter((r) => r.user_username !== user) // исключаем свой
+      .map((review) => (
+        <div key={review.id} className="border rounded-lg p-4 bg-white shadow">
+          <h4 className="font-bold">{review.user_username}</h4>
+          <div className="flex items-center my-2">
+            <div className="text-yellow-400 text-xl mr-2">
+              {'⭐'.repeat(review.rating)}
+            </div>
+            <span className="text-gray-500 text-sm">({review.rating})</span>
+          </div>
+          <p className="text-sm text-gray-500 my-2">{review.created_at}</p>
+          <p>{review.feedback}</p>
+        </div>
+      ))}
+  </div>
+</div>
+
     </div>
   );
 };

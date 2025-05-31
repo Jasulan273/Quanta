@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { registerUser } from '../../Api/api';
+import { registerUser } from '../../Api/auth';
 
 export default function Registration() {
   const [username, setUsername] = useState('');

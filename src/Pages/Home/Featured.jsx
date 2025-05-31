@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
-import courseBanner from "../../Materials/Images/course_banner.png";
+import { useState, useEffect, useRef } from "react";
 import durationIcon from "../../Materials/Icons/Watchlater.png";
 import studentIcon from "../../Materials/Icons/Student.png";
 import styles from "./Home.module.css";
-import { fetchCourses } from '../../Api/api';
+import { fetchCourses } from '../../Api/courses';
+import { NavLink } from "react-router-dom";
 
 const Featured = () => {
   const [courses, setCourses] = useState([]);
@@ -45,7 +45,7 @@ const Featured = () => {
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-all"
       >
         {courses.map((course) => {
-          const courseImage = course.course_image && course.course_image.trim() !== "" ? course.course_image : courseBanner;
+          
           return (
             <div
               key={course.id}
@@ -77,9 +77,9 @@ const Featured = () => {
                   </p>
                 </div>
 
-                <h2 className="mt-4 text-sm text-primary font-bold text-right cursor-pointer hover:underline transition">
-                  View More
-                </h2>
+                 <NavLink to={`/courses/${course.id}`} className="text-orange-500 hover:underline">
+                                       <button className="mt-4 text-sm text-primary font-bold text-right cursor-pointer hover:underline transition">View More</button>
+                </NavLink>
               </div>
             </div>
           );

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import ScrollProgress from '../../Components/ScrollProgress';
 import BlogImage from '../../Materials/Images/BlogImage.png';
-import { fetchBlogPostById } from '../../Api/api';
+import { fetchBlogPostById } from '../../Api/blog';
 import Comments from './Comments';
 
 const BlogPage = () => {
