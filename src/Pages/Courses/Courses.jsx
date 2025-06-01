@@ -143,7 +143,7 @@ export default function Courses() {
               <div className="border flex flex-col lg:flex-row w-full rounded-[20px] mb-10" key={course.id}>
                 <div className="w-full lg:w-[410px] h-[200px] lg:h-[250px] bg-gray-300 rounded-t-[20px] lg:rounded-l-[20px] lg:rounded-tr-none overflow-hidden">
                   <img
-                    src={course.course_image ? 'https://quant.up.railway.app' + course.course_image : courseImagePlaceholder}
+                    src={course.course_image ?  course.course_image : courseImagePlaceholder}
                     alt={course.title || 'Course Image'}
                     className="w-full h-full object-cover"
                   />
@@ -196,7 +196,7 @@ export default function Courses() {
         </div>
       </div>
 
-      <div className={`fixed top-0 right-0 z-50 bg-white shadow-lg w-[90%] max-w-[300px] h-full p-6 transition-transform duration-300 ease-in-out transform ${showSidebar ? 'translate-x-0' : 'translate-x-full'} lg:static lg:translate-x-0 lg:w-[25%] lg:block`}>
+      <div className={`fixed top-0 right-0 bg-white shadow-lg w-[90%] max-w-[300px] h-full p-6 transition-transform duration-300 ease-in-out transform ${showSidebar ? 'translate-x-0' : 'translate-x-full'} lg:static lg:translate-x-0 lg:w-[25%] lg:block`}>
         <div className="flex justify-between items-center lg:hidden mb-4">
           <h2 className="text-xl font-bold">Filters</h2>
           <button onClick={() => setShowSidebar(false)} className="text-2xl">&times;</button>

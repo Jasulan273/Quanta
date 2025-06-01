@@ -68,38 +68,48 @@ const LanguageQuiz = () => {
     }
   };
 
-  const submitAnswers = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('http://localhost:11434/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'deepseek-coder:1.3b',
-          prompt: `
-            Based on these quiz answers: ${JSON.stringify(answers)}, recommend 3 programming languages. Provide a short, one-sentence explanation per language, directly tied to the user's answers. Use simple language, no code examples. 
-            Format:
-            text-answer:
-            1. [Language]: [Why it fits].
-            2. [Language]: [Why it fits].
-            3. [Language]: [Why it fits].
-            languages:
-            [Language]
-            [Language]
-            [Language]
-          `,
-          stream: false,
-        }),
-      });
-      const data = await response.json();
-      setResult(data.response);
-    } catch (error) {
-      console.error('Error:', error);
-      setResult('Error fetching recommendations.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+const submitAnswers = async () => {
+  setIsLoading(true);
+  try {
+    const prompt = `
+      Based on these quiz answers: ${JSON.stringify(answers)}, recommend 3 programming languages. 
+      Provide a short, one-sentence explanation per language, directly tied to the user's answers. 
+      Use simple language, no code examples. 
+      Format:
+      text-answer:
+      1. [Language]: [Why it fits].
+      2. [Language]: [Why it fits].
+      3. [Language]: [Why it fits].
+      languages:
+      [Language]
+      [Language]
+      [Language]
+    `;
+
+    const response = await fetch(`${process.env.REACT_APP_AI_URL}/ask`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        question: prompt,
+        input: '',
+        language: ''
+      }),
+    });
+
+    if (!response.ok) throw new Error('Network response was not ok');
+
+    const data = await response.json();
+    setResult(data.result || data.answer || "No response received.");
+  } catch (error) {
+    console.error('Error:', error);
+    setResult('Sorry, something went wrong.');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const parseResult = () => {
     if (!result) return { textAnswer: '', languages: [] };

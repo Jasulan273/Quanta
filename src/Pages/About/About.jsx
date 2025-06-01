@@ -20,7 +20,7 @@ const About = () => {
         </div>
         </div>
         <div className="w-[850px] rounded-[24px]">
-        <iframe className='rounded-[24px]' title='Map' src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2505.9634228526643!2d71.41559597548381!3d51.09068254106179!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x424585a605525605%3A0x4dff4a1973f7567e!2sAstana%20IT%20University!5e0!3m2!1sru!2skz!4v1733228936752!5m2!1sru!2skz" width="850" height="450" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <iframe className='rounded-[24px]' title='Map' src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2505.9634228526643!2d71.41559597548381!3d51.09068254106179!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x424585a605525605%3A0x4dff4a1973f7567e!2sAstana%20IT%20University!5e0!3m2!1sru!2skz!4v1733228936752!5m2!1sru!2skz" width="850" height="450" allowFullScreen="" loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
         </div>
       </div>
       <div className='w-inherit h-[410px] mt-12'>

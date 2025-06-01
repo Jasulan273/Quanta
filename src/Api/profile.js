@@ -43,3 +43,28 @@ export const updateUserProfile = async (profileData) => {
     throw error;
   }
 };
+
+export const updateUserAvatar = async (avatarFile) => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    if (!token) throw new Error('No access token found');
+
+    const formData = new FormData();
+    formData.append('avatar', avatarFile);
+
+    const response = await axios.patch(
+      `${API_URL}/profile/edit/`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error updating avatar:', error.response?.data || error.message);
+    throw error;
+  }
+};

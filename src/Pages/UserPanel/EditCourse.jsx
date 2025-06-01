@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { API_URL } from '../../Api/api';
 import { Edit, Trash2 } from 'lucide-react';
+import { updateCourse } from '../../Api/courses';
 
 const EditCourse = () => {
   const { courseId } = useParams();
@@ -11,6 +12,8 @@ const EditCourse = () => {
     description: '',
     duration: '',
   });
+  const [courseImage, setCourseImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [modules, setModules] = useState([]);
   const [newModule, setNewModule] = useState({ module: '', duration: '' });
   const [editingModule, setEditingModule] = useState(null);
@@ -44,6 +47,9 @@ const EditCourse = () => {
           description: data.description,
           duration: data.duration,
         });
+        if (data.course_image) {
+          setImagePreview(data.course_image);
+        }
       } catch (err) {
         setError(`Failed to fetch course: ${err.message}`);
         navigate('/courses');
@@ -99,6 +105,14 @@ const EditCourse = () => {
     }
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCourseImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleCourseSubmit = async (e) => {
     e.preventDefault();
     if (!courseData.title.trim() || !courseData.description.trim() || !courseData.duration.trim()) {
@@ -107,18 +121,7 @@ const EditCourse = () => {
     }
     try {
       setIsSubmitting(true);
-      const response = await fetch(`${API_URL}/author/courses/${courseId}/`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-        body: JSON.stringify(courseData),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to update course');
-      }
+      await updateCourse(courseId, courseData, courseImage);
       setError(null);
     } catch (err) {
       setError(`Failed to update course: ${err.message}`);
@@ -341,6 +344,26 @@ const EditCourse = () => {
             required
             disabled={isSubmitting}
           />
+        </div>
+        <div>
+          <label htmlFor="courseImage" className="block text-sm font-medium text-gray-700 mb-2">
+            Course Image
+          </label>
+          <input
+            type="file"
+            id="courseImage"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="w-full p-4 border border-gray-300 rounded-lg text-lg"
+            disabled={isSubmitting}
+          />
+          {imagePreview && (
+            <img
+              src={imagePreview}
+              alt="Course Preview"
+              className="mt-4 max-w-xs rounded-lg shadow-md"
+            />
+          )}
         </div>
         <div className="flex gap-4">
           <button

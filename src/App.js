@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { fetchUserProfile } from "./Api/profile";
 import Header from "./Components/Header/Header";
 import Footer from "./Components/Footer/Footer";
 import Home from "./Pages/Home/Home";
@@ -20,21 +21,44 @@ import LanguageQuiz from "./Pages/LanguageQuiz/LanguageQuiz";
 import CreateCourse from "./Pages/UserPanel/CreateCourse";
 import EditCourse from "./Pages/UserPanel/EditCourse";
 import EditLesson from "./Pages/UserPanel/EditLesson";
+import BlogEditor from "./Pages/UserPanel/BlogEditor";
+import CreateBlog from "./Pages/UserPanel/CreateBlog";
+import ChatAssistant from "./Components/СhatAssistant/ChatAssistant"
 
 function App() {
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState(localStorage.getItem("username"));
+  const [user, setUser] = useState(null);
   const location = useLocation();
 
+  const fetchUser = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      try {
+        const userData = await fetchUserProfile();
+        if (userData) {
+          setUser(userData);
+          localStorage.setItem("username", userData.username);
+        } else {
+          setUser(null);
+          localStorage.removeItem("username");
+          localStorage.removeItem("accessToken");
+        }
+      } catch {
+        setUser(null);
+        localStorage.removeItem("username");
+        localStorage.removeItem("accessToken");
+      }
+    } else {
+      setUser(null);
+      localStorage.removeItem("username");
+    }
+  };
+
   useEffect(() => {
-    const checkUser = () => {
-      const storedUser = localStorage.getItem("username");
-      setUser(storedUser);
-    };
-    checkUser();
-    window.addEventListener("storage", checkUser);
-    return () => window.removeEventListener("storage", checkUser);
-  }, []);
+    fetchUser();
+    window.addEventListener("storage", fetchUser);
+    return () => window.removeEventListener("storage", fetchUser);
+  }, [location.pathname]);
 
   useEffect(() => {
     setLoading(true);
@@ -49,10 +73,10 @@ function App() {
       {loading && <Loader />}
       <Header user={user} setUser={setUser} />
       <Routes>
-        <Route path="/Home" element={<Home />} />
+        <Route path="/Home" element={<Home user={user} />} />
         <Route path="/Courses" element={<Courses />} />
         <Route
-          path="/courses/:courseId/modules/:modulesId/lesson/:lessonId"
+          path="/courses/:courseId/modules/:moduleId/lesson/:lessonId"
           element={
             <PrivateRoute user={user}>
               <LessonPage />
@@ -92,10 +116,26 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/create-blog"
+          element={
+            <PrivateRoute user={user}>
+              <CreateBlog user={user} />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/edit-blog/:blogId"
+          element={
+            <PrivateRoute user={user}>
+              <BlogEditor />
+            </PrivateRoute>
+          }
+        />
         <Route path="/About" element={<About />} />
         <Route path="/FAQ" element={<FAQ />} />
         <Route path="/quiz" element={<LanguageQuiz />} />
-        <Route path="/Auth" element={<Auth setUser={setUser} />} />
+        <Route path="/Auth" element={<Auth setUser={setUser} fetchUser={fetchUser} />} />
         <Route path="/Registration" element={<Registration />} />
         <Route path="/courses/:courseId" element={<CoursePage user={user} />} />
         <Route path="/BlogPage/:id" element={<BlogPage />} />
@@ -103,6 +143,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
+      <ChatAssistant user={user} />
     </div>
   );
 }

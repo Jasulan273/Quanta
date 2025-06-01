@@ -1,13 +1,22 @@
-import React, { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { NavLink, useNavigate, useLocation  } from "react-router-dom";
 import Logo from "../../Materials/Images/Logo_art.png";
+import { API_URL } from "../../Api/api";
 
 export default function Header({ user, setUser }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+   useEffect(() => {
+ 
+    setIsProfileMenuOpen(false);
+    setIsMenuOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem("authToken");
+    localStorage.removeItem("accessToken");
     localStorage.removeItem("username");
     setUser(null);
     navigate("/Auth");
@@ -17,8 +26,12 @@ export default function Header({ user, setUser }) {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const toggleProfileMenu = () => {
+    setIsProfileMenuOpen(!isProfileMenuOpen);
+  };
+
   return (
-    <div className="flex items-center justify-between w-full max-w-7xl mx-auto h-16 px-4 border-b border-lightgrey">
+    <div className="flex items-center justify-between w-full max-w-7xl mx-auto h-16 px-4 border-b z-1000 border-lightgrey relative">
       <div className="flex items-center">
         <img src={Logo} className="w-12 h-auto" alt="Logo" />
         <h1 className="ml-2 font-bold text-lg">Quanta</h1>
@@ -95,27 +108,54 @@ export default function Header({ user, setUser }) {
 
       <div className="flex items-center gap-4">
         {user ? (
-          <>
-            <span className="text-sm font-bold">
-              <a href="/Quanta/UserPanel">{user}</a>
-            </span>
+          <div className="relative">
             <button
-              onClick={handleLogout}
-              className="text-sm font-bold text-red-500 hover:underline"
+              onClick={toggleProfileMenu}
+              className="flex items-center gap-2 focus:outline-none"
             >
-              Logout
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-xl font-bold overflow-hidden">
+                {user.avatar ? (
+                  <img src={`${API_URL}${user.avatar}`} alt="User avatar" className="w-full h-full object-cover" />
+                ) : (
+                  user.username?.charAt(0).toUpperCase() || 'U'
+                )}
+              </div>
+              <span className="hidden md:inline text-sm font-medium">{user.username || 'User'}</span>
             </button>
-          </>
+
+            {isProfileMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                <NavLink
+                  to="/UserPanel"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={() => setIsProfileMenuOpen(false)}
+                >
+                  Profile
+                </NavLink>
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
-          <>
-            <NavLink to="/Auth" className="text-sm font-bold transition hover:scale-105 text-black">
+          <div className="flex items-center gap-2">
+            <NavLink
+              to="/Auth"
+              className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-full hover:bg-primary-dark transition"
+            >
               Login
             </NavLink>
-            <span className="text-sm">||</span>
-            <NavLink to="/Registration" className="text-sm font-bold transition hover:scale-105 text-black">
+            <NavLink
+              to="/Registration"
+              className="px-4 py-2 text-sm font-medium text-primary border border-primary rounded-full hover:bg-primary hover:text-white transition"
+            >
               Register
             </NavLink>
-          </>
+          </div>
         )}
       </div>
     </div>

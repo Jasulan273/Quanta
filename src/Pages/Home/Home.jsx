@@ -9,7 +9,7 @@ import Popular from "./Popular";
 import Feedback from "./Feedback";
 import LastArticles from "./LastArticles";
 
-export default function Home() {
+export default function Home({ user }) {
   return (
   <div className="Home">
      <Banner />
@@ -19,7 +19,7 @@ export default function Home() {
      <Statistics />
      <Advantages />
      <Popular />
-     <Feedback /> 
+     <Feedback user={user} />
      <LastArticles />
   </div>
   );

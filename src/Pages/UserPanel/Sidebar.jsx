@@ -19,6 +19,14 @@ const Sidebar = ({ setActiveComponent, user }) => (
             <BookOpen size={20} /> My Courses
           </button>
         )}
+         {user?.is_journalist === true && (
+          <button
+            onClick={() => setActiveComponent('blogs')}
+            className='flex items-center gap-2 p-2 rounded-md hover:bg-gray-800 w-full'
+          >
+            <BookOpen size={20} /> My Posts
+          </button>
+        )}
         <button
           onClick={() => setActiveComponent('mycourses')}
           className='flex items-center gap-2 p-2 rounded-md hover:bg-gray-800 w-full'

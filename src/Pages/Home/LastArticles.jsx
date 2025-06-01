@@ -3,7 +3,6 @@ import BlogImage from '../../Materials/Images/banner.png';
 import CalendarIcon from '../../Materials/Icons/Calendartoday.png';
 import { NavLink, Link } from 'react-router-dom';
 import { fetchBlogPosts } from '../../Api/blog';
-import { API_URL } from '../../Api/api';
 
 const LastArticles = () => {
   const [posts, setPosts] = useState([]);
@@ -51,7 +50,7 @@ const LastArticles = () => {
         </div>
         <NavLink
           to="/Blog"
-          className="inline-block w-36 sm:w-40 h-10 sm:h-12 bg-white text-black border-2 border-grey rounded-3xl text-center leading-10 sm:leading-12 hover:bg-gray-200 transition text-sm sm:text-base"
+          className="inline-flex justify-center items-center w-36 sm:w-40 h-10 sm:h-12 bg-white text-black border-2 border-grey rounded-3xl hover:bg-gray-200 transition text-sm sm:text-base"
         >
           All Articles
         </NavLink>
@@ -61,7 +60,7 @@ const LastArticles = () => {
         className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 transition-all`}
       >
         {posts.map((post) => {
-          const imageUrl = post.image ? `${API_URL}${post.image}` : BlogImage;
+          const imageUrl = post.image || BlogImage;
           return (
             <Link
               to={`/BlogPage/${post.id}`}

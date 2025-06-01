@@ -97,11 +97,12 @@ const Blog = () => {
               className="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl"
             >
               <div className="flex flex-col md:flex-row">
-                <img
-                  src={post.image || BlogImage}
-                  alt={post.title}
-                  className="w-full md:w-1/3 h-60 md:h-auto object-cover"
-                />
+         <img
+  src={post.image || BlogImage}
+  alt={post.title}
+  className="w-full md:w-1/3 max-h-60 md:h-auto object-cover rounded"
+/>
+
                 <div className="p-6 flex flex-col justify-between w-full md:w-2/3">
                   <div>
                     <h2 className="font-bold text-xl text-gray-900 mb-2">{post.title}</h2>
@@ -109,7 +110,7 @@ const Blog = () => {
                       {post.content.replace(/<[^>]+>/g, '').substring(0, 100)}...
                     </p>
                     <div className="text-xs text-gray-500 mb-4">
-                      <p>By {post.author_username} | {new Date(post.created_at).toLocaleDateString()}</p>
+                      <p>By {post.author_username} | {new Date(post.created_at).toLocaleDateString()} | {post.views} views</p>
                     </div>
                   </div>
                   <NavLink to={`/BlogPage/${post.id}`} className="text-orange-500 hover:underline mt-4 w-max">
@@ -136,7 +137,7 @@ const Blog = () => {
         </div>
       </div>
 
-      <div className={`fixed top-0 right-0 z-50 bg-white shadow-lg w-[90%] max-w-[300px] h-full p-6 transition-transform duration-300 ease-in-out transform ${showSidebar ? 'translate-x-0' : 'translate-x-full'} lg:static lg:translate-x-0 lg:w-[25%] lg:block`}>
+      <div className={`fixed top-0 right-0 bg-white shadow-lg w-[90%] max-w-[300px] h-full p-6 transition-transform duration-300 ease-in-out transform ${showSidebar ? 'translate-x-0' : 'translate-x-full'} lg:static lg:translate-x-0 lg:w-[25%] lg:block`}>
         <div className="flex justify-between items-center lg:hidden mb-4">
           <h2 className="text-xl font-bold">Filters</h2>
           <button onClick={() => setShowSidebar(false)} className="text-2xl">&times;</button>

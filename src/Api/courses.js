@@ -1,21 +1,33 @@
 import axios from 'axios';
 import { API_URL } from './api';
 
-export const updateCourse = async (courseId, updatedData) => {
+export const updateCourse = async (courseId, updatedData, courseImage = null) => {
   try {
     const token = localStorage.getItem('accessToken');
     if (!token) {
       throw new Error('No access token found');
     }
+
+    const formData = new FormData();
     
+   
+    for (const key in updatedData) {
+      if (updatedData[key] !== undefined && updatedData[key] !== null) {
+        formData.append(key, updatedData[key]);
+      }
+    }
+
+    if (courseImage) {
+      formData.append('course_image', courseImage);
+    }
+
     const response = await axios.patch(
       `${API_URL}/author/courses/${courseId}/`,
-      updatedData,
+      formData,
       {
         headers: {
-          Authorization: `Bearer ${token}`, 
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
         },
       }
     );
@@ -78,7 +90,6 @@ export const unenrollFromCourse = async (courseId) => {
 export const fetchMyCourses = async () => {
   try {
     const token = localStorage.getItem('accessToken');
-    console.log(token)
     if (!token) throw new Error('No access token found');
     const response = await axios.get(`${API_URL}/mycourses/`, {
       headers: {

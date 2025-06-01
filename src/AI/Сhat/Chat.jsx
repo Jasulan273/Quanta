@@ -1,89 +1,159 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [isServerOnline, setIsServerOnline] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    const checkServer = async () => {
-      try {
-        const response = await fetch('http://localhost:11434/api/tags');
-        if (response.ok) {
-          setIsServerOnline(true);
-          console.log('✅ Ollama API доступен');
-        } else {
-          setIsServerOnline(false);
-          console.error('⚠️ Ollama API недоступен');
-        }
-      } catch (error) {
-        setIsServerOnline(false);
-        console.error('❌ Ошибка соединения с Ollama:', error);
-      }
-    };
-    checkServer();
+    const savedMessages = localStorage.getItem('regularChatHistory');
+    if (savedMessages) {
+      setMessages(JSON.parse(savedMessages));
+    }
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('regularChatHistory', JSON.stringify(messages));
+  }, [messages]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   const sendMessage = async () => {
-    if (!input.trim()) return;
-    
-    const userMessage = { role: 'user', content: input };
+    if (!input.trim() || isLoading) return;
+
+    const userMessage = { 
+      role: 'user', 
+      content: input,
+      timestamp: new Date().toISOString() 
+    };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
-
-    if (!isServerOnline) {
-      setMessages(prev => [...prev, { role: 'bot', content: '❌ Сервер Ollama недоступен' }]);
-      return;
-    }
+    setIsLoading(true);
 
     try {
-      console.log('🔄 Отправка запроса в Ollama...');
-      const response = await fetch('http://localhost:11434/api/generate', {
+      const response = await fetch(`${process.env.REACT_APP_AI_URL}/ask`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          model: 'deepseek-coder:1.3b',
-          prompt: input + '\n\n(Respond concisely and succinctly.)',
-          stream: false
-        })
+          question: input,
+          input: "",
+          language: ""
+        }),
       });
 
+      if (!response.ok) throw new Error('Network response was not ok');
+
       const data = await response.json();
-      setMessages(prev => [...prev, { role: 'bot', content: formatResponse(data.response) }]);
+      const botMessage = { 
+        role: 'bot', 
+        content: data.result || data.answer || "I couldn't understand that.",
+        timestamp: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, botMessage]);
     } catch (error) {
-      console.error('❌ Ошибка запроса:', error);
-      setMessages(prev => [...prev, { role: 'bot', content: '❌ Ошибка соединения с Ollama' }]);
+      console.error('Error:', error);
+      setMessages(prev => [...prev, { 
+        role: 'bot', 
+        content: "Sorry, I'm having trouble connecting to the server.",
+        timestamp: new Date().toISOString()
+      }]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const formatResponse = (text) => {
-    return text
-      .replace(/```sh([\s\S]*?)```/g, '<pre class="bg-black text-green-400 p-4 rounded-md overflow-x-auto"><code>$1</code></pre>')
-      .replace(/```bash([\s\S]*?)```/g, '<pre class="bg-black text-green-400 p-4 rounded-md overflow-x-auto"><code>$1</code></pre>')
-      .replace(/```python([\s\S]*?)```/g, '<pre class="bg-gray-900 text-green-400 p-4 rounded-md overflow-x-auto"><code>$1</code></pre>')
-      .replace(/```([\s\S]*?)```/g, '<pre class="bg-gray-900 text-white p-4 rounded-md overflow-x-auto"><code>$1</code></pre>');
+  const clearHistory = () => {
+    setMessages([]);
+    localStorage.removeItem('regularChatHistory');
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white text-gray-900 p-6">
-      <div className="flex-1 overflow-y-auto space-y-4 p-4">
+    <div className="flex flex-col h-full bg-white">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, index) => (
-          <div 
-            key={index} 
-            className={`p-4 text-lg rounded-xl max-w-[75%] leading-relaxed whitespace-pre-line ${msg.role === 'user' ? 'bg-gray-200 text-gray-900 self-start' : 'bg-gray-300 text-gray-900 self-end'}`}
-            dangerouslySetInnerHTML={{ __html: msg.content }}
-          />
+          <div
+            key={index}
+            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-[80%] p-3 rounded-lg ${
+                msg.role === 'user'
+                  ? 'bg-orange-500 text-white rounded-br-none'
+                  : 'bg-gray-100 text-gray-800 rounded-bl-none'
+              }`}
+            >
+              <ReactMarkdown
+                children={msg.content}
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code({ node, inline, className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || '');
+                    return !inline ? (
+                      <SyntaxHighlighter
+                        language={match?.[1] || 'javascript'}
+                        style={atomDark}
+                        PreTag="div"
+                        className="rounded-lg text-sm my-2"
+                        {...props}
+                      >
+                        {String(children).replace(/\n$/, '')}
+                      </SyntaxHighlighter>
+                    ) : (
+                      <code className="bg-gray-200 px-1.5 py-0.5 rounded text-sm font-mono">
+                        {children}
+                      </code>
+                    );
+                  }
+                }}
+              />
+              <div className={`text-xs mt-1 ${
+                msg.role === 'user' ? 'text-orange-200' : 'text-gray-500'
+              }`}>
+                {new Date(msg.timestamp).toLocaleTimeString()}
+              </div>
+            </div>
+          </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
-      <div className="flex gap-4 p-4 bg-gray-100 rounded-xl shadow-lg">
-        <input 
-          type="text" 
-          value={input} 
-          onChange={(e) => setInput(e.target.value)} 
-          placeholder="Введите сообщение..."
-          className="flex-1 p-3 text-lg border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button onClick={sendMessage} className="bg-blue-500 text-white px-6 py-3 text-lg rounded-xl hover:bg-blue-600 transition">Отправить</button>
+
+      <div className="p-4 border-t border-gray-200">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+            placeholder="Type your message..."
+            className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white text-gray-900"
+            disabled={isLoading}
+          />
+          <button
+            onClick={sendMessage}
+            disabled={isLoading || !input.trim()}
+            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 disabled:opacity-50"
+          >
+            {isLoading ? '...' : 'Send'}
+          </button>
+          <button
+            onClick={clearHistory}
+            className="bg-gray-200 text-gray-800 px-3 py-2 rounded-lg hover:bg-gray-300"
+          >
+            Clear
+          </button>
+        </div>
+        <div className="text-xs text-gray-500 mt-2 text-center">
+          You are communicating with AI. Responses are generated automatically.
+        </div>
       </div>
     </div>
   );

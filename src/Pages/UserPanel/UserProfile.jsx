@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { User, Edit, Calendar, Save, BookOpen } from 'lucide-react';
-import { updateUserProfile } from '../../Api/profile';
+import { User, Edit, Calendar, Save, BookOpen, Upload } from 'lucide-react';
+import { updateUserProfile, updateUserAvatar } from '../../Api/profile';
+import { API_URL } from '../../Api/api';
 
 const UserProfile = ({ user, setUser }) => {
   const [editing, setEditing] = useState(false);
@@ -11,6 +12,7 @@ const UserProfile = ({ user, setUser }) => {
     phone_number: '',
     gender: '',
   });
+  const [avatarFile, setAvatarFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -33,17 +35,22 @@ const UserProfile = ({ user, setUser }) => {
     }));
   };
 
+  const handleAvatarChange = e => {
+    setAvatarFile(e.target.files[0]);
+  };
+
   const handleEdit = () => setEditing(true);
 
   const handleSave = async () => {
     setLoading(true);
-    let patchData = {};
-    Object.keys(form).forEach(key => {
-      if ((user[key] ?? '') !== form[key]) {
-        patchData[key] = form[key] === '' ? null : form[key];
-      }
-    });
     try {
+     
+      let patchData = {};
+      Object.keys(form).forEach(key => {
+        if ((user[key] ?? '') !== form[key]) {
+          patchData[key] = form[key] === '' ? null : form[key];
+        }
+      });
       if (Object.keys(patchData).length > 0) {
         await updateUserProfile(patchData);
         setUser(prev => ({
@@ -51,9 +58,20 @@ const UserProfile = ({ user, setUser }) => {
           ...patchData
         }));
       }
+
+   
+      if (avatarFile) {
+        const avatarResponse = await updateUserAvatar(avatarFile);
+        setUser(prev => ({
+          ...prev,
+          avatar: avatarResponse.avatar || prev.avatar
+        }));
+        setAvatarFile(null);
+      }
+
       setEditing(false);
     } catch (error) {
-      window.location.reload()
+      window.location.reload();
     } finally {
       setLoading(false);
     }
@@ -62,8 +80,25 @@ const UserProfile = ({ user, setUser }) => {
   return (
     <div className="p-6">
       <div className="flex items-center gap-4">
-        <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-xl font-bold">
-          {user?.username?.charAt(0).toUpperCase() || 'U'}
+        <div className="relative">
+          <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center text-xl font-bold overflow-hidden">
+            {user?.avatar ? (
+              <img src={`${API_URL}${user.avatar}`} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              user?.username?.charAt(0).toUpperCase() || 'U'
+            )}
+          </div>
+          {editing && (
+            <label className="absolute bottom-0 right-0 bg-blue-500 text-white p-1 rounded-full cursor-pointer">
+              <Upload size={16} />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="hidden"
+              />
+            </label>
+          )}
         </div>
         <div>
           <div className="flex items-center gap-2">
