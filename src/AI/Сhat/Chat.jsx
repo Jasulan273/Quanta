@@ -60,7 +60,6 @@ const Chat = () => {
       };
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
-      console.error('Error:', error);
       setMessages(prev => [...prev, { 
         role: 'bot', 
         content: "Sorry, I'm having trouble connecting to the server.",
@@ -112,7 +111,11 @@ const Chat = () => {
                         {children}
                       </code>
                     );
-                  }
+                  },
+                 p({ node, children }) {
+  return <div className="mb-2 text-gray-800 leading-relaxed">{children}</div>;
+}
+
                 }}
               />
               <div className={`text-xs mt-1 ${

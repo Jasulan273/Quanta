@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import Overview from './Overview';
@@ -11,6 +11,7 @@ import { enrollInCourse, unenrollFromCourse, fetchMyCourses } from '../../Api/co
 
 const CoursePage = ({ user }) => {
   const { courseId } = useParams();
+  const navigate = useNavigate();
   const [courseData, setCourseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,16 +20,21 @@ const CoursePage = ({ user }) => {
   const [enrollLoading, setEnrollLoading] = useState(false);
 
   useEffect(() => {
-    const fetchCourseAndEnrollment = async () => {
+    const fetchCourseData = async () => {
       try {
-     
+        
         const courseResponse = await axios.get(`${API_URL}/courses/${courseId}`);
         setCourseData(courseResponse.data);
 
-     
-        const myCourses = await fetchMyCourses();
-        const isEnrolled = myCourses.some(course => course.id === parseInt(courseId));
-        setEnrolled(isEnrolled);
+        if (user) {
+          try {
+            const myCourses = await fetchMyCourses();
+            const isEnrolled = myCourses.some(course => course.id === parseInt(courseId));
+            setEnrolled(isEnrolled);
+          } catch (err) {
+            console.log("Couldn't check enrollment status", err);
+          }
+        }
       } catch (err) {
         setError(err.response?.data?.detail || 'Failed to fetch course data');
       } finally {
@@ -36,10 +42,15 @@ const CoursePage = ({ user }) => {
       }
     };
 
-    fetchCourseAndEnrollment();
-  }, [courseId]);
+    fetchCourseData();
+  }, [courseId, user]);
 
   const handleEnrollToggle = async () => {
+    if (!user) {
+      navigate('/Auth');
+      return;
+    }
+
     setEnrollLoading(true);
     try {
       if (enrolled) {
@@ -93,7 +104,7 @@ const CoursePage = ({ user }) => {
               className={`mt-6 px-6 py-2 rounded-md text-white font-semibold transition 
                 ${enrolled ? 'bg-orange-600 hover:bg-orange-700' : 'bg-gray-600 hover:bg-gray-700'}`}
             >
-              {enrollLoading ? 'Loading...' : enrolled ? 'Unenroll' : 'Enroll'}
+              {enrollLoading ? 'Loading...' : enrolled ? 'Unenroll' : user ? 'Enroll' : 'Sign in to Enroll'}
             </button>
           </div>
 
@@ -130,7 +141,14 @@ const CoursePage = ({ user }) => {
         className="py-8 max-w-7xl mx-auto px-4"
       >
         {activeTab === 'Overview' && <Overview description={description} />}
-        {activeTab === 'Curriculum' && <Curriculum modules={curriculumData} courseId={courseId} />}
+        {activeTab === 'Curriculum' && (
+          <Curriculum 
+            modules={curriculumData} 
+            courseId={courseId} 
+            enrolled={enrolled}
+            user={user}
+          />
+        )}
         {activeTab === 'Reviews' && <Reviews reviews={existing_reviews} user={user} />}
       </motion.div>
     </div>

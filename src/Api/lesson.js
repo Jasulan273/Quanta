@@ -88,3 +88,111 @@ export const updateLesson = async (courseId, moduleId, lessonId, lessonData) => 
     throw new Error(errorData.detail || `Failed to update lesson with status ${response.status}`);
   }
 };
+
+export const fetchExercises = async (courseId, moduleId, lessonId) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      }
+    );
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Exercises not found');
+    }
+    return await response.json();
+  } catch (err) {
+    throw new Error(`Failed to fetch exercises: ${err.message}`);
+  }
+};
+
+export const createExercise = async (courseId, moduleId, lessonId, exerciseData) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(exerciseData),
+      }
+    );
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to create exercise');
+    }
+  } catch (err) {
+    throw new Error(`Failed to create exercise: ${err.message}`);
+  }
+};
+
+export const updateMCQExercise = async (courseId, moduleId, lessonId, exerciseData) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/edit-mcq`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(exerciseData),
+      }
+    );
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to update MCQ exercise');
+    }
+  } catch (err) {
+    throw new Error(`Failed to update MCQ exercise: ${err.message}`);
+  }
+};
+
+export const updateCodeExercise = async (courseId, moduleId, lessonId, exerciseData) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/edit-code`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(exerciseData),
+      }
+    );
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to update code exercise');
+    }
+  } catch (err) {
+    throw new Error(`Failed to update code exercise: ${err.message}`);
+  }
+};
+
+export const deleteExercises = async (courseId, moduleId, lessonId, exerciseData) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/delete`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(exerciseData),
+      }
+    );
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to delete exercises');
+    }
+  } catch (err) {
+    throw new Error(`Failed to delete exercises: ${err.message}`);
+  }
+};

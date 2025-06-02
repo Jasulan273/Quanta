@@ -1,11 +1,26 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
-const Curriculum = ({ modules, courseId }) => {
+const Curriculum = ({ modules, courseId, enrolled, user }) => {
   const [openModules, setOpenModules] = useState([]);
+  const navigate = useNavigate();
+
+
+  React.useEffect(() => {
+    if (!enrolled && modules.length > 0) {
+      setOpenModules([modules[0].module_id]);
+    }
+  }, [enrolled, modules]);
 
   const toggleModule = (moduleId) => {
+    if (!user) {
+      navigate('/Auth');
+      return;
+    }
+    
+    if (!enrolled && !openModules.includes(moduleId)) return;
+    
     setOpenModules((prev) =>
       prev.includes(moduleId) ? prev.filter((id) => id !== moduleId) : [...prev, moduleId]
     );
@@ -18,24 +33,43 @@ const Curriculum = ({ modules, courseId }) => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Curriculum</h2>
-      {modules.map((module) => {
+      {!enrolled && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+          <p className="text-yellow-700">
+            {user 
+              ? 'Enroll in the course to access all content.' 
+              : 'Sign in and enroll to access all content.'}
+          </p>
+        </div>
+      )}
+      
+      {modules.map((module, index) => {
         const lessons = Array.isArray(module.lessons) ? module.lessons : [];
+        const isLocked = !enrolled && index > 0;
 
-        // ✅ Удалим undefined/null и проверим lesson_id
         const sortedLessons = lessons
           .filter((lesson) => lesson && lesson.lesson_id !== undefined)
           .sort((a, b) => a.lesson_id - b.lesson_id);
 
         return (
-          <div key={module.module_id} className="border rounded-lg p-6 bg-white shadow-sm">
+          <div 
+            key={module.module_id} 
+            className={`border rounded-lg p-6 bg-white shadow-sm ${isLocked ? 'opacity-60' : ''}`}
+          >
             <button
               onClick={() => toggleModule(module.module_id)}
-              className="flex justify-between w-full text-left font-bold text-lg text-gray-800 hover:text-orange-500 transition duration-200"
+              className={`flex justify-between w-full text-left font-bold text-lg ${isLocked ? 'text-gray-400 cursor-not-allowed' : 'text-gray-800 hover:text-orange-500'} transition duration-200`}
+              disabled={isLocked}
             >
-              <span>{module.module}</span>
-              <span className="text-gray-500">
-                {openModules.includes(module.module_id) ? '−' : '+'}
+              <span>
+                {module.module}
+                {isLocked && <span className="ml-2 text-sm">🔒</span>}
               </span>
+              {!isLocked && (
+                <span className="text-gray-500">
+                  {openModules.includes(module.module_id) ? '−' : '+'}
+                </span>
+              )}
             </button>
             <p className="text-sm text-gray-500 mt-1">
               Duration: {module.duration || 'Unknown duration'}
@@ -52,12 +86,18 @@ const Curriculum = ({ modules, courseId }) => {
                   {sortedLessons.length > 0 ? (
                     sortedLessons.map((lesson) => (
                       <li key={lesson.lesson_id} className="flex flex-col py-4 border-t border-gray-200">
-                        <Link
-                          to={`/courses/${courseId}/modules/${module.module_id}/lesson/${lesson.lesson_id}`}
-                          className="text-blue-500 hover:underline text-base font-medium"
-                        >
-                          {lesson.name}
-                        </Link>
+                        {isLocked ? (
+                          <span className="text-gray-400 text-base font-medium">
+                            {lesson.name}
+                          </span>
+                        ) : (
+                          <Link
+                            to={user ? `/courses/${courseId}/modules/${module.module_id}/lesson/${lesson.lesson_id}` : '/Auth'}
+                            className="text-blue-500 hover:underline text-base font-medium"
+                          >
+                            {lesson.name}
+                          </Link>
+                        )}
                         <p className="text-sm text-gray-600 mt-1">
                           {lesson.short_description || 'No description available.'}
                         </p>

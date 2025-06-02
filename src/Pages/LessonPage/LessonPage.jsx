@@ -7,7 +7,7 @@ import Chat from '../../AI/Сhat/Chat';
 import { API_URL } from '../../Api/api';
 
 const LessonPage = () => {
-  const { courseId, modulesId, lessonId } = useParams();
+  const { courseId, moduleId, lessonId } = useParams();
   const [lessonData, setLessonData] = useState(null);
   const [courseData, setCourseData] = useState(null);
   const [tasks, setTasks] = useState([]);
@@ -27,12 +27,12 @@ const LessonPage = () => {
 
         const [courseResponse, lessonResponse, tasksResponse] = await Promise.all([
           axios.get(`${API_URL}/courses/${courseId}`),
-          axios.get(`${API_URL}/courses/${courseId}/modules/${modulesId}/lessons/${lessonId}`, {
-            headers: { Authorization: `Bearer ${accessToken}` }
+          axios.get(`${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
           }),
-          axios.get(`${API_URL}/courses/${courseId}/modules/${modulesId}/lessons/${lessonId}/exercises`, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          })
+          axios.get(`${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }),
         ]);
         setCourseData(courseResponse.data);
         setLessonData(lessonResponse.data);
@@ -43,8 +43,8 @@ const LessonPage = () => {
         } else {
           setError(
             err.response?.data?.detail ||
-            err.message ||
-            'Failed to fetch lesson data. Please try again.'
+              err.message ||
+              'Failed to fetch lesson data. Please try again.'
           );
         }
       } finally {
@@ -53,7 +53,7 @@ const LessonPage = () => {
     };
 
     fetchData();
-  }, [courseId, modulesId, lessonId, navigate]);
+  }, [courseId, moduleId, lessonId, navigate]);
 
   useEffect(() => {
     if (lessonData?.content && contentRef.current) {
@@ -88,64 +88,69 @@ const LessonPage = () => {
     return htmlContent.replace(/src="\/media\//g, `src="https://quant.up.railway.app/media/`);
   };
 
- const getLessonNavigation = () => {
-  if (!Array.isArray(courseData?.Curriculum)) return { prev: null, next: null };
-  let prev = null, next = null, foundCurrent = false;
+  const getLessonNavigation = () => {
+    if (!Array.isArray(courseData?.Curriculum)) return { prev: null, next: null };
+    let prev = null,
+      next = null,
+      foundCurrent = false;
 
-  for (const module of courseData.Curriculum) {
-    if (!Array.isArray(module.lessons) || module.lessons.length === 0) continue;
+    for (const module of courseData.Curriculum) {
+      if (!Array.isArray(module.lessons) || module.lessons.length === 0) continue;
 
-    const sortedLessons = [...module.lessons].sort((a, b) => a.lesson_id - b.lesson_id);
-    for (let i = 0; i < sortedLessons.length; i++) {
-      const lesson = sortedLessons[i];
-      if (
-        lesson.lesson_id === parseInt(lessonId) &&
-        module.module_id === parseInt(modulesId)
-      ) {
-        foundCurrent = true;
+      const sortedLessons = [...module.lessons].sort((a, b) => a.lesson_id - b.lesson_id);
+      for (let i = 0; i < sortedLessons.length; i++) {
+        const lesson = sortedLessons[i];
+        if (
+          lesson.lesson_id === parseInt(lessonId) &&
+          module.module_id === parseInt(moduleId)
+        ) {
+          foundCurrent = true;
 
-        if (i > 0) {
-          prev = {
-            moduleId: module.module_id,
-            lessonId: sortedLessons[i - 1].lesson_id,
-          };
-        } else if (courseData.Curriculum.indexOf(module) > 0) {
-          const prevModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) - 1];
-          const prevSortedLessons = [...(prevModule.lessons || [])].sort((a, b) => a.lesson_id - b.lesson_id);
-          if (prevSortedLessons.length > 0) {
+          if (i > 0) {
             prev = {
-              moduleId: prevModule.module_id,
-              lessonId: prevSortedLessons[prevSortedLessons.length - 1].lesson_id,
+              moduleId: module.module_id,
+              lessonId: sortedLessons[i - 1].lesson_id,
             };
+          } else if (courseData.Curriculum.indexOf(module) > 0) {
+            const prevModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) - 1];
+            const prevSortedLessons = [...(prevModule.lessons || [])].sort(
+              (a, b) => a.lesson_id - b.lesson_id
+            );
+            if (prevSortedLessons.length > 0) {
+              prev = {
+                moduleId: prevModule.module_id,
+                lessonId: prevSortedLessons[prevSortedLessons.length - 1].lesson_id,
+              };
+            }
           }
-        }
 
-        if (i < sortedLessons.length - 1) {
-          next = {
-            moduleId: module.module_id,
-            lessonId: sortedLessons[i + 1].lesson_id,
-          };
-        } else if (courseData.Curriculum.indexOf(module) < courseData.Curriculum.length - 1) {
-          const nextModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) + 1];
-          const nextSortedLessons = [...(nextModule.lessons || [])].sort((a, b) => a.lesson_id - b.lesson_id);
-          if (nextSortedLessons.length > 0) {
+          if (i < sortedLessons.length - 1) {
             next = {
-              moduleId: nextModule.module_id,
-              lessonId: nextSortedLessons[0].lesson_id,
+              moduleId: module.module_id,
+              lessonId: sortedLessons[i + 1].lesson_id,
             };
+          } else if (courseData.Curriculum.indexOf(module) < courseData.Curriculum.length - 1) {
+            const nextModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) + 1];
+            const nextSortedLessons = [...(nextModule.lessons || [])].sort(
+              (a, b) => a.lesson_id - b.lesson_id
+            );
+            if (nextSortedLessons.length > 0) {
+              next = {
+                moduleId: nextModule.module_id,
+                lessonId: nextSortedLessons[0].lesson_id,
+              };
+            }
           }
-        }
 
-        break;
+          break;
+        }
       }
+
+      if (foundCurrent) break;
     }
 
-    if (foundCurrent) break;
-  }
-
-  return { prev, next };
-};
-
+    return { prev, next };
+  };
 
   const { prev, next } = getLessonNavigation();
 
@@ -160,9 +165,13 @@ const LessonPage = () => {
       <ScrollProgress />
       <div className="container mx-auto my-16 px-4">
         <div className="mb-8">
-          <h1 className="text-5xl font-bold mb-4">{name} - Lesson {lessonId}</h1>
+          <h1 className="text-5xl font-bold mb-4">
+            {name} - Lesson {lessonId}
+          </h1>
           <div className="text-gray-600 text-lg">
-            <p><strong>Description:</strong> {description || 'No description available.'}</p>
+            <p>
+              <strong>Description:</strong> {description || 'No description available.'}
+            </p>
           </div>
         </div>
         {(video_url || uploaded_video) && (
@@ -176,12 +185,12 @@ const LessonPage = () => {
         )}
         <div ref={contentRef} className="bg-white p-10 rounded-lg shadow-xl content_block" />
 
-        {/* Динамическое отображение заданий */}
+        {/* Dynamic Task Rendering */}
         {tasks.length > 0 && (
           <div className="mt-12">
             {tasks.map((task) => (
               <div key={task.id} className="mb-10">
-                {task.type === 'quiz' ? (
+                {task.type === 'mcq' ? (
                   <QuizTask task={task} />
                 ) : task.type === 'code' ? (
                   <LessonCompiler task={task} />
@@ -215,9 +224,6 @@ const LessonPage = () => {
     </div>
   );
 };
-
-export default LessonPage;
-
 
 function QuizTask({ task }) {
   const [selected, setSelected] = useState(null);
@@ -256,7 +262,7 @@ function QuizTask({ task }) {
             {option.text}
           </button>
         ))}
-      </div >
+      </div>
       {!submitted && (
         <button
           onClick={handleSubmit}
@@ -268,12 +274,15 @@ function QuizTask({ task }) {
       )}
       {submitted && (
         <div>
-          {task.options.find((o) => o.is_correct)?.id === selected
-            ? <span className="text-green-600 font-bold">Correct!</span>
-            : <span className="text-red-600 font-bold">Incorrect</span>
-          }
+          {task.options.find((o) => o.is_correct)?.id === selected ? (
+            <span className="text-green-600 font-bold">Correct!</span>
+          ) : (
+            <span className="text-red-600 font-bold">Incorrect</span>
+          )}
         </div>
       )}
     </div>
   );
 }
+
+export default LessonPage;
