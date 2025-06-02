@@ -48,7 +48,7 @@ const Reviews = ({ reviews, user }) => {
     try {
       const accessToken = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `${API_URL}/courses/${courseId}/reviews/`,
+        `${API_URL}/courses/${courseId}/`,
         { rating, feedback },
         {
           headers: {
