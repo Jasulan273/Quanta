@@ -14,8 +14,7 @@ const Reviews = ({ reviews, user }) => {
   useEffect(() => {
     setLocalReviews(reviews || []);
   }, [reviews]);
-
-  // Ensure user.username exists before comparison and trim for safety
+  
   const userReview = user?.username
     ? localReviews.find((r) => r.user_username?.trim() === user.username.trim())
     : null;
