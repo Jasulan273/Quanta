@@ -96,13 +96,13 @@ export default function Header({ user, setUser }) {
           FAQ
         </NavLink>
         <NavLink
-          to="/Quiz"
+          to="/Ai"
           className={({ isActive }) =>
             `text-sm transition hover:scale-105 px-3 py-2 w-full md:w-auto text-center md:text-left ${isActive ? "bg-lightgrey text-black border border-gray-300 shadow-md rounded" : "text-black"}`
           }
           onClick={() => setIsMenuOpen(false)}
         >
-          QUIZ
+          AI
         </NavLink>
       </div>
 

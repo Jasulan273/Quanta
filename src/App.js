@@ -17,14 +17,14 @@ import BlogPage from "./Pages/Blog/BlogPage";
 import NotFound from "./Pages/NotFound/NotFound";
 import UserPanel from "./Pages/UserPanel/UserPanel";
 import PrivateRoute from "./Components/PrivateRoute";
-import LanguageQuiz from "./Pages/LanguageQuiz/LanguageQuiz";
+import AI from "./Pages/AI/AI"
 import CreateCourse from "./Pages/UserPanel/CreateCourse";
 import EditCourse from "./Pages/UserPanel/EditCourse";
 import EditLesson from "./Pages/UserPanel/EditLesson";
 import BlogEditor from "./Pages/UserPanel/BlogEditor";
 import CreateBlog from "./Pages/UserPanel/CreateBlog";
-import ChatAssistant from "./Components/СhatAssistant/ChatAssistant"
-import AuthCallback from "./Pages/Auth/AuthCallback"
+import ChatAssistant from "./Components/СhatAssistant/ChatAssistant";
+import AuthCallback from "./Pages/Auth/AuthCallback";
 
 function App() {
   const [loading, setLoading] = useState(false);
@@ -135,7 +135,7 @@ function App() {
         />
         <Route path="/About" element={<About />} />
         <Route path="/FAQ" element={<FAQ />} />
-        <Route path="/quiz" element={<LanguageQuiz />} />
+        <Route path="/Ai" element={<AI />} />
         <Route path="/Auth" element={<Auth setUser={setUser} fetchUser={fetchUser} />} />
         <Route path="/Registration" element={<Registration />} />
         <Route path="/auth/callback" element={<AuthCallback setUser={setUser} />} />
