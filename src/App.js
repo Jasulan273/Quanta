@@ -152,7 +152,7 @@ function App() {
 
 export default function WrappedApp() {
   return (
-    <Router basename="/Quanta">
+    <Router>
       <App />
     </Router>
   );
