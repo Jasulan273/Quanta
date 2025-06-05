@@ -46,7 +46,6 @@ const HighlightChat = ({ contentRef }) => {
 
       const chatHeight = 400;
       const offset = 10;
-      const viewportHeight = window.innerHeight;
       let chatY = rect.top + window.scrollY - parentRect.top - chatHeight - offset;
       if (chatY < window.scrollY + 10) {
         chatY = bottomY + offset;
