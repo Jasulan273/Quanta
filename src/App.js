@@ -24,6 +24,7 @@ import EditLesson from "./Pages/UserPanel/EditLesson";
 import BlogEditor from "./Pages/UserPanel/BlogEditor";
 import CreateBlog from "./Pages/UserPanel/CreateBlog";
 import ChatAssistant from "./Components/СhatAssistant/ChatAssistant"
+import AuthCallback from "./Pages/Auth/AuthCallback"
 
 function App() {
   const [loading, setLoading] = useState(false);
@@ -137,6 +138,7 @@ function App() {
         <Route path="/quiz" element={<LanguageQuiz />} />
         <Route path="/Auth" element={<Auth setUser={setUser} fetchUser={fetchUser} />} />
         <Route path="/Registration" element={<Registration />} />
+        <Route path="/auth/callback" element={<AuthCallback setUser={setUser} />} />
         <Route path="/courses/:courseId" element={<CoursePage user={user} />} />
         <Route path="/BlogPage/:id" element={<BlogPage />} />
         <Route path="/" element={<Navigate to="/Home" replace />} />

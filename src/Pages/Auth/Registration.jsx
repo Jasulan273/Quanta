@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { registerUser } from '../../Api/auth';
+import { registerUser, handleSocialLogin } from '../../Api/auth';
 import { FaEye, FaEyeSlash, FaGoogle, FaGithub } from 'react-icons/fa';
 
-export default function Registration() {
+export default function Registration({ setUser }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
@@ -35,6 +35,10 @@ export default function Registration() {
     } else {
       setError('Passwords do not match');
     }
+  };
+
+  const handleSocialLoginClick = (provider) => {
+    handleSocialLogin(provider);
   };
 
   const togglePasswordVisibility = () => {
@@ -133,10 +137,16 @@ export default function Registration() {
         </div>
 
         <div className="flex justify-center gap-4 mb-6">
-          <button className="p-3 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-all duration-300">
+          <button 
+            onClick={() => handleSocialLoginClick('google')}
+            className="p-3 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-all duration-300"
+          >
             <FaGoogle size={24} className="text-red-500" />
           </button>
-          <button className="p-3 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-all duration-300">
+          <button 
+            onClick={() => handleSocialLoginClick('github')}
+            className="p-3 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-all duration-300"
+          >
             <FaGithub size={24} className="text-gray-800" />
           </button>
         </div>

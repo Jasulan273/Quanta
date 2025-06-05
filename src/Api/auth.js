@@ -67,3 +67,13 @@ export const handleRegister = async (username, email, password, confirmPassword,
     setError("Registration failed. Please check your details and try again.");
   }
 };
+
+export const handleSocialLogin = (provider) => {
+  const urls = {
+    google: 'https://accounts.google.com/o/oauth2/v2/auth?client_id=998000786825-bcd7ifc4nkdmf8v6p8rhrbg6g6n9or0d.apps.googleusercontent.com&redirect_uri=https://jasulan273.github.io/Quanta/auth/callback&response_type=code&scope=email%20profile',
+    github: 'https://github.com/login/oauth/authorize?client_id=Ov23lis9u0BhXqDVRIwn&redirect_uri=https://jasulan273.github.io/Quanta/auth/callback&scope=user:email'
+  };
+  
+  localStorage.setItem('authProvider', provider);
+  window.location.href = urls[provider];
+};

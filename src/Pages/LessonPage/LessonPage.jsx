@@ -3,7 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ScrollProgress from '../../Components/ScrollProgress';
 import LessonCompiler from '../../AI/Compiler/LessonCompiler';
-import Chat from '../../AI/Сhat/Chat';
+import HighlightChat from './HighlightChat';
 import { API_URL } from '../../Api/api';
 
 const LessonPage = () => {
@@ -15,11 +15,11 @@ const LessonPage = () => {
   const [error, setError] = useState(null);
   const contentRef = useRef(null);
   const navigate = useNavigate();
+  const accessToken = localStorage.getItem('accessToken');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const accessToken = localStorage.getItem('accessToken');
         if (!accessToken) {
           navigate('/Auth');
           return;
@@ -53,7 +53,7 @@ const LessonPage = () => {
     };
 
     fetchData();
-  }, [courseId, moduleId, lessonId, navigate]);
+  }, [courseId, moduleId, lessonId, navigate, accessToken]);
 
   useEffect(() => {
     if (lessonData?.content && contentRef.current) {
@@ -63,7 +63,20 @@ const LessonPage = () => {
         const fixedContent = fixImageUrls(lessonData.content);
         const contentDiv = document.createElement('div');
         contentDiv.innerHTML = fixedContent;
+        contentDiv.className = 'selectable-content';
         shadowRoot.appendChild(contentDiv);
+
+        const style = document.createElement('style');
+        style.textContent = `
+          .selectable-content {
+            user-select: text;
+          }
+          .selectable-content ::selection {
+            background: #3b82f6;
+            color: white;
+          }
+        `;
+        shadowRoot.appendChild(style);
 
         const link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -85,7 +98,7 @@ const LessonPage = () => {
   }, [lessonData]);
 
   const fixImageUrls = (htmlContent) => {
-    return htmlContent.replace(/src="\/media\//g, `src="https://quant.up.railway.app/media/`);
+    return htmlContent.replace(/src="\/media\//g, `src="${API_URL}/media/`);
   };
 
   const getLessonNavigation = () => {
@@ -183,9 +196,16 @@ const LessonPage = () => {
             />
           </div>
         )}
-        <div ref={contentRef} className="bg-white p-10 rounded-lg shadow-xl content_block" />
+        <div ref={contentRef} className="bg-white p-10 rounded-lg shadow-xl content_block">
+          {lessonData?.content && (
+            <div
+              dangerouslySetInnerHTML={{ __html: fixImageUrls(lessonData.content) }}
+              className="selectable-content"
+            />
+          )}
+        </div>
+        <HighlightChat contentRef={contentRef} />
 
-        {/* Dynamic Task Rendering */}
         {tasks.length > 0 && (
           <div className="mt-12">
             {tasks.map((task) => (
@@ -199,8 +219,6 @@ const LessonPage = () => {
             ))}
           </div>
         )}
-
-        <Chat />
 
         <div className="flex justify-between my-8 text-xl">
           {prev && (

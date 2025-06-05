@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { loginUser } from '../../Api/auth';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { loginUser, handleSocialLogin } from '../../Api/auth';
 import { FaEye, FaEyeSlash, FaGoogle, FaGithub } from 'react-icons/fa';
 
 export default function Auth({ setUser }) {
@@ -10,6 +10,13 @@ export default function Auth({ setUser }) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.error) {
+      setError(location.state.error);
+    }
+  }, [location]);
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -25,6 +32,10 @@ export default function Auth({ setUser }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSocialLoginClick = (provider) => {
+    handleSocialLogin(provider);
   };
 
   const togglePasswordVisibility = () => {
@@ -86,10 +97,16 @@ export default function Auth({ setUser }) {
         </div>
 
         <div className="flex justify-center gap-4 mb-6">
-          <button className="p-3 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-all duration-300">
+          <button 
+            onClick={() => handleSocialLoginClick('google')}
+            className="p-3 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-all duration-300"
+          >
             <FaGoogle size={24} className="text-red-500" />
           </button>
-          <button className="p-3 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-all duration-300">
+          <button 
+            onClick={() => handleSocialLoginClick('github')}
+            className="p-3 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-all duration-300"
+          >
             <FaGithub size={24} className="text-gray-800" />
           </button>
         </div>
