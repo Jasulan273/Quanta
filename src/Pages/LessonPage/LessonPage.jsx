@@ -13,7 +13,9 @@ const LessonPage = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [videoError, setVideoError] = useState(null);
   const contentRef = useRef(null);
+  const videoRef = useRef(null);
   const navigate = useNavigate();
   const accessToken = localStorage.getItem('accessToken');
 
@@ -95,10 +97,22 @@ const LessonPage = () => {
         }, 100);
       }
     }
+
+    if (lessonData) {
+      console.log('video_url:', lessonData.video_url);
+      console.log('uploaded_video:', lessonData.uploaded_video);
+    }
   }, [lessonData]);
 
   const fixImageUrls = (htmlContent) => {
     return htmlContent.replace(/src="\/media\//g, `src="${API_URL}/media/`);
+  };
+
+  const getYouTubeEmbedUrl = (url) => {
+    if (!url) return null;
+    const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(youtubeRegex);
+    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
   };
 
   const getLessonNavigation = () => {
@@ -167,11 +181,21 @@ const LessonPage = () => {
 
   const { prev, next } = getLessonNavigation();
 
+  const handleVideoError = (e) => {
+    console.error('Video error:', e);
+    setVideoError('Failed to load video. Please check the video URL or try again later.');
+  };
+
+  const codeTasks = tasks.filter(task => task.type === 'code');
+  const mcqTasks = tasks.filter(task => task.type === 'mcq');
+
   if (loading) return <p>Loading lesson data...</p>;
   if (error) return <p>Error: {error}</p>;
   if (!lessonData) return <p>Lesson not found.</p>;
 
   const { name, description, video_url, uploaded_video } = lessonData;
+  const videoSrc = uploaded_video ? `${API_URL}${uploaded_video}` : video_url;
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(video_url);
 
   return (
     <div>
@@ -182,18 +206,37 @@ const LessonPage = () => {
             {name} - Lesson {lessonId}
           </h1>
           <div className="text-gray-600 text-lg">
-            <p>
+            <div>
               <strong>Description:</strong> {description || 'No description available.'}
-            </p>
+            </div>
           </div>
         </div>
-        {(video_url || uploaded_video) && (
+        {(video_url || uploaded_video) && (videoSrc || youtubeEmbedUrl) && (
           <div className="relative mb-12">
-            <video
-              src={uploaded_video ? `${API_URL}${uploaded_video}` : video_url}
-              controls
-              className="w-full h-auto rounded-lg shadow-lg"
-            />
+            {youtubeEmbedUrl ? (
+              <iframe
+                src={youtubeEmbedUrl}
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-96 rounded-lg shadow-lg"
+              />
+            ) : (
+              <>
+                <video
+                  ref={videoRef}
+                  src={videoSrc}
+                  controls
+                  onError={handleVideoError}
+                  type={uploaded_video ? 'video/mp4' : 'video/mp4'}
+                  className="w-full h-auto rounded-lg shadow-lg"
+                />
+                {videoError && (
+                  <p className="text-red-500 text-center mt-4">{videoError}</p>
+                )}
+              </>
+            )}
           </div>
         )}
         <div ref={contentRef} className="bg-white p-10 rounded-lg shadow-xl content_block">
@@ -208,15 +251,22 @@ const LessonPage = () => {
 
         {tasks.length > 0 && (
           <div className="mt-12">
-            {tasks.map((task) => (
-              <div key={task.id} className="mb-10">
-                {task.type === 'mcq' ? (
-                  <QuizTask task={task} />
-                ) : task.type === 'code' ? (
-                  <LessonCompiler task={task} />
-                ) : null}
+            {codeTasks.length > 0 && (
+              <div className="mb-10">
+                <h2 className="text-2xl font-bold mb-4 text-orange-500">Coding Exercises</h2>
+                <LessonCompiler tasks={codeTasks} courseId={courseId} moduleId={moduleId} lessonId={lessonId} />
               </div>
-            ))}
+            )}
+            {mcqTasks.length > 0 && (
+              <div className="mb-10">
+                <h2 className="text-2xl font-bold mb-4 text-orange-500">Multiple Choice Questions</h2>
+                {mcqTasks.map((task) => (
+                  <div key={task.id} className="mb-10">
+                    <QuizTask task={task} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

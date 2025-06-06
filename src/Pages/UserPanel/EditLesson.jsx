@@ -5,7 +5,7 @@ import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import { fetchLesson, updateLesson, fetchExercises, createExercise, updateMCQExercise, updateCodeExercise, deleteExercises } from '../../Api/lesson';
 import { API_URL } from '../../Api/api';
 
-const EditLesson = () => {
+const LessonEditor = () => {
   const { courseId, moduleId, lessonId } = useParams();
   const navigate = useNavigate();
   const [lessonData, setLessonData] = useState({
@@ -21,11 +21,12 @@ const EditLesson = () => {
     title: '',
     description: '',
     options: [{ text: '', is_correct: false }],
-    solution: { sample_input: '', expected_output: '', initial_code: '' },
+    solution: { sample_input: '', expected_output: '', initial_code: '', language: 'javascript' },
   });
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editorReady, setEditorReady] = useState(false);
+  const [editingExercise, setEditingExercise] = useState(null);
 
   useEffect(() => {
     const loadLessonAndExercises = async () => {
@@ -34,14 +35,14 @@ const EditLesson = () => {
           fetchLesson(courseId, moduleId, lessonId),
           fetchExercises(courseId, moduleId, lessonId),
         ]);
-         setLessonData({
-        name: lesson?.name || '',
-        short_description: lesson?.short_description || '',
-        video_url: lesson?.video_url || '',
-        uploaded_video: null, 
-        content: lesson?.content || '',
-      });
-        setExercises(exerciseData);
+        setLessonData({
+          name: lesson?.name || '',
+          short_description: lesson?.short_description || '',
+          video_url: lesson?.video_url || '',
+          uploaded_video: null,
+          content: lesson?.content || '',
+        });
+        setExercises(exerciseData.sort((a, b) => a.id - b.id));
         setEditorReady(true);
       } catch (err) {
         setError(err.message);
@@ -54,7 +55,7 @@ const EditLesson = () => {
   const handleLessonSubmit = async (e) => {
     e.preventDefault();
     if (!lessonData.name.trim() || !lessonData.short_description.trim()) {
-      setError('Название урока и описание обязательны');
+      setError('Lesson title and description are required');
       return;
     }
     try {
@@ -63,7 +64,7 @@ const EditLesson = () => {
       setError(null);
       navigate(`/edit-course/${courseId}`);
     } catch (err) {
-      setError(`Ошибка обновления урока: ${err.message}`);
+      setError(`Failed to update lesson: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -71,72 +72,107 @@ const EditLesson = () => {
 
   const handleExerciseSubmit = async (e) => {
     e.preventDefault();
+    if (!newExercise.title.trim() || !newExercise.description.trim()) {
+      setError('Exercise title and description are required');
+      return;
+    }
     try {
       setIsSubmitting(true);
       const payload = {
         type: newExercise.type,
-        exercises: [
-          newExercise.type === 'mcq'
-            ? {
-                title: newExercise.title,
-                description: newExercise.description,
-                options: newExercise.options,
-              }
-            : {
-                title: newExercise.title,
-                description: newExercise.description,
-                solution: newExercise.solution,
-              },
-        ],
+        title: newExercise.title,
+        description: newExercise.description,
+        ...(newExercise.type === 'mcq' ? { options: newExercise.options } : { solution: newExercise.solution }),
       };
       await createExercise(courseId, moduleId, lessonId, payload);
       const updatedExercises = await fetchExercises(courseId, moduleId, lessonId);
-      setExercises(updatedExercises);
+      setExercises(updatedExercises.sort((a, b) => a.id - b.id));
       setNewExercise({
         type: 'mcq',
         title: '',
         description: '',
         options: [{ text: '', is_correct: false }],
-        solution: { sample_input: '', expected_output: '', initial_code: '' },
+        solution: { sample_input: '', expected_output: '', initial_code: '', language: 'javascript' },
       });
       setError(null);
     } catch (err) {
-      setError(`Ошибка создания задания: ${err.message}`);
+      setError(`Failed to create exercise: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleExerciseUpdate = async (exercise) => {
+  const handleStartEdit = (exercise) => {
+    setEditingExercise({
+      ...exercise,
+      options: exercise.type === 'mcq' ? [...exercise.options] : [{ text: '', is_correct: false }],
+      solution: exercise.type === 'code' ? { ...exercise.solution, language: exercise.solution.language || 'javascript' } : { sample_input: '', expected_output: '', initial_code: '', language: 'javascript' },
+    });
+  };
+
+  const handleEditChange = (field, value) => {
+    setEditingExercise((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleEditOptionChange = (index, field, value) => {
+    const updatedOptions = [...editingExercise.options];
+    updatedOptions[index] = { ...updatedOptions[index], [field]: value };
+    setEditingExercise((prev) => ({
+      ...prev,
+      options: updatedOptions,
+    }));
+  };
+
+  const handleAddEditOption = () => {
+    setEditingExercise((prev) => ({
+      ...prev,
+      options: [...prev.options, { text: '', is_correct: false }],
+    }));
+  };
+
+  const handleRemoveEditOption = (index) => {
+    if (editingExercise.options.length > 1) {
+      setEditingExercise((prev) => ({
+        ...prev,
+        options: prev.options.filter((_, i) => i !== index),
+      }));
+    }
+  };
+
+  const handleEditSolutionChange = (field, value) => {
+    setEditingExercise((prev) => ({
+      ...prev,
+      solution: { ...prev.solution, [field]: value },
+    }));
+  };
+
+  const handleExerciseUpdate = async () => {
+    if (!editingExercise.title.trim() || !editingExercise.description.trim()) {
+      setError('Exercise title and description are required');
+      return;
+    }
     try {
       setIsSubmitting(true);
       const payload = {
-        exercises: [
-          exercise.type === 'mcq'
-            ? {
-                exercise_id: exercise.id,
-                title: exercise.title,
-                description: exercise.description,
-                options: exercise.options,
-              }
-            : {
-                exercise_id: exercise.id,
-                title: exercise.title,
-                description: exercise.description,
-                solution: exercise.solution,
-              },
-        ],
+        exercise_id: editingExercise.id,
+        title: editingExercise.title,
+        description: editingExercise.description,
+        ...(editingExercise.type === 'mcq' ? { options: editingExercise.options } : { solution: editingExercise.solution }),
       };
-      if (exercise.type === 'mcq') {
+      if (editingExercise.type === 'mcq') {
         await updateMCQExercise(courseId, moduleId, lessonId, payload);
       } else {
         await updateCodeExercise(courseId, moduleId, lessonId, payload);
       }
       const updatedExercises = await fetchExercises(courseId, moduleId, lessonId);
-      setExercises(updatedExercises);
+      setExercises(updatedExercises.sort((a, b) => a.id - b.id));
+      setEditingExercise(null);
       setError(null);
     } catch (err) {
-      setError(`Ошибка обновления задания: ${err.message}`);
+      setError(`Failed to update exercise: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -147,10 +183,11 @@ const EditLesson = () => {
       setIsSubmitting(true);
       await deleteExercises(courseId, moduleId, lessonId, { exercise_ids: exerciseIds });
       const updatedExercises = await fetchExercises(courseId, moduleId, lessonId);
-      setExercises(updatedExercises);
+      setExercises(updatedExercises.sort((a, b) => a.id - b.id));
+      setEditingExercise(null);
       setError(null);
     } catch (err) {
-      setError(`Ошибка удаления задания: ${err.message}`);
+      setError(`Failed to delete exercise: ${err.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -193,7 +230,7 @@ const EditLesson = () => {
                 resolve({ default: res.url });
               })
               .catch((error) => {
-                reject(error);
+                reject(error.message || 'Image upload failed');
               });
           });
         });
@@ -203,7 +240,7 @@ const EditLesson = () => {
 
   return (
     <div className="max-w-[90%] mx-auto p-8 bg-gradient-to-b from-gray-50 to-white min-h-screen">
-      <h2 className="text-3xl font-extrabold text-gray-900 mb-8 text-center">Редактировать урок</h2>
+      <h2 className="text-3xl font-extrabold text-gray-900 mb-8 text-center">Edit Lesson</h2>
       {error && (
         <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg shadow-md">{error}</div>
       )}
@@ -211,7 +248,7 @@ const EditLesson = () => {
       <form onSubmit={handleLessonSubmit} className="space-y-6 bg-white p-8 rounded-xl shadow-lg">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-            Название урока
+            Lesson Title
           </label>
           <input
             type="text"
@@ -225,7 +262,7 @@ const EditLesson = () => {
         </div>
         <div>
           <label htmlFor="short_description" className="block text-sm font-medium text-gray-700 mb-2">
-            Описание
+            Description
           </label>
           <textarea
             id="short_description"
@@ -239,7 +276,7 @@ const EditLesson = () => {
         </div>
         <div>
           <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
-            Контент
+            Content
           </label>
           {editorReady && lessonData.content !== null ? (
             <div className="border border-gray-300 rounded-lg overflow-hidden shadow-sm">
@@ -274,13 +311,13 @@ const EditLesson = () => {
             </div>
           ) : (
             <div className="flex items-center justify-center p-8 bg-gray-100 rounded-lg">
-              <p className="text-gray-600">Загрузка редактора...</p>
+              <p className="text-gray-600">Loading editor...</p>
             </div>
           )}
         </div>
         <div>
           <label htmlFor="video_url" className="block text-sm font-medium text-gray-700 mb-2">
-            URL видео (опционально)
+            Video URL (optional)
           </label>
           <input
             type="text"
@@ -293,7 +330,7 @@ const EditLesson = () => {
         </div>
         <div>
           <label htmlFor="uploaded_video" className="block text-sm font-medium text-gray-700 mb-2">
-            Загрузить видео (опционально)
+            Upload Video (optional)
           </label>
           <input
             type="file"
@@ -309,7 +346,7 @@ const EditLesson = () => {
             className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-md disabled:bg-gray-400"
             disabled={isSubmitting}
           >
-            Сохранить урок
+            Save Lesson
           </button>
           <button
             type="button"
@@ -317,13 +354,13 @@ const EditLesson = () => {
             className="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-all duration-300 shadow-md disabled:bg-gray-400"
             disabled={isSubmitting}
           >
-            Отмена
+            Cancel
           </button>
         </div>
       </form>
 
       <div className="mt-12">
-        <h3 className="text-2xl font-bold text-gray-900 mb-6">Задания</h3>
+        <h3 className="text-2xl font-bold text-gray-900 mb-6">Exercises</h3>
         {exercises.map((exercise) => (
           <div key={exercise.id} className="bg-white p-6 rounded-xl shadow-lg mb-4">
             <h4 className="text-lg font-semibold text-gray-800">{exercise.title} ({exercise.type.toUpperCase()})</h4>
@@ -344,28 +381,143 @@ const EditLesson = () => {
             )}
             <div className="mt-4 flex gap-2">
               <button
-                onClick={() => handleExerciseUpdate(exercise)}
+                onClick={() => handleStartEdit(exercise)}
                 className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-all duration-200"
                 disabled={isSubmitting}
               >
-                Редактировать
+                Edit
               </button>
               <button
                 onClick={() => handleExerciseDelete([exercise.id])}
                 className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-200"
                 disabled={isSubmitting}
               >
-                Удалить
+                Delete
               </button>
             </div>
           </div>
         ))}
       </div>
 
+      {editingExercise && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+          <div className="bg-white p-8 rounded-xl shadow-xl max-w-4xl w-full">
+            <h3 className="text-2xl font-bold mb-6">Edit Exercise</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                <input
+                  type="text"
+                  value={editingExercise.title}
+                  onChange={(e) => handleEditChange('title', e.target.value)}
+                  className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea
+                  value={editingExercise.description}
+                  onChange={(e) => handleEditChange('description', e.target.value)}
+                  className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows="4"
+                  disabled={isSubmitting}
+                />
+              </div>
+              {editingExercise.type === 'mcq' ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Options</label>
+                  {editingExercise.options.map((option, index) => (
+                    <div key={index} className="flex gap-2 mb-2">
+                      <input
+                        type="text"
+                        value={option.text}
+                        onChange={(e) => handleEditOptionChange(index, 'text', e.target.value)}
+                        className="flex-1 p-2 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Option text"
+                        disabled={isSubmitting}
+                      />
+                      <input
+                        type="checkbox"
+                        checked={option.is_correct}
+                        onChange={(e) => handleEditOptionChange(index, 'is_correct', e.target.checked)}
+                        className="h-6 w-6 text-blue-600"
+                        disabled={isSubmitting}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveEditOption(index)}
+                        className="bg-red-500 text-white px-2 py-1 rounded-lg"
+                        disabled={isSubmitting}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={handleAddEditOption}
+                    className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-200"
+                    disabled={isSubmitting}
+                  >
+                    Add Option
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Solution</label>
+                  <input
+                    type="text"
+                    value={editingExercise.solution.expected_output}
+                    onChange={(e) => handleEditSolutionChange('expected_output', e.target.value)}
+                    className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Expected output"
+                    disabled={isSubmitting}
+                  />
+                  <textarea
+                    value={editingExercise.solution.initial_code}
+                    onChange={(e) => handleEditSolutionChange('initial_code', e.target.value)}
+                    className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mt-2"
+                    placeholder="Initial code"
+                    rows="4"
+                    disabled={isSubmitting}
+                  />
+                  <select
+                    value={editingExercise.solution.language}
+                    onChange={(e) => handleEditSolutionChange('language', e.target.value)}
+                    className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mt-2"
+                    disabled={isSubmitting}
+                  >
+                    <option value="javascript">JavaScript</option>
+                    <option value="python">Python</option>
+                  </select>
+                </div>
+              )}
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={handleExerciseUpdate}
+                  className="bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-600 transition-all duration-300 shadow-md disabled:bg-gray-400"
+                  disabled={isSubmitting}
+                >
+                  Save Changes
+                </button>
+                <button
+                  onClick={() => setEditingExercise(null)}
+                  className="bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all duration-300 shadow-md disabled:bg-gray-400"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleExerciseSubmit} className="mt-8 bg-white p-8 rounded-xl shadow-lg">
-        <h3 className="text-xl font-bold text-gray-900 mb-6">Создать новое задание</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-6">Create New Exercise</h3>
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Тип задания</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Exercise Type</label>
           <select
             value={newExercise.type}
             onChange={(e) => setNewExercise({ ...newExercise, type: e.target.value })}
@@ -377,7 +529,7 @@ const EditLesson = () => {
           </select>
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Название</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
           <input
             type="text"
             value={newExercise.title}
@@ -388,7 +540,7 @@ const EditLesson = () => {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Описание</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
           <textarea
             value={newExercise.description}
             onChange={(e) => setNewExercise({ ...newExercise, description: e.target.value })}
@@ -400,7 +552,7 @@ const EditLesson = () => {
         </div>
         {newExercise.type === 'mcq' ? (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Варианты ответа</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Options</label>
             {newExercise.options.map((option, index) => (
               <div key={index} className="flex gap-2 mb-2">
                 <input
@@ -408,7 +560,7 @@ const EditLesson = () => {
                   value={option.text}
                   onChange={(e) => updateOption(index, 'text', e.target.value)}
                   className="flex-1 p-2 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Текст варианта"
+                  placeholder="Option text"
                   required
                   disabled={isSubmitting}
                 />
@@ -427,12 +579,12 @@ const EditLesson = () => {
               className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-200"
               disabled={isSubmitting}
             >
-              Добавить вариант
+              Add Option
             </button>
           </div>
         ) : (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Решение</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Solution</label>
             <input
               type="text"
               value={newExercise.solution.expected_output}
@@ -443,7 +595,7 @@ const EditLesson = () => {
                 })
               }
               className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Ожидаемый вывод"
+              placeholder="Expected output"
               required
               disabled={isSubmitting}
             />
@@ -456,10 +608,24 @@ const EditLesson = () => {
                 })
               }
               className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mt-2"
-              placeholder="Начальный код"
+              placeholder="Initial code"
               rows="4"
               disabled={isSubmitting}
             />
+            <select
+              value={newExercise.solution.language}
+              onChange={(e) =>
+                setNewExercise({
+                  ...newExercise,
+                  solution: { ...newExercise.solution, language: e.target.value },
+                })
+              }
+              className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mt-2"
+              disabled={isSubmitting}
+            >
+              <option value="javascript">JavaScript</option>
+              <option value="python">Python</option>
+            </select>
           </div>
         )}
         <button
@@ -467,11 +633,11 @@ const EditLesson = () => {
           className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-md disabled:bg-gray-400"
           disabled={isSubmitting}
         >
-          Создать задание
+          Create Exercise
         </button>
       </form>
     </div>
   );
 };
 
-export default EditLesson;
+export default LessonEditor;

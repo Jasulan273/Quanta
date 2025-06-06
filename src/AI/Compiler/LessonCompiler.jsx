@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import Editor from '@monaco-editor/react';
 import { API_URL } from '../../Api/api';
 
-const LessonCompiler = ({ task }) => {
-  const { courseId, moduleId, lessonId } = useParams();
-  const [code, setCode] = useState(task?.solution?.initial_code || '// Write your code here...');
+const LessonCompiler = ({ tasks, courseId, moduleId, lessonId }) => {
+  const [selectedTaskIndex, setSelectedTaskIndex] = useState(0);
+  const [code, setCode] = useState(tasks[0]?.solution?.initial_code || '// Write your code here...');
   const [output, setOutput] = useState('');
-  const [language, setLanguage] = useState(task?.language === 1 ? 'python' : 'javascript');
+  const [language, setLanguage] = useState(tasks[0]?.language === 1 ? 'python' : 'javascript');
   const [showHintModal, setShowHintModal] = useState(false);
   const [hint, setHint] = useState({ text: '', code: '' });
   const [isLoadingHint, setIsLoadingHint] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const currentTask = tasks[selectedTaskIndex];
+
   const handleRunCode = async () => {
-    if (!task?.id) {
+    if (!currentTask?.id) {
       setOutput('Error: Invalid task ID.');
       return;
     }
@@ -34,7 +35,7 @@ const LessonCompiler = ({ task }) => {
       const response = await axios.post(
         `${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/submit-answer/`,
         {
-          answers: [{ exercise_id: task.id, submitted_code: code }],
+          answers: [{ exercise_id: currentTask.id, submitted_code: code }],
         },
         {
           headers: { Authorization: `Bearer ${accessToken}` },
@@ -66,7 +67,7 @@ const LessonCompiler = ({ task }) => {
   };
 
   const fetchHint = async () => {
-    if (!task?.id) {
+    if (!currentTask?.id) {
       setHint({ text: 'Error: Invalid task ID.', code: '' });
       return;
     }
@@ -80,13 +81,13 @@ const LessonCompiler = ({ task }) => {
       }
 
       const requestConfig = {
-        url: `${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/${task.id}/hint/`,
+        url: `${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/${currentTask.id}/hint/`,
         payload: { submitted_code: code },
       };
       console.log('Sending hint request:', {
         url: requestConfig.url,
         payload: JSON.stringify(requestConfig.payload),
-        taskId: task.id,
+        taskId: currentTask.id,
       });
 
       const response = await axios.post(
@@ -120,8 +121,8 @@ const LessonCompiler = ({ task }) => {
       });
       if (error.response?.status === 500) {
         setHint({
-          text: `Unable to fetch hint from server. Please review the task description: "${task.description || 'No description available.'}" or check your code for syntax errors.`,
-          code: task.solution?.initial_code || '',
+          text: `Unable to fetch hint from server. Please review the task description: "${currentTask.description || 'No description available.'}" or check your code for syntax errors.`,
+          code: currentTask.solution?.initial_code || '',
         });
       } else {
         setHint({
@@ -135,16 +136,44 @@ const LessonCompiler = ({ task }) => {
     }
   };
 
+  const handleTaskChange = (index) => {
+    setSelectedTaskIndex(index);
+    setCode(tasks[index]?.solution?.initial_code || '// Write your code here...');
+    setLanguage(tasks[index]?.language === 1 ? 'python' : 'javascript');
+    setOutput('');
+    setHint({ text: '', code: '' });
+    setShowHintModal(false);
+  };
+
   return (
     <div className="flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-5xl border border-gray-200 p-6 rounded-lg shadow-xl bg-white">
-        {task ? (
+        {tasks.length > 1 && (
           <div className="mb-6">
-            <h2 className="text-2xl font-bold mb-4 text-orange-500">{task.title}</h2>
-            <p className="text-gray-700 mb-4">{task.description}</p>
+            <label htmlFor="task-select" className="block text-sm font-medium mb-2 text-gray-700">
+              Select Task
+            </label>
+            <select
+              id="task-select"
+              value={selectedTaskIndex}
+              onChange={(e) => handleTaskChange(Number(e.target.value))}
+              className="w-full p-2 bg-gray-100 border border-gray-300 text-gray-800 rounded-lg mb-4 focus:ring-2 focus:ring-orange-500"
+            >
+              {tasks.map((task, index) => (
+                <option key={task.id} value={index}>
+                  {task.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        {currentTask ? (
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-4 text-orange-500">{currentTask.title}</h2>
+            <p className="text-gray-700 mb-4">{currentTask.description}</p>
             <div className="mb-4">
               <strong>Expected Output:</strong>{' '}
-              <code>{task.solution?.expected_output || 'Not specified'}</code>
+              <code>{currentTask.solution?.expected_output || 'Not specified'}</code>
             </div>
           </div>
         ) : (
@@ -153,19 +182,7 @@ const LessonCompiler = ({ task }) => {
 
         <div className="flex">
           <div className="w-1/2 pr-4">
-            <label htmlFor="language" className="block text-sm font-medium mb-2 text-gray-700">
-              Select Language
-            </label>
-            <select
-              id="language"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="w-full p-2 bg-gray-100 border border-gray-300 text-gray-800 rounded-lg mb-4 focus:ring-2 focus:ring-orange-500"
-              disabled={isSubmitting}
-            >
-              <option value="javascript">JavaScript</option>
-              <option value="python">Python</option>
-            </select>
+        
 
             <div className="border rounded-lg overflow-hidden">
               <Editor
@@ -186,7 +203,7 @@ const LessonCompiler = ({ task }) => {
             <button
               onClick={handleRunCode}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-medium mt-4 transition-all duration-200 disabled:bg-gray-400"
-              disabled={isSubmitting || !task}
+              disabled={isSubmitting || !currentTask}
             >
               {isSubmitting ? 'Submitting...' : 'Run Code'}
             </button>

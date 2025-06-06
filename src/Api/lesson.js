@@ -134,7 +134,7 @@ export const createExercise = async (courseId, moduleId, lessonId, exerciseData)
 export const updateMCQExercise = async (courseId, moduleId, lessonId, exerciseData) => {
   try {
     const response = await fetch(
-      `${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/edit-mcq`,
+      `${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/edit-mcq/`,
       {
         method: 'PATCH',
         headers: {
@@ -156,7 +156,7 @@ export const updateMCQExercise = async (courseId, moduleId, lessonId, exerciseDa
 export const updateCodeExercise = async (courseId, moduleId, lessonId, exerciseData) => {
   try {
     const response = await fetch(
-      `${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/edit-code`,
+      `${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/edit-code/`,
       {
         method: 'PATCH',
         headers: {
@@ -188,10 +188,13 @@ export const deleteExercises = async (courseId, moduleId, lessonId, exerciseData
         body: JSON.stringify(exerciseData),
       }
     );
+
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json(); 
       throw new Error(errorData.detail || 'Failed to delete exercises');
     }
+
+    return await response.json(); 
   } catch (err) {
     throw new Error(`Failed to delete exercises: ${err.message}`);
   }
