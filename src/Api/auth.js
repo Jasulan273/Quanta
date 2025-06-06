@@ -65,10 +65,10 @@ export const handleLogin = async (username, password, setError, setUser, navigat
     setUser(username);
     console.log("Saved Access Token:", localStorage.getItem("accessToken"));
     navigate("/Home");
-  } catch (err) {
-    setError("Invalid credentials. Please try again.");
-    console.error("Login error:", err);
-  }
+} catch (err) {
+  const message = err?.response?.data?.detail || 'Login failed. Please try again.';
+  setError(message);
+}
 };
 
 export const handleRegister = async (username, email, password, confirmPassword, setError, setUser, navigate) => {
