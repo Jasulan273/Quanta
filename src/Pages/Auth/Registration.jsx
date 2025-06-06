@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { registerUser, handleSocialLogin } from '../../Api/auth';
+import { handleRegister, handleSocialLogin } from '../../Api/auth';
 import { FaEye, FaEyeSlash, FaGoogle, FaGithub } from 'react-icons/fa';
 
 export default function Registration({ setUser }) {
@@ -14,13 +14,11 @@ export default function Registration({ setUser }) {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleRegister = async () => {
+  const handleRegisterClick = async () => {
     if (password === confirmPassword) {
       setIsLoading(true);
       try {
-        await registerUser(username, email, password);
-        setError('');
-        navigate('/Auth');
+        await handleRegister(username, email, password, confirmPassword, setError, setUser, navigate);
       } catch (err) {
         const serverMsg =
           err?.response?.data
@@ -121,7 +119,7 @@ export default function Registration({ setUser }) {
         </div>
 
         <button 
-          onClick={handleRegister} 
+          onClick={handleRegisterClick} 
           disabled={isLoading}
           className={`w-full bg-orange-500 text-white font-bold py-3 text-lg rounded-xl hover:bg-orange-600 transition-all duration-300 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-md'}`}
         >

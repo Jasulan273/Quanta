@@ -39,7 +39,7 @@ export const fetchLesson = async (courseId, moduleId, lessonId) => {
 };
 
 export const updateLesson = async (courseId, moduleId, lessonId, lessonData) => {
-  const contentToSend = document.getElementById('content-fallback').value;
+  const contentToSend = lessonData.content;
   const payload = {
     lesson_id: parseInt(lessonId),
     name: lessonData.name,

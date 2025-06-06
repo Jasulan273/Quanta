@@ -6,11 +6,13 @@ export const registerUser = async (username, email, password) => {
     const response = await axios.post(`${API_URL}/signup/`, {
       username,
       email,
-      password,
+      password
+    }, {
+      headers: { 'Content-Type': 'application/json' }
     });
     return response.data;
   } catch (error) {
-    console.error('Error during registration:', error);
+    console.error('Error during registration:', error.response?.data || error.message);
     throw error;
   }
 };
@@ -39,6 +41,18 @@ export const refreshToken = async () => {
   }
 };
 
+export const verifyEmail = async (key) => {
+  try {
+    const response = await axios.post(`${API_URL}/account/confirm-email/`, {
+      key,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error during email verification:', error);
+    throw error;
+  }
+};
+
 export const handleLogin = async (username, password, setError, setUser, navigate) => {
   try {
     const data = await loginUser(username, password);
@@ -59,12 +73,21 @@ export const handleLogin = async (username, password, setError, setUser, navigat
 
 export const handleRegister = async (username, email, password, confirmPassword, setError, setUser, navigate) => {
   try {
-    await registerUser(username, email, password, confirmPassword);
+    await registerUser(username, email, password);
     setError("");
     await handleLogin(username, password, setError, setUser, navigate);
   } catch (error) {
     console.error("Registration error:", error.response?.data || error.message);
-    setError("Registration failed. Please check your details and try again.");
+    if (error.response?.data?.detail) {
+      setError(error.response.data.detail);
+    } else if (error.response?.data) {
+      const errorMessages = Object.entries(error.response.data)
+        .map(([key, val]) => `${key}: ${val instanceof Array ? val.join(', ') : val}`)
+        .join('\n');
+      setError(errorMessages);
+    } else {
+      setError("Registration failed. Please check your details and try again.");
+    }
   }
 };
 
