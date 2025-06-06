@@ -198,7 +198,7 @@ const UserProfile = ({ user, setUser }) => {
               placeholder="About you"
             />
           ) : (
-            <p>{user?.about || 'Hello! My name is Bakhtyar, and I am a passionate author...'}</p>
+            <p>{user?.about || 'Hello! My name is'}</p>
           )}
         </div>
       </div>

@@ -155,6 +155,13 @@ export const updateMCQExercise = async (courseId, moduleId, lessonId, exerciseDa
 
 export const updateCodeExercise = async (courseId, moduleId, lessonId, exerciseData) => {
   try {
+    const payload = {
+      exercises: [{
+        exercise_id: exerciseData.exercise_id,
+        solution: exerciseData.solution
+      }]
+    };
+
     const response = await fetch(
       `${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/edit-code/`,
       {
@@ -163,7 +170,7 @@ export const updateCodeExercise = async (courseId, moduleId, lessonId, exerciseD
           Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(exerciseData),
+        body: JSON.stringify(payload),
       }
     );
     if (!response.ok) {
