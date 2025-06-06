@@ -28,8 +28,9 @@ export default function Auth({ setUser }) {
       setUser(username);
       navigate('/Home');
     } catch (err) {
-      setError('Invalid credentials. Please try again.');
-    } finally {
+  const message = err?.response?.data?.detail || 'Login failed. Please try again.';
+  setError(message);
+} finally {
       setIsLoading(false);
     }
   };
