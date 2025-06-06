@@ -75,7 +75,6 @@ export const handleRegister = async (username, email, password, confirmPassword,
   try {
     await registerUser(username, email, password);
     setError("");
-    await handleLogin(username, password, setError, setUser, navigate);
   } catch (error) {
     console.error("Registration error:", error.response?.data || error.message);
     if (error.response?.data?.detail) {

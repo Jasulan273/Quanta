@@ -19,9 +19,9 @@ const Statistics = () => {
         const data = await response.json();
         setStats([
           { id: 1, title: 'Active Students', value: data.total_students },
-          { id: 2, title: 'Courses', value: 899 },
+          { id: 2, title: 'Courses', value: data.total_courses },
           { id: 3, title: 'Instructors', value: data.total_authors },
-          { id: 4, title: 'Rate', value: 9 },
+          { id: 4, title: 'Rate', value: data.average_site_rating },
         ]);
       } catch (error) {
         console.error('Failed to fetch stats:', error);
