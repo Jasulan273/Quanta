@@ -138,7 +138,7 @@ const AiNotes = ({ user }) => {
 
   useEffect(() => {
     fetchChats();
-  }, [user]);
+  }, [user,fetchChats]);
 
   useEffect(() => {
     if (selectedChatId) {
