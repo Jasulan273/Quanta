@@ -75,7 +75,7 @@ const AiNotes = ({ user }) => {
       setSelectedChatId(chat_id);
 
       const prompt = `Create a clear and concise learning summary (cheatsheet/notes) about the topic "${newChatTopic}" in ${newChatLanguage}. Keep it beginner-friendly and informative. Format in markdown or bullet points.`;
-      const sendResponse = await fetch(`${API_URL}/conspect/${chat_id}/send/`, {
+      const sendResponse = await fetch(`${API_URL}/conspect/${chat_id}/send-message/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
