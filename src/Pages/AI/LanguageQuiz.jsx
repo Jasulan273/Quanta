@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_URL } from '../../Api/api';
 
 const LanguageQuiz = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -60,68 +61,63 @@ const LanguageQuiz = () => {
   ];
 
   const handleAnswer = (value) => {
-    setAnswers({ ...answers, [currentQuestion]: value });
+    const newAnswers = { ...answers, [currentQuestion]: value };
+    setAnswers(newAnswers);
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
-      submitAnswers();
+      submitAnswers(newAnswers);
     }
   };
 
-  const submitAnswers = async () => {
+  const submitAnswers = async (answers) => {
     setIsLoading(true);
     try {
-      const prompt = `
-        Based on these quiz answers: ${JSON.stringify(answers)}, recommend 3 programming languages. 
-        Provide a short, one-sentence explanation per language, directly tied to the user's answers. 
-        Use simple language, no code examples. 
-        Format:
-        text-answer:
-        1. [Language]: [Why it fits].
-        2. [Language]: [Why it fits].
-        3. [Language]: [Why it fits].
-        languages:
-        [Language]
-        [Language]
-        [Language]
-      `;
-
-      const response = await fetch(`${process.env.REACT_APP_AI_URL}/ask`, {
+      const formattedAnswers = Object.keys(answers).map((key, index) => 
+        `${parseInt(key) + 1}) ${questions[key].question} ${answers[key]}`
+      ).join('\n');
+      const token = localStorage.getItem('accessToken');
+      console.log('API_URL:', API_URL);
+      console.log('Request URL:', `${API_URL}/survey/`);
+      console.log('Payload:', { answers: formattedAnswers });
+      
+      const response = await fetch(`${API_URL}/survey/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          question: prompt,
-          input: '',
-          language: ''
+          answers: formattedAnswers,
         }),
       });
 
-      if (!response.ok) throw new Error('Network response was not ok');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Network response was not ok');
+      }
 
       const data = await response.json();
-      setResult(data.result || data.answer || "No response received.");
+      setResult(data);
     } catch (error) {
-      console.error('Error:', error);
-      setResult('Sorry, something went wrong.');
+      console.error('Error:', error.message);
+      console.error('Error details:', error);
+      setResult({ result: `Sorry, something went wrong: ${error.message}`, courses: {} });
     } finally {
       setIsLoading(false);
     }
   };
 
   const parseResult = () => {
-    if (!result) return { textAnswer: '', languages: [] };
-    const textAnswerMatch = result.match(/text-answer:([\s\S]*?)languages:/);
-    const languagesMatch = result.match(/languages:([\s\S]*)/);
-    const textAnswer = textAnswerMatch ? textAnswerMatch[1].trim() : result;
-    const languages = languagesMatch
-      ? languagesMatch[1].trim().split('\n ').map(lang => lang.trim()).filter(lang => lang)
-      : [];
-    return { textAnswer, languages };
+    if (!result) return { textAnswer: '', courses: [] };
+    const textAnswer = result.result || 'No recommendation received.';
+    const courses = Object.entries(result.courses || {}).flatMap(([lang, courseList]) => 
+      courseList.map(course => ({ ...course, language: lang }))
+    );
+    return { textAnswer, courses };
   };
 
-  const { textAnswer, languages } = parseResult();
+  const { textAnswer, courses } = parseResult();
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -221,25 +217,31 @@ const LanguageQuiz = () => {
                 ))}
               </div>
               
-              <div className="grid grid-cols-3 gap-4 mb-8">
-                {languages.map((lang, index) => (
-                  <motion.div
-                    key={index}
-                    className="p-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl text-center text-orange-800 font-semibold text-lg border border-orange-100"
-                    whileHover={{ 
-                      scale: 1.05, 
-                      boxShadow: '0px 10px 25px rgba(245, 158, 11, 0.2)',
-                      y: -5
-                    }}
-                    transition={{ type: 'spring', stiffness: 300 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    {lang}
-                  </motion.div>
-                ))}
-              </div>
+              {courses.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-xl font-semibold mb-4 text-gray-800">Recommended Courses</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {courses.slice(0, 3).map((course, index) => (
+                      <motion.div
+                        key={course.id}
+                        className="p-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl text-center text-orange-800 font-semibold text-lg border border-orange-100"
+                        whileHover={{ 
+                          scale: 1.05, 
+                          boxShadow: '0px 10px 25px rgba(245, 158, 11, 0.2)',
+                          y: -5
+                        }}
+                        transition={{ type: 'spring', stiffness: 300 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <p>{course.title}</p>
+                        <p className="text-sm text-orange-600">{course.language}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
               
               <motion.button
                 onClick={() => {

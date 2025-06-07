@@ -5,7 +5,7 @@ import AiNotes from "./AiNotes";
 import ProjectToR from "./ProjectToR";
 import StandaloneCompiler from "./StandaloneCompiler";
 
-const AI = () => {
+const AI = ({ user }) => {
   const [selectedFeature, setSelectedFeature] = useState(null);
 
   const features = [
@@ -69,13 +69,13 @@ const AI = () => {
                 className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 cursor-pointer"
                 onClick={() => setSelectedFeature(feature.id)}
               >
-                <div className="h-2 bg-gradient-to-r from-orange-400 to-amber-500"></div>
+                <div className={`h-2 bg-gradient-to-r ${feature.color}`}></div>
                 <div className="p-6">
                   <div className="text-4xl mb-4">{feature.icon}</div>
                   <h2 className="text-2xl font-bold mb-2 text-gray-800">{feature.title}</h2>
                   <p className="text-gray-600">{feature.description}</p>
                   <div className="mt-4 flex justify-end">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-orange-400 to-amber-500 text-white">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r ${feature.color} text-white`}>
                       Select →
                     </span>
                   </div>
@@ -111,7 +111,7 @@ const AI = () => {
           Back
         </motion.button>
         {selectedFeature === 'language' && <LanguageQuiz onBack={handleBack} />}
-        {selectedFeature === 'summary' && <AiNotes onBack={handleBack} />}
+        {selectedFeature === 'summary' && <AiNotes onBack={handleBack} user={user} />}
         {selectedFeature === 'project-tor' && <ProjectToR onBack={handleBack} />}
         {selectedFeature === 'compiler' && <StandaloneCompiler onBack={handleBack} />}
       </motion.div>

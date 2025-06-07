@@ -17,7 +17,7 @@ import BlogPage from "./Pages/Blog/BlogPage";
 import NotFound from "./Pages/NotFound/NotFound";
 import UserPanel from "./Pages/UserPanel/UserPanel";
 import PrivateRoute from "./Components/PrivateRoute";
-import AI from "./Pages/AI/AI"
+import AI from "./Pages/AI/AI";
 import CreateCourse from "./Pages/UserPanel/CreateCourse";
 import EditCourse from "./Pages/UserPanel/EditCourse";
 import EditLesson from "./Pages/UserPanel/EditLesson";
@@ -58,8 +58,13 @@ function App() {
 
   useEffect(() => {
     fetchUser();
-    window.addEventListener("storage", fetchUser);
-    return () => window.removeEventListener("storage", fetchUser);
+    const handleStorageChange = (e) => {
+      if (e.key === "accessToken") {
+        fetchUser();
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -75,8 +80,8 @@ function App() {
       {loading && <Loader />}
       <Header user={user} setUser={setUser} />
       <Routes>
-        <Route path="/Home" element={<Home user={user} />} />
-        <Route path="/Courses" element={<Courses />} />
+        <Route path="/home" element={<Home user={user} />} />
+        <Route path="/courses" element={<Courses />} />
         <Route
           path="/courses/:courseId/modules/:moduleId/lesson/:lessonId"
           element={
@@ -85,9 +90,9 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route path="/Blog" element={<Blog />} />
+        <Route path="/blog" element={<Blog />} />
         <Route
-          path="/UserPanel"
+          path="/userpanel"
           element={
             <PrivateRoute user={user}>
               <UserPanel user={user} setUser={setUser} />
@@ -134,16 +139,23 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route path="/About" element={<About />} />
-        <Route path="/FAQ" element={<FAQ />} />
-        <Route path="/Ai" element={<AI />} />
-        <Route path="/Auth" element={<Auth setUser={setUser} fetchUser={fetchUser} />} />
-        <Route path="/Registration" element={<Registration />} />
+        <Route
+          path="/ai"
+          element={
+            <PrivateRoute user={user}>
+              <AI user={user} />
+            </PrivateRoute>
+          }
+        />
+        <Route path="/about" element={<About />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/auth" element={<Auth setUser={setUser} fetchUser={fetchUser} />} />
+        <Route path="/registration" element={<Registration />} />
         <Route path="/auth/callback" element={<AuthCallback setUser={setUser} />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/courses/:courseId" element={<CoursePage user={user} />} />
-        <Route path="/BlogPage/:id" element={<BlogPage />} />
-        <Route path="/" element={<Navigate to="/Home" replace />} />
+        <Route path="/blogpage/:id" element={<BlogPage />} />
+        <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
