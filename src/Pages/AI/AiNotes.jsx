@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_URL } from '../../Api/api';
 
 const AiNotes = ({ user }) => {
@@ -13,7 +13,7 @@ const AiNotes = ({ user }) => {
 
   const languages = ['Python', 'JavaScript', 'Go', 'Java', 'C++', 'Ruby', 'TypeScript', 'PHP'];
 
-  const fetchChats = async () => {
+  const fetchChats = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/conspect/`, {
         headers: {
@@ -29,7 +29,7 @@ const AiNotes = ({ user }) => {
     } catch (err) {
       console.error('Error fetching chats:', err.message);
     }
-  };
+  }, [selectedChatId]);
 
   const fetchChatHistory = async (chatId) => {
     try {
@@ -138,7 +138,7 @@ const AiNotes = ({ user }) => {
 
   useEffect(() => {
     fetchChats();
-  }, [user,fetchChats]);
+  }, [user, fetchChats]);
 
   useEffect(() => {
     if (selectedChatId) {
