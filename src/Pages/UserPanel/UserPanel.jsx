@@ -7,6 +7,7 @@ import UserProfile from './UserProfile';
 import Courses from './Courses';
 import MyCourses from './MyCourses';
 import Blogs from './Blogs';
+import Applications from './Applications';
 
 const UserPanel = () => {
   const [activeComponent, setActiveComponent] = useState('info');
@@ -14,7 +15,7 @@ const UserPanel = () => {
   const [blogs, setBlogs] = useState([]);
   const [user, setUser] = useState(null);
   const username = localStorage.getItem("username");
-  console.log(user?.is_journalist)
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -45,6 +46,7 @@ const UserPanel = () => {
         {activeComponent === 'courses' && user?.role === "author" && <Courses courses={courses} />}
         {activeComponent === 'mycourses' && <MyCourses />}
         {activeComponent === 'blogs' && user?.is_journalist && <Blogs blogs={blogs} />}
+        {activeComponent === 'applications' && <Applications user={user} setUser={setUser} />}
       </div>
     </div>
   );

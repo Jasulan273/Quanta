@@ -1,4 +1,4 @@
-import { Settings, BookOpen, User } from 'lucide-react';
+import { Settings, BookOpen, User, FileText } from 'lucide-react';
 
 const Sidebar = ({ setActiveComponent, user }) => (
   <div className='bg-gray-900 text-white w-1/5 min-h-screen p-4 flex flex-col justify-between'>
@@ -19,7 +19,7 @@ const Sidebar = ({ setActiveComponent, user }) => (
             <BookOpen size={20} /> My Courses
           </button>
         )}
-         {user?.is_journalist === true && (
+        {user?.is_journalist === true && (
           <button
             onClick={() => setActiveComponent('blogs')}
             className='flex items-center gap-2 p-2 rounded-md hover:bg-gray-800 w-full'
@@ -33,6 +33,14 @@ const Sidebar = ({ setActiveComponent, user }) => (
         >
           <BookOpen size={20} /> Enrolled
         </button>
+        {user?.role === 'student' && (
+          <button
+            onClick={() => setActiveComponent('applications')}
+            className='flex items-center gap-2 p-2 rounded-md hover:bg-gray-800 w-full'
+          >
+            <FileText size={20} /> Applications
+          </button>
+        )}
         <button
           onClick={() => setActiveComponent('settings')}
           className='flex items-center gap-2 p-2 rounded-md hover:bg-gray-800 w-full'

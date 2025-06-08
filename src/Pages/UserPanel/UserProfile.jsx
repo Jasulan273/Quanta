@@ -6,7 +6,6 @@ import { API_URL } from '../../Api/api';
 const UserProfile = ({ user, setUser }) => {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
-    email: '',
     about: '',
     birthday: '',
     phone_number: '',
@@ -18,7 +17,6 @@ const UserProfile = ({ user, setUser }) => {
   useEffect(() => {
     if (user) {
       setForm({
-        email: user.email ?? '',
         about: user.about ?? '',
         birthday: user.birthday ?? '',
         phone_number: user.phone_number ?? '',
@@ -44,7 +42,6 @@ const UserProfile = ({ user, setUser }) => {
   const handleSave = async () => {
     setLoading(true);
     try {
-     
       let patchData = {};
       Object.keys(form).forEach(key => {
         if ((user[key] ?? '') !== form[key]) {
@@ -59,7 +56,6 @@ const UserProfile = ({ user, setUser }) => {
         }));
       }
 
-   
       if (avatarFile) {
         const avatarResponse = await updateUserAvatar(avatarFile);
         setUser(prev => ({
@@ -125,13 +121,6 @@ const UserProfile = ({ user, setUser }) => {
           {editing ? (
             <>
               <input
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                className="input w-full mt-1 mb-1 p-1 border rounded"
-                placeholder="Email"
-              />
-              <input
                 name="phone_number"
                 value={form.phone_number}
                 onChange={handleChange}
@@ -166,7 +155,7 @@ const UserProfile = ({ user, setUser }) => {
               <option value="Other">Other</option>
             </select>
           ) : (
-            <p>{user?.gender || 'Не указано'}</p>
+            <p>{user?.gender || 'Not specified'}</p>
           )}
         </div>
         <div className="p-4 bg-white shadow rounded-lg">
@@ -182,7 +171,7 @@ const UserProfile = ({ user, setUser }) => {
               className="input w-full mt-1 mb-1 p-1 border rounded"
             />
           ) : (
-            <p>{user?.birthday || 'Не указано'}</p>
+            <p>{user?.birthday || 'Not specified'}</p>
           )}
         </div>
         <div className="p-4 bg-white shadow rounded-lg col-span-2">

@@ -3,12 +3,11 @@ import axios from 'axios';
 import Editor from '@monaco-editor/react';
 import { API_URL } from '../../Api/api';
 
-const LessonCompiler = ({ tasks, courseId, moduleId, lessonId }) => {
+const LessonCompiler = ({ tasks, courseId, moduleId, lessonId, onHintRequest, hintData }) => {
   const [selectedTaskIndex, setSelectedTaskIndex] = useState(0);
   const [code, setCode] = useState(tasks[0]?.solution?.initial_code || '// Write your code here...');
   const [output, setOutput] = useState('');
   const [language, setLanguage] = useState(tasks[0]?.language === 1 ? 'python' : 'javascript');
-  const [showHintModal, setShowHintModal] = useState(false);
   const [hint, setHint] = useState({ text: '', code: '' });
   const [isLoadingHint, setIsLoadingHint] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,10 +47,6 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId }) => {
           ? 'Correct!'
           : `Incorrect. Output: ${result.submitted_output || 'None'}\nExpected: ${result.expected_output || 'None'}\nError: ${result.stderr || 'None'}`
       );
-
-      if (!result.is_correct) {
-        setShowHintModal(true);
-      }
     } catch (error) {
       console.error('Submission error:', {
         status: error.response?.status,
@@ -80,44 +75,24 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId }) => {
         return;
       }
 
-      const requestConfig = {
-        url: `${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/${currentTask.id}/hint/`,
-        payload: { submitted_code: code },
-      };
-      console.log('Sending hint request:', {
-        url: requestConfig.url,
-        payload: JSON.stringify(requestConfig.payload),
-        taskId: currentTask.id,
-      });
+      const response = await onHintRequest(currentTask.id, true, code);
 
-      const response = await axios.post(
-        requestConfig.url,
-        requestConfig.payload,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      console.log('Hint response:', {
-        status: response.status,
-        data: response.data,
-      });
-      setHint({
-        text: response.data.hint || 'No hint provided.',
-        code: response.data.fixed_code || '',
-      });
+      if (response.hint) {
+        setHint({
+          text: response.hint || 'No hint provided.',
+          code: response.fixed_code || '',
+        });
+      } else {
+        setHint({
+          text: response.error || 'Unable to fetch hint.',
+          code: '',
+        });
+      }
     } catch (error) {
       console.error('Hint error:', {
         status: error.response?.status,
         data: error.response?.data,
         message: error.message,
-        request: {
-          url: error.config?.url,
-          payload: error.config?.data,
-        },
       });
       if (error.response?.status === 500) {
         setHint({
@@ -132,7 +107,6 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId }) => {
       }
     } finally {
       setIsLoadingHint(false);
-      setShowHintModal(false);
     }
   };
 
@@ -142,7 +116,6 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId }) => {
     setLanguage(tasks[index]?.language === 1 ? 'python' : 'javascript');
     setOutput('');
     setHint({ text: '', code: '' });
-    setShowHintModal(false);
   };
 
   return (
@@ -167,8 +140,25 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId }) => {
             </select>
           </div>
         )}
-        {currentTask ? (
-          <div className="mb-6">
+       {currentTask ? (
+          <div className="mb-6 relative">
+            <div className="absolute top-0 right-0 flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Hint count:</span>
+              <button
+                onClick={() => fetchHint()}
+                disabled={hintData[currentTask.id]?.remaining === 0 || isLoadingHint}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+                  hintData[currentTask.id]?.remaining === 0 || isLoadingHint ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'
+                }`}
+                title={
+                  hintData[currentTask.id]?.remaining === 0
+                    ? `No hints available. Next hint in ${hintData[currentTask.id]?.next_available_in_minutes} minutes.`
+                    : `${hintData[currentTask.id]?.remaining} hints remaining`
+                }
+              >
+                {hintData[currentTask.id]?.remaining || 0}
+              </button>
+            </div>
             <h2 className="text-2xl font-bold mb-4 text-orange-500">{currentTask.title}</h2>
             <p className="text-gray-700 mb-4">{currentTask.description}</p>
             <div className="mb-4">
@@ -182,8 +172,6 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId }) => {
 
         <div className="flex">
           <div className="w-1/2 pr-4">
-        
-
             <div className="border rounded-lg overflow-hidden">
               <Editor
                 height="300px"
@@ -199,7 +187,6 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId }) => {
                 }}
               />
             </div>
-
             <button
               onClick={handleRunCode}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-medium mt-4 transition-all duration-200 disabled:bg-gray-400"
@@ -208,7 +195,6 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId }) => {
               {isSubmitting ? 'Submitting...' : 'Run Code'}
             </button>
           </div>
-
           <div className="w-1/2 bg-gray-100 p-4 rounded-lg text-sm font-mono border border-gray-300">
             <h3 className="text-lg font-semibold mb-2 text-gray-700">Output:</h3>
             <pre className="p-2 bg-white rounded-md whitespace-pre-wrap break-all max-h-[300px] overflow-auto">
@@ -217,39 +203,6 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId }) => {
           </div>
         </div>
       </div>
-
-      {showHintModal && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50"
-          onClick={() => setShowHintModal(false)}
-        >
-          <div
-            className="bg-white rounded-lg shadow-xl p-6 max-w-[80vw] max-h-[80vh] w-[80vw] overflow-auto"
-            onClick={(e) => e.stopPropagation()}
-            style={{ boxSizing: 'border-box' }}
-          >
-            <h3 className="text-xl font-bold mb-4">Incorrect Submission</h3>
-            <p className="mb-4">
-              Your code did not produce the expected output. Would you like a hint to fix it?
-            </p>
-            <div className="flex gap-4">
-              <button
-                onClick={fetchHint}
-                disabled={isLoadingHint}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:bg-blue-300"
-              >
-                {isLoadingHint ? 'Loading...' : 'Get Hint'}
-              </button>
-              <button
-                onClick={() => setShowHintModal(false)}
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {hint.text && (
         <div

@@ -11,6 +11,7 @@ const LessonPage = () => {
   const [lessonData, setLessonData] = useState(null);
   const [courseData, setCourseData] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [hintData, setHintData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [videoError, setVideoError] = useState(null);
@@ -27,27 +28,34 @@ const LessonPage = () => {
           return;
         }
 
-        const [courseResponse, lessonResponse, tasksResponse] = await Promise.all([
+        const [courseResponse, lessonResponse, tasksResponse, ...hintResponses] = await Promise.all([
           axios.get(`${API_URL}/courses/${courseId}`),
           axios.get(`${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           }),
-          axios.get(`${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises`, {
+          axios.get(`${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           }),
+          ...tasks.map(task =>
+            axios.get(`${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/${task.id}/hint/`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }).catch(() => ({ data: { remaining: 0, limit: 5, next_available_in_minutes: 720 } }))
+          ),
         ]);
+
         setCourseData(courseResponse.data);
         setLessonData(lessonResponse.data);
         setTasks(tasksResponse.data || []);
+        const hintDataMap = tasks.reduce((acc, task, index) => ({
+          ...acc,
+          [task.id]: hintResponses[index]?.data || { remaining: 0, limit: 5, next_available_in_minutes: 720 },
+        }), {});
+        setHintData(hintDataMap);
       } catch (err) {
         if (err.response?.status === 401) {
           navigate('/Auth');
         } else {
-          setError(
-            err.response?.data?.detail ||
-              err.message ||
-              'Failed to fetch lesson data. Please try again.'
-          );
+          setError(err.response?.data?.detail || err.message || 'Failed to fetch lesson data. Please try again.');
         }
       } finally {
         setLoading(false);
@@ -55,7 +63,7 @@ const LessonPage = () => {
     };
 
     fetchData();
-  }, [courseId, moduleId, lessonId, navigate, accessToken]);
+  }, [courseId, moduleId, lessonId, navigate, accessToken, tasks]);
 
   useEffect(() => {
     if (lessonData?.content && contentRef.current) {
@@ -117,9 +125,7 @@ const LessonPage = () => {
 
   const getLessonNavigation = () => {
     if (!Array.isArray(courseData?.Curriculum)) return { prev: null, next: null };
-    let prev = null,
-      next = null,
-      foundCurrent = false;
+    let prev = null, next = null, foundCurrent = false;
 
     for (const module of courseData.Curriculum) {
       if (!Array.isArray(module.lessons) || module.lessons.length === 0) continue;
@@ -127,45 +133,26 @@ const LessonPage = () => {
       const sortedLessons = [...module.lessons].sort((a, b) => a.lesson_id - b.lesson_id);
       for (let i = 0; i < sortedLessons.length; i++) {
         const lesson = sortedLessons[i];
-        if (
-          lesson.lesson_id === parseInt(lessonId) &&
-          module.module_id === parseInt(moduleId)
-        ) {
+        if (lesson.lesson_id === parseInt(lessonId) && module.module_id === parseInt(moduleId)) {
           foundCurrent = true;
 
           if (i > 0) {
-            prev = {
-              moduleId: module.module_id,
-              lessonId: sortedLessons[i - 1].lesson_id,
-            };
+            prev = { moduleId: module.module_id, lessonId: sortedLessons[i - 1].lesson_id };
           } else if (courseData.Curriculum.indexOf(module) > 0) {
             const prevModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) - 1];
-            const prevSortedLessons = [...(prevModule.lessons || [])].sort(
-              (a, b) => a.lesson_id - b.lesson_id
-            );
+            const prevSortedLessons = [...(prevModule.lessons || [])].sort((a, b) => a.lesson_id - b.lesson_id);
             if (prevSortedLessons.length > 0) {
-              prev = {
-                moduleId: prevModule.module_id,
-                lessonId: prevSortedLessons[prevSortedLessons.length - 1].lesson_id,
-              };
+              prev = { moduleId: prevModule.module_id, lessonId: prevSortedLessons[prevSortedLessons.length - 1].lesson_id };
             }
           }
 
           if (i < sortedLessons.length - 1) {
-            next = {
-              moduleId: module.module_id,
-              lessonId: sortedLessons[i + 1].lesson_id,
-            };
+            next = { moduleId: module.module_id, lessonId: sortedLessons[i + 1].lesson_id };
           } else if (courseData.Curriculum.indexOf(module) < courseData.Curriculum.length - 1) {
             const nextModule = courseData.Curriculum[courseData.Curriculum.indexOf(module) + 1];
-            const nextSortedLessons = [...(nextModule.lessons || [])].sort(
-              (a, b) => a.lesson_id - b.lesson_id
-            );
+            const nextSortedLessons = [...(nextModule.lessons || [])].sort((a, b) => a.lesson_id - b.lesson_id);
             if (nextSortedLessons.length > 0) {
-              next = {
-                moduleId: nextModule.module_id,
-                lessonId: nextSortedLessons[0].lesson_id,
-              };
+              next = { moduleId: nextModule.module_id, lessonId: nextSortedLessons[0].lesson_id };
             }
           }
 
@@ -179,15 +166,30 @@ const LessonPage = () => {
     return { prev, next };
   };
 
-  const { prev, next } = getLessonNavigation();
-
   const handleVideoError = (e) => {
     console.error('Video error:', e);
     setVideoError('Failed to load video. Please check the video URL or try again later.');
   };
 
+  const handleHintRequest = async (exerciseId, isCodeTask = false, submittedCode = '') => {
+    try {
+      const url = `${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/${exerciseId}/hint/`;
+      const response = isCodeTask
+        ? await axios.post(url, { submitted_code: submittedCode }, { headers: { Authorization: `Bearer ${accessToken}` } })
+        : await axios.get(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+
+      setHintData(prev => ({ ...prev, [exerciseId]: response.data }));
+      return response.data;
+    } catch (err) {
+      const errorData = err.response?.data || {};
+      setHintData(prev => ({ ...prev, [exerciseId]: errorData }));
+      return errorData;
+    }
+  };
+
   const codeTasks = tasks.filter(task => task.type === 'code');
   const mcqTasks = tasks.filter(task => task.type === 'mcq');
+  const { prev, next } = getLessonNavigation();
 
   if (loading) return <p>Loading lesson data...</p>;
   if (error) return <p>Error: {error}</p>;
@@ -202,13 +204,9 @@ const LessonPage = () => {
       <ScrollProgress />
       <div className="container mx-auto my-16 px-4">
         <div className="mb-8">
-          <h1 className="text-5xl font-bold mb-4">
-            {name} - Lesson {lessonId}
-          </h1>
+          <h1 className="text-5xl font-bold mb-4">{name} - Lesson {lessonId}</h1>
           <div className="text-gray-600 text-lg">
-            <div>
-              <strong>Description:</strong> {description || 'No description available.'}
-            </div>
+            <div><strong>Description:</strong> {description || 'No description available.'}</div>
           </div>
         </div>
         {(video_url || uploaded_video) && (videoSrc || youtubeEmbedUrl) && (
@@ -232,9 +230,7 @@ const LessonPage = () => {
                   type={uploaded_video ? 'video/mp4' : 'video/mp4'}
                   className="w-full h-auto rounded-lg shadow-lg"
                 />
-                {videoError && (
-                  <p className="text-red-500 text-center mt-4">{videoError}</p>
-                )}
+                {videoError && <p className="text-red-500 text-center mt-4">{videoError}</p>}
               </>
             )}
           </div>
@@ -254,7 +250,14 @@ const LessonPage = () => {
             {codeTasks.length > 0 && (
               <div className="mb-10">
                 <h2 className="text-2xl font-bold mb-4 text-orange-500">Coding Exercises</h2>
-                <LessonCompiler tasks={codeTasks} courseId={courseId} moduleId={moduleId} lessonId={lessonId} />
+                <LessonCompiler
+                  tasks={codeTasks}
+                  courseId={courseId}
+                  moduleId={moduleId}
+                  lessonId={lessonId}
+                  onHintRequest={handleHintRequest}
+                  hintData={hintData}
+                />
               </div>
             )}
             {mcqTasks.length > 0 && (
@@ -262,7 +265,11 @@ const LessonPage = () => {
                 <h2 className="text-2xl font-bold mb-4 text-orange-500">Multiple Choice Questions</h2>
                 {mcqTasks.map((task) => (
                   <div key={task.id} className="mb-10">
-                    <QuizTask task={task} />
+                    <QuizTask
+                      task={task}
+                      onHintRequest={() => handleHintRequest(task.id)}
+                      hintData={hintData[task.id] || { remaining: 0, limit: 5 }}
+                    />
                   </div>
                 ))}
               </div>
@@ -293,28 +300,56 @@ const LessonPage = () => {
   );
 };
 
-function QuizTask({ task }) {
+function QuizTask({ task, onHintRequest, hintData }) {
   const [selected, setSelected] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+  const [submissionResult, setSubmissionResult] = useState(null);
 
   const handleSelect = (id) => {
     if (!submitted) setSelected(id);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitted(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/courses/${task.course_id}/modules/${task.module_id}/lessons/${task.lesson_id}/submit-answer/`,
+        {
+          answers: [{ exercise_id: task.id, selected_option: selected }],
+        },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
+      );
+      setSubmissionResult(response.data.results[0].is_correct);
+    } catch (err) {
+      console.error('Submission error:', err);
+    }
   };
 
   return (
-    <div className="bg-gray-100 p-6 rounded-xl shadow">
+    <div className="bg-gray-100 p-6 rounded-xl shadow relative">
+      {hintData.remaining > 0 && (
+        <div className="absolute top-4 right-4 flex items-center space-x-2">
+          <span className="text-sm text-gray-600">Hints remaining:</span>
+          <button
+            onClick={onHintRequest}
+            disabled={hintData.remaining === 0}
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+              hintData.remaining === 0 ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'
+            } transition-colors`}
+            title={hintData.remaining === 0 ? `No hints available. Next hint in ${hintData.next_available_in_minutes} minutes.` : `${hintData.remaining} hints remaining`}
+          >
+            {hintData.remaining}
+          </button>
+        </div>
+      )}
       <h3 className="text-lg font-bold mb-2">{task.title}</h3>
-      {task.description && <p className="mb-2">{task.description}</p>}
+      {task.description && <p className="mb-4">{task.description}</p>}
       <div className="mb-4">
         {task.options.map((option) => (
           <button
             key={option.id}
-            className={`block w-full text-left mb-2 p-3 rounded border 
-              ${submitted
+            className={`block w-full text-left mb-2 p-3 rounded border ${
+              submitted
                 ? option.is_correct
                   ? 'bg-green-200 border-green-500'
                   : selected === option.id
@@ -323,7 +358,7 @@ function QuizTask({ task }) {
                 : selected === option.id
                 ? 'bg-blue-100 border-blue-400'
                 : 'border-gray-300'
-              }`}
+            }`}
             onClick={() => handleSelect(option.id)}
             disabled={submitted}
           >
@@ -342,7 +377,7 @@ function QuizTask({ task }) {
       )}
       {submitted && (
         <div>
-          {task.options.find((o) => o.is_correct)?.id === selected ? (
+          {submissionResult ? (
             <span className="text-green-600 font-bold">Correct!</span>
           ) : (
             <span className="text-red-600 font-bold">Incorrect</span>
