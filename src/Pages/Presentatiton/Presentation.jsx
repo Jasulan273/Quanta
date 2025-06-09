@@ -139,7 +139,7 @@ const Presentation = () => {
   };
 
   return (
-    <div className="h-screen w-full relative overflow-hidden flex items-center justify-center py-4 px-6 bg-gradient-to-br from-gray-100 to-orange-100">
+    <div className="h-screen w-full relative overflow-hidden py-[500px] flex items-center justify-center px-6 bg-gradient-to-br from-gray-100 to-orange-100">
       <svg className="absolute inset-0 w-full h-full opacity-20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
