@@ -1,19 +1,60 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { API_URL } from '../../Api/api';
 
 const ProjectToR = ({ onBack }) => {
   const [projectName, setProjectName] = useState('');
-  const [description, setDescription] = useState('');
-  const [features, setFeatures] = useState('');
-  const [techStack, setTechStack] = useState('');
-  const [torGenerated, setTorGenerated] = useState(false);
-  const [correctionRequest, setCorrectionRequest] = useState('');
+  const [isCreatingChat, setIsCreatingChat] = useState(true);
+  const [chatId, setChatId] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const generateToR = () => {
-    if (!projectName.trim() || !description.trim()) {
-      return;
+  const handleCreateChat = async () => {
+    if (!projectName.trim()) return;
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/project-tor/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}),
+        },
+        body: JSON.stringify({ topic: projectName }),
+      });
+      if (!response.ok) throw new Error('Failed to create chat');
+      const data = await response.json();
+      setChatId(data.chat_id);
+      setIsCreatingChat(false);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error creating ToR chat:', error);
+      setIsLoading(false);
     }
-    setTorGenerated(true);
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !chatId) return;
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/project-tor/${chatId}/send-message/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}),
+        },
+        body: JSON.stringify({ content: newMessage }),
+      });
+      if (!response.ok) throw new Error('Failed to send message');
+      const data = await response.json();
+      setMessages(data.messages || []);
+      setNewMessage('');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setMessages([...messages, { role: 'assistant', content: `Error: ${error.message}` }]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -25,13 +66,11 @@ const ProjectToR = ({ onBack }) => {
         className="w-full max-w-5xl border border-gray-200 p-6 rounded-lg shadow-xl bg-white"
       >
         <h2 className="text-2xl font-bold mb-4 text-orange-500">Project ToR Generator</h2>
-        
-        {!torGenerated ? (
+
+        {isCreatingChat ? (
           <div className="flex flex-col gap-6">
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">
-                Project Name
-              </label>
+              <label className="block text-sm font-medium mb-2 text-gray-700">Project Name</label>
               <input
                 type="text"
                 value={projectName}
@@ -40,52 +79,13 @@ const ProjectToR = ({ onBack }) => {
                 placeholder="Enter project name"
               />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">
-                Project Description
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full p-2 bg-gray-100 border border-gray-300 text-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500"
-                rows="4"
-                placeholder="Describe your project"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">
-                Key Features (Optional)
-              </label>
-              <textarea
-                value={features}
-                onChange={(e) => setFeatures(e.target.value)}
-                className="w-full p-2 bg-gray-100 border border-gray-300 text-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500"
-                rows="4"
-                placeholder="List key features"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">
-                Technical Stack (Optional)
-              </label>
-              <textarea
-                value={techStack}
-                onChange={(e) => setTechStack(e.target.value)}
-                className="w-full p-2 bg-gray-100 border border-gray-300 text-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500"
-                rows="4"
-                placeholder="Specify technical stack"
-              />
-            </div>
-
             <div className="flex gap-4">
               <button
-                onClick={generateToR}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-medium transition-all duration-200"
+                onClick={handleCreateChat}
+                disabled={isLoading || !projectName}
+                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-medium transition-all duration-200 disabled:bg-gray-400"
               >
-                Generate ToR
+                {isLoading ? 'Creating...' : 'Create ToR'}
               </button>
               <button
                 onClick={onBack}
@@ -97,59 +97,45 @@ const ProjectToR = ({ onBack }) => {
           </div>
         ) : (
           <div className="flex flex-col gap-6">
-            <div className="space-y-6">
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2 text-orange-500">1. Project Overview</h3>
-                <p className="text-gray-700">{projectName}: {description}</p>
-              </div>
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2 text-orange-500">2. Key Features</h3>
-                <p className="text-gray-700">{features || 'To be defined.'}</p>
-              </div>
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2 text-orange-500">3. Technical Stack</h3>
-                <p className="text-gray-700">{techStack || 'To be defined.'}</p>
-              </div>
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2 text-orange-500">4. Next Steps</h3>
-                <ul className="list-disc pl-5 text-gray-700">
-                  <li>Define project timeline and milestones</li>
-                  <li>Assign team roles and responsibilities</li>
-                  <li>Set up development environment</li>
-                </ul>
-              </div>
+            <div className="flex-1 overflow-y-auto">
+              {messages.length > 0 ? (
+                messages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`p-4 rounded-lg ${msg.role === 'user' ? 'bg-orange-50 ml-auto w-fit max-w-xl' : 'bg-gray-50 mr-auto w-full'}`}
+                  >
+                    <div className="font-semibold text-sm mb-2 text-gray-600">
+                      {msg.role === 'user' ? 'You' : 'AI Assistant'}
+                    </div>
+                    <p className="text-gray-700">{msg.content}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500">No messages yet. Start the conversation!</div>
+              )}
             </div>
-
-            <div className="mt-6">
-              <label className="block text-sm font-medium mb-2 text-gray-700">
-                Request Corrections
-              </label>
-              <textarea
-                value={correctionRequest}
-                onChange={(e) => setCorrectionRequest(e.target.value)}
-                className="w-full p-2 bg-gray-100 border border-gray-300 text-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500"
-                rows="4"
-                placeholder="Describe any corrections needed for the ToR"
+            <div className="flex gap-4">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type your message..."
+                className="flex-1 p-2 bg-gray-100 border border-gray-300 text-gray-800 rounded-lg focus:ring-2 focus:ring-orange-500"
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
               />
-              <div className="flex gap-4 mt-4">
-                <button
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-medium transition-all duration-200"
-                >
-                  Submit Correction
-                </button>
-                <button
-                  onClick={() => setTorGenerated(false)}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-medium transition-all duration-200"
-                >
-                  Edit ToR
-                </button>
-                <button
-                  onClick={onBack}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-medium transition-all duration-200"
-                >
-                  Back
-                </button>
-              </div>
+              <button
+                onClick={handleSendMessage}
+                disabled={isLoading || !newMessage}
+                className="bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-medium transition-all duration-200 disabled:bg-gray-400"
+              >
+                {isLoading ? 'Sending...' : 'Send'}
+              </button>
+              <button
+                onClick={onBack}
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 p-3 rounded-lg font-medium transition-all duration-200"
+              >
+                Back
+              </button>
             </div>
           </div>
         )}
