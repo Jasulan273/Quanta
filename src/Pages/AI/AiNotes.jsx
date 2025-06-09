@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { API_URL } from '../../Api/api';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const AiNotes = ({ user }) => {
   const [chats, setChats] = useState([]);
@@ -137,6 +140,75 @@ const AiNotes = ({ user }) => {
     }
   };
 
+  const handleDeleteChat = async (chatId) => {
+    if (!window.confirm('Are you sure you want to delete this chat?')) return;
+    try {
+      const response = await fetch(`${API_URL}/conspect/${chatId}/`, {
+        method: 'DELETE',
+        headers: {
+          ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}),
+        },
+      });
+      if (!response.ok) throw new Error('Failed to delete chat');
+      await fetchChats();
+      if (selectedChatId === chatId) {
+        setSelectedChatId(null);
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error('Error deleting chat:', err.message);
+    }
+  };
+
+const handleGeneratePDF = async (chatId) => {
+  try {
+    const response = await fetch(`${API_URL}/project_tor/${chatId}/pdf/`, {
+      method: 'POST',
+      headers: {
+        ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.log(errorData)
+      throw new Error('Failed to generate PDF');
+    }
+
+    const data = await response.json();
+    const url = data.url;
+    if (!url) {
+      throw new Error('No URL found in response');
+    }
+
+    const fullUrl = url.startsWith('http') ? url : `${API_URL}${url}`;
+
+    const downloadResponse = await fetch(fullUrl);
+    if (!downloadResponse.ok) {
+      const errorData = await downloadResponse.text();
+      throw new Error('Failed to download PDF: ' + errorData);
+    }
+
+    const contentType = downloadResponse.headers.get('Content-Type');
+    if (!contentType || !contentType.includes('application/pdf')) {
+      const errorData = await downloadResponse.text();
+      throw new Error('Invalid file type received: ' + contentType + ' - ' + errorData);
+    }
+
+    const blob = await downloadResponse.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = `project_tor_${chatId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(downloadUrl);
+  } catch (err) {
+    alert(`Failed to generate PDF: ${err.message}`);
+  }
+};
+
   useEffect(() => {
     fetchChats();
   }, [user, fetchChats]);
@@ -151,7 +223,6 @@ const AiNotes = ({ user }) => {
 
   return (
     <div className="flex w-full h-screen bg-gray-100">
-      {/* Sidebar */}
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-xl font-bold text-orange-500 flex items-center">
@@ -209,21 +280,47 @@ const AiNotes = ({ user }) => {
             chats.map((chat) => (
               <div
                 key={chat.id}
-                onClick={() => setSelectedChatId(chat.id)}
-                className={`p-3 mx-2 my-1 rounded-lg cursor-pointer transition-colors ${
+                className={`p-3 mx-2 my-1 rounded-lg border border-transparent transition-colors ${
                   selectedChatId === chat.id 
-                    ? 'bg-orange-100 border border-orange-200' 
-                    : 'hover:bg-gray-50 border border-transparent'
+                    ? 'bg-orange-100 border-orange-200' 
+                    : 'hover:bg-gray-50'
                 }`}
               >
-                <p className="font-semibold text-gray-800 truncate">{chat.topic}</p>
-                <div className="flex justify-between items-center mt-1">
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                    {chat.language}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {new Date(chat.created_at).toLocaleDateString()}
-                  </span>
+                <div className="flex justify-between items-center">
+                  <div
+                    onClick={() => setSelectedChatId(chat.id)}
+                    className="cursor-pointer flex-1"
+                  >
+                    <p className="font-semibold text-gray-800 truncate">{chat.topic}</p>
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                        {chat.language}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {new Date(chat.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleGeneratePDF(chat.id)}
+                      className="text-gray-500 hover:text-orange-500"
+                      title="Generate PDF"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 2H6a2 2 0 00-2 2zm7 3a1 1 0 10-2 0v4a1 1 0 102 0V7zm-5 6a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteChat(chat.id)}
+                      className="text-gray-500 hover:text-red-500"
+                      title="Delete Chat"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))
@@ -235,7 +332,6 @@ const AiNotes = ({ user }) => {
         </div>
       </div>
 
-      {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         <div className="flex-1 overflow-y-auto p-6 bg-white">
           {selectedChatId ? (
@@ -255,27 +351,31 @@ const AiNotes = ({ user }) => {
                     </div>
                     <div className="prose max-w-none">
                       <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
                         components={{
                           p: ({ node, ...props }) => <p className="mb-3" {...props} />,
                           ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-3" {...props} />,
                           ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-3" {...props} />,
                           li: ({ node, ...props }) => <li className="mb-1" {...props} />,
                           code: ({ node, inline, className, children, ...props }) =>
-                            inline ? (
+                            !inline ? (
+                              <SyntaxHighlighter
+                                language={className?.replace('language-', '') || 'javascript'}
+                                style={atomDark}
+                                PreTag="div"
+                                className="rounded-md text-sm my-2"
+                                {...props}
+                              >
+                                {String(children).replace(/\n$/, '')}
+                              </SyntaxHighlighter>
+                            ) : (
                               <code className="bg-gray-200 px-1 py-0.5 rounded text-sm" {...props}>
                                 {children}
                               </code>
-                            ) : (
-                              <pre className="bg-gray-800 text-gray-100 p-3 rounded-md overflow-x-auto text-sm mb-3">
-                                <code {...props}>{children}</code>
-                              </pre>
                             ),
-                          // eslint-disable-next-line jsx-a11y/heading-has-content
-                          h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mb-3 mt-4" {...props} />,
-                          // eslint-disable-next-line jsx-a11y/heading-has-content
-                          h2: ({ node, ...props }) => <h2 className="text-xl font-bold mb-3 mt-4" {...props} />,
-                          // eslint-disable-next-line jsx-a11y/heading-has-content
-                          h3: ({ node, ...props }) => <h3 className="text-lg font-bold mb-3 mt-4" {...props} />,
+                          h1: ({ node, children, ...props }) => <h1 className="text-2xl font-bold mb-3 mt-4" {...props}>{children || 'Heading'}</h1>,
+                          h2: ({ node, children, ...props }) => <h2 className="text-xl font-bold mb-3 mt-4" {...props}>{children || 'Subheading'}</h2>,
+                          h3: ({ node, children, ...props }) => <h3 className="text-lg font-bold mb-3 mt-4" {...props}>{children || 'Sub-subheading'}</h3>,
                           blockquote: ({ node, ...props }) => (
                             <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-600 mb-3" {...props} />
                           ),

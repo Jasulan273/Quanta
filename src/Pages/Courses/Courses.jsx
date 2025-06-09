@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { fetchCourses } from '../../Api/courses';
 import courseImagePlaceholder from '../../Materials/Images/course_banner.png';
 import Time from '../../Materials/Icons/Watchlater.png';
@@ -18,7 +18,27 @@ export default function Courses() {
   const [sortBy, setSortBy] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [showAllLanguages, setShowAllLanguages] = useState(false);
   const coursesPerPage = 3;
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const language = params.get('language');
+    if (language && !selectedLanguages.includes(language)) {
+      setSelectedLanguages([language]);
+    }
+  }, [location.search,selectedLanguages]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedLanguages.length > 0) {
+      params.set('language', selectedLanguages[0]);
+    }
+    navigate({ pathname: '/courses', search: params.toString() }, { replace: true });
+  }, [selectedLanguages, navigate]);
 
   useEffect(() => {
     const loadCourses = async () => {
@@ -45,7 +65,7 @@ export default function Courses() {
     }
 
     if (selectedLanguages.length > 0) {
-      result = result.filter(course => selectedLanguages.includes(course.language));
+      result = result.filter(course => course.language && selectedLanguages.includes(course.language));
     }
 
     if (selectedLevels.length > 0) {
@@ -99,6 +119,18 @@ export default function Courses() {
     setSortBy(type);
   };
 
+  const handleResetFilters = () => {
+    setSelectedLanguages([]);
+    setSelectedLevels([]);
+    setSelectedRating(null);
+    setSearchQuery('');
+    setSortBy('');
+    navigate({ pathname: '/courses', search: '' }, { replace: true });
+  };
+
+  const languages = ['Python', 'Javascript', 'Java', 'C#', 'Golang', 'Ruby', 'PHP', 'C++', 'Swift', 'Kotlin'];
+  const displayedLanguages = showAllLanguages ? languages : languages.slice(0, 5);
+
   if (loading) return <p>Loading courses...</p>;
   if (error) return <p>{error}</p>;
 
@@ -143,7 +175,7 @@ export default function Courses() {
               <div className="border flex flex-col lg:flex-row w-full rounded-[20px] mb-10" key={course.id}>
                 <div className="w-full lg:w-[410px] h-[200px] lg:h-[250px] bg-gray-300 rounded-t-[20px] lg:rounded-l-[20px] lg:rounded-tr-none overflow-hidden">
                   <img
-                    src={course.course_image ?  course.course_image : courseImagePlaceholder}
+                    src={course.course_image ? course.course_image : courseImagePlaceholder}
                     alt={course.title || 'Course Image'}
                     className="w-full h-full object-cover"
                   />
@@ -157,7 +189,7 @@ export default function Courses() {
                   </div>
                   <div className="flex items-center justify-between border-t mt-2 border-gray-300 pt-2 text-sm text-gray-600">
                     <div className="flex items-center">
-                      <img src={Time} className="mr-1" alt="Time Icon" />
+                      <img src={Time} className="r-1" alt="Time Icon" />
                       <p>{course.duration || 'Unknown duration'}</p>
                     </div>
                     <div className="flex items-center">
@@ -197,31 +229,49 @@ export default function Courses() {
       </div>
 
       <div className={`fixed top-0 right-0 bg-white shadow-lg w-[90%] max-w-[300px] h-full p-6 transition-transform duration-300 ease-in-out transform ${showSidebar ? 'translate-x-0' : 'translate-x-full'} lg:static lg:translate-x-0 lg:w-[25%] lg:block`}>
-        <div className="flex justify-between items-center lg:hidden mb-4">
+        <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Filters</h2>
-          <button onClick={() => setShowSidebar(false)} className="text-2xl">&times;</button>
+          <div className="flex gap-2 items-center">
+            <button
+              onClick={handleResetFilters}
+              className="bg-primary text-white p-2 rounded text-sm"
+            >
+              Reset
+            </button>
+            <button onClick={() => setShowSidebar(false)} className="text-2xl lg:hidden">×</button>
+          </div>
         </div>
 
         <h2 className="font-bold text-xl mt-4 mb-6 hidden lg:block">Filter Courses</h2>
 
         <div className="mb-6">
           <h3 className="font-semibold text-lg mb-2">Programming Languages</h3>
-          <ul className="space-y-2">
-            {['Python', 'Javascript', 'Java', 'C#', 'Golang'].map(lang => (
-              <li key={lang} className="flex justify-between items-center">
-                <div>
-                  <input
-                    type="checkbox"
-                    id={lang}
-                    checked={selectedLanguages.includes(lang)}
-                    onChange={() => handleLanguageChange(lang)}
-                  />
-                  <label htmlFor={lang} className="ml-2">{lang}</label>
-                </div>
-                <p>{courses.filter(course => course.language === lang).length}</p>
-              </li>
-            ))}
-          </ul>
+          <div className="max-h-[150px] overflow-y-auto">
+            <ul className="space-y-2">
+              {displayedLanguages.map(lang => (
+                <li key={lang} className="flex justify-between items-center">
+                  <div>
+                    <input
+                      type="checkbox"
+                      id={lang}
+                      checked={selectedLanguages.includes(lang)}
+                      onChange={() => handleLanguageChange(lang)}
+                    />
+                    <label htmlFor={lang} className="ml-2">{lang}</label>
+                  </div>
+                  <p>{courses.filter(course => course.language && course.language === lang).length}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+          {languages.length > 5 && (
+            <button
+              onClick={() => setShowAllLanguages(prev => !prev)}
+              className="mt-2 text-primary hover:underline"
+            >
+              {showAllLanguages ? 'Show Less' : 'Show More'}
+            </button>
+          )}
         </div>
 
         <div className="mb-6">

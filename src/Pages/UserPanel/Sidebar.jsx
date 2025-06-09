@@ -11,14 +11,15 @@ const Sidebar = ({ setActiveComponent, user }) => (
         >
           <User size={20} /> About Me
         </button>
-        {user?.role === "author" && (
-          <button
-            onClick={() => setActiveComponent('courses')}
-            className='flex items-center gap-2 p-2 rounded-md hover:bg-gray-800 w-full'
-          >
-            <BookOpen size={20} /> My Courses
-          </button>
-        )}
+       {['author', 'author_journalist'].includes(user?.role) && (
+  <button
+    onClick={() => setActiveComponent('courses')}
+    className='flex items-center gap-2 p-2 rounded-md hover:bg-gray-800 w-full'
+  >
+    <BookOpen size={20} /> My Courses
+  </button>
+)}
+
         {user?.is_journalist === true && (
           <button
             onClick={() => setActiveComponent('blogs')}

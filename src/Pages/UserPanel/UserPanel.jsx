@@ -21,10 +21,18 @@ const UserPanel = () => {
       try {
         const profile = await fetchUserProfile();
         setUser(profile);
-        if (profile.role && profile.role.toLowerCase() === 'author') {
+        console.log(profile.role);
+
+        // Загружаем курсы для ролей author и author_journalist
+        if (
+          profile.role &&
+          ['author', 'author_journalist'].includes(profile.role.toLowerCase())
+        ) {
           const authorCourses = await fetchAuthorCourses();
           setCourses(authorCourses);
         }
+
+        // Загружаем блоги для журналистов
         if (profile.is_journalist) {
           const authorBlogs = await fetchAuthorBlogs();
           setBlogs(authorBlogs);
@@ -33,17 +41,26 @@ const UserPanel = () => {
         console.error("Failed to fetch data", error);
       }
     };
+
     if (username) {
       fetchData();
     }
   }, [username]);
+
+  // Условие для отображения курсов
+  const canViewCourses =
+    user && ['author', 'author_journalist'].includes(user.role?.toLowerCase());
 
   return (
     <div className='flex w-full min-h-screen'>
       <Sidebar setActiveComponent={setActiveComponent} user={user} />
       <div className='flex-1 bg-gray-100 p-6'>
         {activeComponent === 'info' && <UserProfile user={user} setUser={setUser} />}
-        {activeComponent === 'courses' && user?.role === "author" && <Courses courses={courses} />}
+        
+        {activeComponent === 'courses' && canViewCourses && (
+          <Courses courses={courses} />
+        )}
+
         {activeComponent === 'mycourses' && <MyCourses />}
         {activeComponent === 'blogs' && user?.is_journalist && <Blogs blogs={blogs} />}
         {activeComponent === 'applications' && <Applications user={user} setUser={setUser} />}
