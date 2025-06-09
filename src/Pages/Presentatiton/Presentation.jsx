@@ -1,16 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import Introduction from './videos/introduction.gif'
 
 const Presentation = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [animationClass, setAnimationClass] = useState('');
+  const videoRefs = useRef([]);
 
-  const slides = [
+const slides = useMemo(() => [
     {
       title: 'Welcome to Quanta',
       content: 'Discover Quanta, your ultimate platform for mastering programming through cutting-edge courses, AI-driven tools, and a vibrant community.',
       video: true,
       layout: 'center',
       infographic: 'users',
+      videoPath: Introduction,
+      speed: 2.0,
     },
     {
       title: 'Seamless Authentication',
@@ -18,6 +22,8 @@ const Presentation = () => {
       video: true,
       layout: 'left',
       infographic: 'lock',
+      videoPath: '',
+      speed: 1.0,
     },
     {
       title: 'Empowering Courses',
@@ -25,6 +31,8 @@ const Presentation = () => {
       video: true,
       layout: 'right',
       infographic: 'book',
+      videoPath: './course-video.mp4',
+      speed: 1.5,
     },
     {
       title: 'Interactive Lessons',
@@ -32,6 +40,8 @@ const Presentation = () => {
       video: true,
       layout: 'left',
       infographic: 'code',
+      videoPath: '',
+      speed: 1.0,
     },
     {
       title: 'Vibrant Blogs',
@@ -39,6 +49,8 @@ const Presentation = () => {
       video: true,
       layout: 'center',
       infographic: 'pen',
+      videoPath: './blog-video.mp4',
+      speed: 2.0,
     },
     {
       title: 'Connect & Grow',
@@ -46,6 +58,8 @@ const Presentation = () => {
       video: true,
       layout: 'right',
       infographic: 'network',
+      videoPath: '',
+      speed: 1.0,
     },
     {
       title: 'AI-Powered Learning',
@@ -53,6 +67,8 @@ const Presentation = () => {
       video: true,
       layout: 'left',
       infographic: 'brain',
+      videoPath: './ai-video.mp4',
+      speed: 1.5,
     },
     {
       title: 'Advanced AI Tools',
@@ -60,8 +76,10 @@ const Presentation = () => {
       video: true,
       layout: 'center',
       infographic: 'tools',
+      videoPath: '',
+      speed: 1.0,
     },
-  ];
+  ], []);
 
   const nextSlide = () => {
     setAnimationClass('animate-slide-out-left');
@@ -79,9 +97,18 @@ const Presentation = () => {
     }, 500);
   };
 
-  useEffect(() => {
+useEffect(() => {
     setAnimationClass('animate-slide-in-right');
-  }, []);
+    if (videoRefs.current[currentSlide]) {
+      videoRefs.current[currentSlide].playbackRate = slides[currentSlide].speed;
+      videoRefs.current[currentSlide].play().catch(error => console.log("Autoplay prevented"));
+    }
+    if (currentSlide > 0 && videoRefs.current[currentSlide - 1]) {
+      videoRefs.current[currentSlide - 1].pause();
+    } else if (currentSlide < slides.length - 1 && videoRefs.current[currentSlide + 1]) {
+      videoRefs.current[currentSlide + 1].pause();
+    }
+  }, [currentSlide, slides]);
 
   const renderInfographic = (type) => {
     switch (type) {
@@ -139,7 +166,7 @@ const Presentation = () => {
   };
 
   return (
-    <div className="h-screen w-full relative overflow-hidden py-[500px] flex items-center justify-center px-6 bg-gradient-to-br from-gray-100 to-orange-100">
+     <div className="h-screen w-full relative overflow-hidden flex items-center justify-center py-[500px] px-6 bg-gradient-to-br from-gray-100 to-orange-100">
       <svg className="absolute inset-0 w-full h-full opacity-20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -185,9 +212,29 @@ const Presentation = () => {
                           <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse delay-75"></div>
                           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse delay-150"></div>
                         </div>
-                        <div className="aspect-video bg-gray-300 flex items-center justify-center">
-                          <p className="text-gray-600 text-base">16:9 Video Placeholder</p>
-                        </div>
+                        {slides[currentSlide].videoPath ? (
+                          slides[currentSlide].videoPath.toLowerCase().endsWith('.gif') ? (
+                            <img
+                              className="w-full aspect-video"
+                              src={slides[currentSlide].videoPath}
+                              alt="Slide animation"
+                            />
+                          ) : (
+                            <video
+                              ref={el => videoRefs.current[currentSlide] = el}
+                              className="w-full aspect-video"
+                              autoPlay
+                              muted
+                              src={slides[currentSlide].videoPath}
+                            >
+                              Your browser does not support the video tag.
+                            </video>
+                          )
+                        ) : (
+                          <div className="aspect-video bg-gray-300 flex items-center justify-center">
+                            <p className="text-gray-600 text-base">16:9 Video Placeholder</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -213,9 +260,29 @@ const Presentation = () => {
                           <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse delay-75"></div>
                           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse delay-150"></div>
                         </div>
-                        <div className="aspect-video bg-gray-300 flex items-center justify-center">
-                          <p className="text-gray-600 text-base">16:9 Video Placeholder</p>
-                        </div>
+                        {slides[currentSlide].videoPath ? (
+                          slides[currentSlide].videoPath.toLowerCase().endsWith('.gif') ? (
+                            <img
+                              className="w-full aspect-video"
+                              src={slides[currentSlide].videoPath}
+                              alt="Slide animation"
+                            />
+                          ) : (
+                            <video
+                              ref={el => videoRefs.current[currentSlide] = el}
+                              className="w-full aspect-video"
+                              autoPlay
+                              muted
+                              src={slides[currentSlide].videoPath}
+                            >
+                              Your browser does not support the video tag.
+                            </video>
+                          )
+                        ) : (
+                          <div className="aspect-video bg-gray-300 flex items-center justify-center">
+                            <p className="text-gray-600 text-base">16:9 Video Placeholder</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
