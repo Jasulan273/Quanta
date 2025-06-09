@@ -26,6 +26,7 @@ import CreateBlog from "./Pages/UserPanel/CreateBlog";
 import ChatAssistant from "./Components/СhatAssistant/ChatAssistant";
 import AuthCallback from "./Pages/Auth/AuthCallback";
 import VerifyEmail from "./Pages/Auth/VerifyEmail";
+import Presentation from "./Pages/Presentatiton/Presentation";
 
 function App() {
   const [loading, setLoading] = useState(false);
@@ -148,6 +149,7 @@ function App() {
           }
         />
         <Route path="/about" element={<About />} />
+        <Route path="/presentation" element={<Presentation />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/auth" element={<Auth setUser={setUser} fetchUser={fetchUser} />} />
         <Route path="/registration" element={<Registration />} />
