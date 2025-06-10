@@ -17,8 +17,9 @@ const Blog = () => {
     const loadPosts = async () => {
       try {
         const data = await fetchBlogPosts();
-        setPosts(data);
-        setFilteredPosts(data);
+        const sortedByViews = [...data].sort((a, b) => b.views - a.views);
+        setPosts(sortedByViews);
+        setFilteredPosts(sortedByViews);
         setLoading(false);
       } catch (err) {
         setError('Failed to load blog posts');
@@ -29,14 +30,9 @@ const Blog = () => {
   }, []);
 
   useEffect(() => {
-    let result = [...posts];
-    
-    if (searchTerm) {
-      result = result.filter(post =>
-        post.title.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
+    const result = posts.filter(post =>
+      post.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
     setFilteredPosts(result);
     setCurrentPage(1);
   }, [searchTerm, posts]);
@@ -49,12 +45,7 @@ const Blog = () => {
     { id: 5, title: 'Single Family', count: '15' },
   ];
 
-  const popularPosts = [
-    { id: 1, title: 'How to Start Learning Programming', image: BlogImage },
-    { id: 2, title: 'Top 5 Frameworks for Web Development', image: BlogImage },
-    { id: 3, title: 'Most Popular Programming Languages in 2024', image: BlogImage },
-    { id: 4, title: 'How AI is Changing the World', image: BlogImage },
-  ];
+  const popularPosts = posts.slice(0, 4);
 
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
@@ -97,12 +88,14 @@ const Blog = () => {
               className="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl"
             >
               <div className="flex flex-col md:flex-row">
-         <img
-  src={post.image || BlogImage}
-  alt={post.title}
-  className="w-full md:w-1/3 max-h-60 md:h-auto object-cover rounded"
-/>
-
+                <img
+                  src={post.image || BlogImage}
+                  alt={post.title}
+                  className="w-full md:w-1/3 max-h-60 md:h-auto object-cover rounded"
+                  onError={(e) => {
+                    e.target.src = BlogImage;
+                  }}
+                />
                 <div className="p-6 flex flex-col justify-between w-full md:w-2/3">
                   <div>
                     <h2 className="font-bold text-xl text-gray-900 mb-2">{post.title}</h2>
@@ -163,12 +156,19 @@ const Blog = () => {
                 key={post.id}
                 className="flex items-center w-full h-[90px] bg-white rounded-lg transition-transform duration-300 transform hover:scale-105"
               >
-                <img src={post.image} alt={post.title} className="w-[90px] h-[90px] object-cover rounded-md mr-4" />
+                <img 
+                  src={post.image || BlogImage} 
+                  alt={post.title} 
+                  className="w-[90px] h-[90px] object-cover rounded-md mr-4"
+                  onError={(e) => {
+                    e.target.src = BlogImage;
+                  }}
+                />
                 <div>
                   <h3 className="font-semibold text-gray-800 text-sm hover:cursor-pointer hover:text-primary transition">
                     {post.title}
                   </h3>
-                  <p className="text-xs text-gray-500">Short description...</p>
+                  <p className="text-xs text-gray-500">{post.views} views</p>
                 </div>
               </div>
             ))}

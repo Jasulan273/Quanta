@@ -5,6 +5,7 @@ import levelIcon from "../../Materials/Icons/Signalcellular alt.png";
 import styles from "./Home.module.css";
 import { fetchCourses } from '../../Api/courses';
 import { NavLink } from "react-router-dom";
+import Placeholder from '../../Materials/Images/course_banner.png'
 
 const Featured = () => {
   const [courses, setCourses] = useState([]);
@@ -13,20 +14,30 @@ const Featured = () => {
   const sectionRef = useRef(null);
 
   useEffect(() => {
+    let isMounted = true;
+    
     const loadCourses = async () => {
       try {
         const data = await fetchCourses();
-        const latestCourses = data.slice(-6).reverse();
-        setCourses(latestCourses);
-        setLoading(false);
+        if (isMounted) {
+          const latestCourses = data.slice(-6).reverse();
+          setCourses(latestCourses);
+          setLoading(false);
+        }
       } catch (err) {
-        console.error('Error fetching courses:', err);
-        setError('Failed to load courses. Please try again later.');
-        setLoading(false);
+        if (isMounted) {
+          console.error('Error fetching courses:', err);
+          setError('Failed to load courses. Please try again later.');
+          setLoading(false);
+        }
       }
     };
 
     loadCourses();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (loading) return <p className="text-center">Loading courses...</p>;
@@ -50,16 +61,24 @@ const Featured = () => {
             ? course.description.split(' ').slice(0, 20).join(' ') + (course.description.split(' ').length > 20 ? '...' : '')
             : 'No description available.';
 
+          const secureImageUrl = course.course_image 
+            ? course.course_image.replace(/^http:\/\//i, 'http://')
+            : Placeholder;
+
           return (
             <div
               key={course.id}
-              className={`max-w-sm h-full bg-white rounded-3xl shadow-md overflow-hidden hover:scale-105 hover:shadow-xl transition duration-300 ${styles.fadeIn}`}
+              className={`max-w-sm h-full bg-white rounded-3xl shadow-md overflow-hidden hover:transform hover:scale-105 hover:shadow-xl transition duration-300 ${styles.fadeIn}`}
             >
               <div className="h-52 sm:h-60 bg-gray-300 overflow-hidden">
                 <img 
-                  src={course.course_image ? course.course_image : '/course_placeholder.jpg'}
+                  src={secureImageUrl}
                   alt={course.title || 'Course Image'}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={(e) => {
+                    e.target.src = Placeholder;
+                  }}
                 />
               </div>
 
@@ -90,6 +109,7 @@ const Featured = () => {
                   <NavLink 
                     to={`/courses/${course.id}`} 
                     className="text-black font-semibold hover:underline text-sm sm:text-base"
+                    aria-label={`View details for ${course.title}`}
                   >
                     View More
                   </NavLink>

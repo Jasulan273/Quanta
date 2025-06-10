@@ -14,24 +14,27 @@ const Advertisment = () => {
   const bannerRef = useRef(null);
 
   useEffect(() => {
-    const fetchAds = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`${API_URL}/advertisement/`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        const adsArray = Array.isArray(data.results) ? data.results : [];
-        setAds(adsArray);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching advertisement data:", error);
-        setError("Failed to load advertisements. Please try again later.");
-        setAds([]);
-        setLoading(false);
-      }
-    };
+  const fetchAds = async () => {
+  try {
+    setLoading(true);
+    const response = await fetch(`${API_URL}/advertisements/`);
+    console.log(response);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    console.log(data);
+    // Check if data is an array; otherwise, check data.results or default to []
+    const adsArray = Array.isArray(data) ? data : Array.isArray(data.results) ? data.results : [];
+    setAds(adsArray);
+    setLoading(false);
+  } catch (error) {
+    console.error("Error fetching advertisement data:", error);
+    setError("Failed to load advertisements. Please try again later.");
+    setAds([]);
+    setLoading(false);
+  }
+};
     fetchAds();
   }, []);
 

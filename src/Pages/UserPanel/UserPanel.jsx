@@ -8,9 +8,10 @@ import Courses from './Courses';
 import MyCourses from './MyCourses';
 import Blogs from './Blogs';
 import Applications from './Applications';
+import ModeratorPanel from './ModeratorPanel';
 
 const UserPanel = () => {
-  const [activeComponent, setActiveComponent] = useState('info');
+  const [activeTab, setActiveTab] = useState('info');
   const [courses, setCourses] = useState([]);
   const [blogs, setBlogs] = useState([]);
   const [user, setUser] = useState(null);
@@ -21,9 +22,8 @@ const UserPanel = () => {
       try {
         const profile = await fetchUserProfile();
         setUser(profile);
-        console.log(profile.role);
+        localStorage.setItem('user', JSON.stringify(profile));
 
-        // Загружаем курсы для ролей author и author_journalist
         if (
           profile.role &&
           ['author', 'author_journalist'].includes(profile.role.toLowerCase())
@@ -32,13 +32,12 @@ const UserPanel = () => {
           setCourses(authorCourses);
         }
 
-        // Загружаем блоги для журналистов
         if (profile.is_journalist) {
           const authorBlogs = await fetchAuthorBlogs();
           setBlogs(authorBlogs);
         }
       } catch (error) {
-        console.error("Failed to fetch data", error);
+        console.error('Fetch error:', error);
       }
     };
 
@@ -47,25 +46,27 @@ const UserPanel = () => {
     }
   }, [username]);
 
-  // Условие для отображения курсов
   const canViewCourses =
     user && ['author', 'author_journalist'].includes(user.role?.toLowerCase());
+  const isModerator = user && user.role?.toLowerCase() === 'moderator';
 
   return (
     <div className='flex w-full min-h-screen'>
-      <Sidebar setActiveComponent={setActiveComponent} user={user} />
+      <Sidebar setActiveTab={setActiveTab} user={user} />
       <div className='flex-1 bg-gray-100 p-6'>
-        {activeComponent === 'info' && <UserProfile user={user} setUser={setUser} />}
-        
-        {activeComponent === 'courses' && canViewCourses && (
+        {activeTab === 'info' && <UserProfile user={user} />}
+        {activeTab === 'courses' && canViewCourses && (
           <Courses courses={courses} />
         )}
-
-        {activeComponent === 'mycourses' && <MyCourses />}
-        {activeComponent === 'blogs' && user?.is_journalist && <Blogs blogs={blogs} />}
-        {activeComponent === 'applications' && (
-          <Applications user={user} setUser={setUser} fetchUserProfile={fetchUserProfile} />
+        {activeTab === 'mycourses' && !isModerator && <MyCourses />}
+        {activeTab === 'blogs' && !isModerator && user?.is_journalist && <Blogs blogs={blogs} />}
+        {activeTab === 'applications' && !isModerator && (
+          <Applications user={user} fetchUserProfile={fetchUserProfile} />
         )}
+        {activeTab === 'applications' && isModerator && <ModeratorPanel activeTab={activeTab} />}
+        {activeTab === 'users' && isModerator && <ModeratorPanel activeTab={activeTab} />}
+        {activeTab === 'ads' && isModerator && <ModeratorPanel activeTab={activeTab} />}
+        {activeTab === 'settings' && <div>Settings Content</div>}
       </div>
     </div>
   );
