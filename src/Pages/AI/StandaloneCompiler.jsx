@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import Editor from '@monaco-editor/react';
 import { API_URL } from '../../Api/api';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const StandaloneCompiler = ({ onBack }) => {
   const codeTemplates = {
@@ -10,24 +14,24 @@ const StandaloneCompiler = ({ onBack }) => {
     cpp: `#include <iostream>
 using namespace std;
 int main() {
-    cout << "Hello, World!" << endl;
-    return 0;
+  cout << "Hello, World!" << endl;
+  return 0;
 }`,
     go: `package main
 import "fmt"
 func main() {
-    fmt.Println("Hello, World!")
+  fmt.Println("Hello, World!")
 }`,
     csharp: `using System;
 class Program {
-    static void Main() {
-        Console.WriteLine("Hello, World!");
-    }
+  static void Main() {
+    Console.WriteLine("Hello, World!");
+  }
 }`,
     java: `public class Main {
-    public static void main(String[] args) {
-        System.out.println("Hello, World!");
-    }
+  public static void main(String[] args) {
+    System.out.println("Hello, World!");
+  }
 }`,
   };
 
@@ -35,6 +39,7 @@ class Program {
   const [output, setOutput] = useState('');
   const [language, setLanguage] = useState('javascript');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modalContent, setModalContent] = useState(null);
 
   const handleLanguageChange = (newLanguage) => {
     setLanguage(newLanguage);
@@ -43,7 +48,7 @@ class Program {
     }
   };
 
-  const handleCodeAction = async (action) => {
+  const handleRunCode = async () => {
     if (!code.trim()) {
       setOutput('Please write some code first.');
       return;
@@ -60,9 +65,8 @@ class Program {
       const response = await axios.post(
         `${API_URL}/compiler/`,
         {
-          code,
+          input: code,
           language,
-          action,
         },
         {
           headers: {
@@ -79,17 +83,56 @@ class Program {
         setOutput(stderr || `Error: Code execution failed with exit code ${exit_code}.`);
       }
     } catch (error) {
-      console.error(`${action} error:`, {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-      });
       setOutput(
-        `Error: ${error.response?.data?.stderr || error.response?.data?.detail || error.message || `Failed to ${action} code.`}`
+        `Error: ${error.response?.data?.stderr || error.response?.data?.detail || error.message || 'Failed to run code.'}`
       );
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleAIFeature = async (feature) => {
+    if (!code.trim()) {
+      setOutput('Please write some code first.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        setOutput('Error: Please log in to use AI features.');
+        return;
+      }
+
+      const response = await axios.post(
+        `${API_URL}/compiler-features/`,
+        {
+          input: code,
+          feature,
+          language,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const { text, code: newCode } = response.data;
+      setModalContent({ feature, text, code: newCode });
+    } catch (error) {
+      setOutput(
+        `Error: ${error.response?.data?.detail || error.message || `Failed to ${feature.toLowerCase()}.`}`
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const closeModal = () => {
+    setModalContent(null);
   };
 
   return (
@@ -128,10 +171,9 @@ class Program {
                 }}
               />
             </div>
-
             <div className="flex gap-4 mt-4">
               <button
-                onClick={() => handleCodeAction('test')}
+                onClick={handleRunCode}
                 className="flex-1 bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-lg font-medium transition-all duration-200 disabled:bg-gray-400"
                 disabled={isSubmitting}
               >
@@ -147,43 +189,80 @@ class Program {
           </div>
 
           <div className="w-1/2 bg-gray-100 p-4 rounded-lg text-sm font-mono border border-gray-300">
+            <div className="flex space-x-2 mb-4">
+              {['Refactor code', 'Analyze Code', 'Optimize Performance', 'Debug Code'].map((feature) => (
+                <button
+                  key={feature}
+                  onClick={() => handleAIFeature(feature)}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg font-medium transition-all duration-200 disabled:bg-gray-400 text-xs"
+                  disabled={isSubmitting}
+                >
+                  {feature}
+                </button>
+              ))}
+            </div>
             <h3 className="text-lg font-semibold mb-2 text-gray-700">Output:</h3>
-            <pre className="p-2 bg-white rounded-md whitespace-pre-wrap break-all max-h-[400px] overflow-auto">
+            <pre className="p-2 bg-white rounded-md whitespace-pre-wrap break-all max-h-[360px] overflow-auto">
               {output}
             </pre>
-            <div className="mt-4 flex flex-col gap-2">
-              <button
-                onClick={() => handleCodeAction('refactor')}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg font-medium transition-all duration-200 disabled:bg-gray-400"
-                disabled={isSubmitting}
-              >
-                Refactor Code
-              </button>
-              <button
-                onClick={() => handleCodeAction('analyze')}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg font-medium transition-all duration-200 disabled:bg-gray-400"
-                disabled={isSubmitting}
-              >
-                Analyze Code
-              </button>
-              <button
-                onClick={() => handleCodeAction('optimize')}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg font-medium transition-all duration-200 disabled:bg-gray-400"
-                disabled={isSubmitting}
-              >
-                Optimize Performance
-              </button>
-              <button
-                onClick={() => handleCodeAction('debug')}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg font-medium transition-all duration-200 disabled:bg-gray-400"
-                disabled={isSubmitting}
-              >
-                Debug Code
-              </button>
-            </div>
           </div>
         </div>
       </div>
+
+      {modalContent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-orange-500">{modalContent.feature}</h3>
+              <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                p: ({ node, ...props }) => <p className="text-gray-700 mb-4" {...props} />,
+                code: ({ node, inline, className, children, ...props }) =>
+                  !inline ? (
+                    <SyntaxHighlighter
+                      language={language}
+                      style={atomDark}
+                      PreTag="div"
+                      className="rounded-md text-sm my-2"
+                      {...props}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                  ) : (
+                    <code className="bg-gray-200 px-1 py-0.5 rounded text-sm text-gray-800" {...props}>
+                      {children}
+                    </code>
+                  ),
+              }}
+            >
+              {modalContent.text}
+            </ReactMarkdown>
+            {modalContent.code && (
+              <SyntaxHighlighter
+                language={language}
+                style={atomDark}
+                PreTag="div"
+                className="rounded-md text-sm my-2"
+              >
+                {modalContent.code}
+              </SyntaxHighlighter>
+            )}
+            <button
+              onClick={closeModal}
+              className="mt-4 bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg font-medium transition-all duration-200"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
