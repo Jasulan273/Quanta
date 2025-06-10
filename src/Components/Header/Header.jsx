@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NavLink, useNavigate, useLocation  } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import Logo from "../../Materials/Images/Logo_art.png";
 import { API_URL } from "../../Api/api";
 
@@ -9,8 +9,7 @@ export default function Header({ user, setUser }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-   useEffect(() => {
- 
+  useEffect(() => {
     setIsProfileMenuOpen(false);
     setIsMenuOpen(false);
   }, [location.pathname]);
@@ -31,7 +30,7 @@ export default function Header({ user, setUser }) {
   };
 
   return (
-    <div className="flex items-center justify-between w-full max-w-7xl mx-auto h-16 px-4 border-b z-1000 border-lightgrey relative">
+    <div className="flex items-center justify-between w-full max-w-7xl mx-auto h-16 px-4 border-b z-40 border-lightgrey relative">
       <div className="flex items-center">
         <img src={Logo} className="w-12 h-auto" alt="Logo" />
         <h1 className="ml-2 font-bold text-lg">Quanta</h1>
@@ -49,7 +48,7 @@ export default function Header({ user, setUser }) {
         </button>
       </div>
 
-      <div className={`flex-col md:flex md:flex-row md:items-center md:gap-6 font-semibold absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent shadow-md md:shadow-none transition-all duration-300 ease-in-out ${isMenuOpen ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`flex-col md:flex md:flex-row md:items-center md:gap-6 font-semibold absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent shadow-md md:shadow-none transition-all duration-300 ease-in-out z-50 ${isMenuOpen ? 'flex' : 'hidden md:flex'}`}>
         <NavLink
           to="/Home"
           className={({ isActive }) =>
