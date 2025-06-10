@@ -12,6 +12,7 @@ export default function Registration({ setUser }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
   const navigate = useNavigate();
 
   const handleRegisterClick = async () => {
@@ -19,6 +20,12 @@ export default function Registration({ setUser }) {
       setIsLoading(true);
       try {
         await handleRegister(username, email, password, confirmPassword, setError, setUser, navigate);
+        setShowVerificationModal(true);
+  
+        setTimeout(() => {
+          setShowVerificationModal(false);
+          navigate('/auth');
+        }, 3000);
       } catch (err) {
         const serverMsg =
           err?.response?.data
@@ -156,6 +163,16 @@ export default function Registration({ setUser }) {
           </NavLink>
         </p>
       </div>
+
+      {showVerificationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl p-8 max-w-sm w-full text-center">
+            <h3 className="text-2xl font-bold text-orange-500 mb-4">Registration Successful!</h3>
+            <p className="text-gray-700 mb-4">Please check your email to verify your account.</p>
+            <p className="text-gray-500">Redirecting to login in 3 seconds...</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

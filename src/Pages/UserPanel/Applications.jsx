@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_URL } from '../../Api/api';
 
-const Applications = ({ user, setUser }) => {
+const Applications = ({ user, setUser, fetchUserProfile }) => {
   const [statuses, setStatuses] = useState({
     author_status: 'none',
     author_reject_reason: '',
@@ -12,7 +12,7 @@ const Applications = ({ user, setUser }) => {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (user?.role === 'student') {
+    if (user?.role === 'student' || user?.role === 'author' || user?.role === 'journalist') {
       fetchApplicationStatuses();
     }
   }, [user]);
@@ -37,7 +37,10 @@ const Applications = ({ user, setUser }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage(response.data.message);
-      fetchApplicationStatuses();
+      await fetchApplicationStatuses();
+   
+      const updatedProfile = await fetchUserProfile();
+      setUser(updatedProfile);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Error submitting application');
     }
@@ -50,13 +53,16 @@ const Applications = ({ user, setUser }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessage(response.data.message);
-      fetchApplicationStatuses();
+      await fetchApplicationStatuses();
+    
+      const updatedProfile = await fetchUserProfile();
+      setUser(updatedProfile);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Error withdrawing application');
     }
   };
 
-  if (user?.role !== 'student' && (user?.role === 'author' || user?.is_journalist)) {
+  if (user?.role === 'author_journalist') {
     return null;
   }
 
@@ -65,7 +71,7 @@ const Applications = ({ user, setUser }) => {
       <h2 className="text-2xl font-bold mb-4">Apply for Additional Roles</h2>
       {message && <p className="mb-4 text-green-600">{message}</p>}
       
-      {user?.role === 'student' && statuses.author_status !== 'approved' && (
+      {user?.role !== 'author' && statuses.author_status !== 'approved' && (
         <div className="mb-6">
           <h3 className="text-xl font-semibold">Become a Course Author</h3>
           <p className="text-gray-600 mb-2">Status: {statuses.author_status}</p>
@@ -91,7 +97,7 @@ const Applications = ({ user, setUser }) => {
         </div>
       )}
 
-      {user?.role === 'student' && statuses.journalist_status !== 'approved' && (
+      {user?.role !== 'journalist' && statuses.journalist_status !== 'approved' && (
         <div>
           <h3 className="text-xl font-semibold">Become a Journalist</h3>
           <p className="text-gray-600 mb-2">Status: {statuses.journalist_status}</p>

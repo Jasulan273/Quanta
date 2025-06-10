@@ -63,7 +63,9 @@ const UserPanel = () => {
 
         {activeComponent === 'mycourses' && <MyCourses />}
         {activeComponent === 'blogs' && user?.is_journalist && <Blogs blogs={blogs} />}
-        {activeComponent === 'applications' && <Applications user={user} setUser={setUser} />}
+        {activeComponent === 'applications' && (
+          <Applications user={user} setUser={setUser} fetchUserProfile={fetchUserProfile} />
+        )}
       </div>
     </div>
   );

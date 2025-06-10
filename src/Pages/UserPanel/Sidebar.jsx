@@ -34,7 +34,7 @@ const Sidebar = ({ setActiveComponent, user }) => (
         >
           <BookOpen size={20} /> Enrolled
         </button>
-        {user?.role === 'student' && (
+       {['student', 'author', 'journalist'].includes(user?.role) && (
           <button
             onClick={() => setActiveComponent('applications')}
             className='flex items-center gap-2 p-2 rounded-md hover:bg-gray-800 w-full'

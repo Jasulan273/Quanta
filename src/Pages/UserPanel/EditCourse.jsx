@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { API_URL } from '../../Api/api';
 import { Edit, Trash2 } from 'lucide-react';
-import { updateCourse } from '../../Api/courses';
 
 const EditCourse = () => {
   const { courseId } = useParams();
@@ -10,12 +9,15 @@ const EditCourse = () => {
   const [courseData, setCourseData] = useState({
     title: '',
     description: '',
-    duration: '',
+    durationValue: '',
+    durationUnit: '',
+    language: '',
+    level: ''
   });
   const [courseImage, setCourseImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [modules, setModules] = useState([]);
-  const [newModule, setNewModule] = useState({ module: '', duration: '' });
+  const [newModule, setNewModule] = useState({ module: '', durationValue: '', durationUnit: '' });
   const [editingModule, setEditingModule] = useState(null);
   const [lessons, setLessons] = useState({});
   const [newLesson, setNewLesson] = useState({ name: '' });
@@ -28,24 +30,33 @@ const EditCourse = () => {
   const [deleteModuleId, setDeleteModuleId] = useState(null);
   const [confirmInput, setConfirmInput] = useState('');
   const [modalError, setModalError] = useState(null);
+  const programmingLanguages = ['R', 'Ruby', 'PHP', 'Golang', 'Java', 'Javascript', 'C++', 'Python'];
+  const durationValues = Array.from({ length: 30 }, (_, i) => (i + 1).toString());
+  const courseDurationUnits = ['day', 'week'];
+  const moduleDurationUnits = ['hour', 'minute'];
+  const courseLevels = ['beginner', 'intermediate', 'expert', 'all'];
 
   useEffect(() => {
     const fetchCourse = async () => {
       try {
         const response = await fetch(`${API_URL}/author/courses/${courseId}/`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-          },
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+          }
         });
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.detail || 'Course not found');
         }
         const data = await response.json();
+        const [value, unit] = data.duration ? data.duration.split(' ') : ['', ''];
         setCourseData({
-          title: data.title,
-          description: data.description,
-          duration: data.duration,
+          title: data.title || '',
+          description: data.description || '',
+          durationValue: value,
+          durationUnit: unit.replace(/s$/, ''),
+          language: data.language || '',
+          level: data.level || ''
         });
         if (data.course_image) {
           setImagePreview(data.course_image);
@@ -60,15 +71,18 @@ const EditCourse = () => {
       try {
         const response = await fetch(`${API_URL}/author/courses/${courseId}/modules/`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-          },
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+          }
         });
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.detail || 'Failed to fetch modules');
         }
         const data = await response.json();
-        setModules(data);
+        setModules(data.map(mod => {
+          const [value, unit] = mod.duration ? mod.duration.split(' ') : ['', ''];
+          return { ...mod, durationValue: value, durationUnit: unit.replace(/s$/, '') };
+        }));
       } catch (err) {
         setError(`Failed to fetch modules: ${err.message}`);
       }
@@ -82,8 +96,8 @@ const EditCourse = () => {
     try {
       const response = await fetch(`${API_URL}/author/courses/${courseId}/modules/${moduleId}/lessons/`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-        },
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        }
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -115,13 +129,33 @@ const EditCourse = () => {
 
   const handleCourseSubmit = async (e) => {
     e.preventDefault();
-    if (!courseData.title.trim() || !courseData.description.trim() || !courseData.duration.trim()) {
-      setError('Title, description, and duration are required');
+    if (!courseData.title.trim() || !courseData.description.trim() || !courseData.durationValue || !courseData.durationUnit || !courseData.language || !courseData.level) {
+      setError('All fields are required');
       return;
     }
     try {
       setIsSubmitting(true);
-      await updateCourse(courseId, courseData, courseImage);
+      const duration = `${courseData.durationValue} ${courseData.durationUnit}${parseInt(courseData.durationValue) > 1 ? 's' : ''}`;
+      const formData = new FormData();
+      formData.append('title', courseData.title);
+      formData.append('description', courseData.description);
+      formData.append('duration', duration);
+      formData.append('language', courseData.language);
+      formData.append('level', courseData.level);
+      if (courseImage) {
+        formData.append('course_image', courseImage);
+      }
+      const response = await fetch(`${API_URL}/author/courses/${courseId}/`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: formData
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to update course');
+      }
       setError(null);
     } catch (err) {
       setError(`Failed to update course: ${err.message}`);
@@ -132,27 +166,37 @@ const EditCourse = () => {
 
   const handleModuleSubmit = async (e) => {
     e.preventDefault();
-    if (!newModule.module.trim() || !newModule.duration.trim()) {
+    if (!newModule.module.trim() || !newModule.durationValue || !newModule.durationUnit) {
       setError('Module name and duration are required');
       return;
     }
     try {
       setIsSubmitting(true);
+      const duration = `${newModule.durationValue} ${newModule.durationUnit}${parseInt(newModule.durationValue) > 1 ? 's' : ''}`;
       const response = await fetch(`${API_URL}/author/courses/${courseId}/modules/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
         },
-        body: JSON.stringify(newModule),
+        body: JSON.stringify({
+          module: newModule.module,
+          duration: duration
+        })
       });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to create module');
       }
       const data = await response.json();
-      setModules([...modules, { ...newModule, module_id: data.module_id }]);
-      setNewModule({ module: '', duration: '' });
+      setModules([...modules, {
+        module: newModule.module,
+        duration: duration,
+        durationValue: newModule.durationValue,
+        durationUnit: newModule.durationUnit,
+        module_id: data.module_id
+      }]);
+      setNewModule({ module: '', durationValue: '', durationUnit: '' });
       setError(null);
     } catch (err) {
       setError(`Failed to create module: ${err.message}`);
@@ -162,29 +206,37 @@ const EditCourse = () => {
   };
 
   const handleModuleUpdate = async (moduleId) => {
-    if (!newModule.module.trim() || !newModule.duration.trim()) {
+    if (!newModule.module.trim() || !newModule.durationValue || !newModule.durationUnit) {
       setError('Module name and duration are required');
       return;
     }
     try {
       setIsSubmitting(true);
+      const duration = `${newModule.durationValue} ${newModule.durationUnit}${parseInt(newModule.durationValue) > 1 ? 's' : ''}`;
       const response = await fetch(`${API_URL}/author/courses/${courseId}/modules/${moduleId}/`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
         },
-        body: JSON.stringify(newModule),
+        body: JSON.stringify({
+          module: newModule.module,
+          duration: duration
+        })
       });
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Failed to update module');
       }
-      setModules(modules.map((mod) => 
-        mod.module_id === moduleId ? { ...newModule, module_id: moduleId } : mod
+      setModules(modules.map((mod) =>
+        mod.module_id === moduleId ? {
+          ...newModule,
+          module_id: moduleId,
+          duration: duration
+        } : mod
       ));
       setEditingModule(null);
-      setNewModule({ module: '', duration: '' });
+      setNewModule({ module: '', durationValue: '', durationUnit: '' });
       setError(null);
     } catch (err) {
       setError(`Failed to update module: ${err.message}`);
@@ -207,9 +259,9 @@ const EditCourse = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`
           },
-          body: JSON.stringify({ name: newLesson.name }),
+          body: JSON.stringify({ name: newLesson.name })
         }
       );
       if (!response.ok) {
@@ -219,7 +271,7 @@ const EditCourse = () => {
       const data = await response.json();
       setLessons((prev) => ({
         ...prev,
-        [moduleId]: [...(prev[moduleId] || []), { name: newLesson.name, lesson_id: data.lesson_id }],
+        [moduleId]: [...(prev[moduleId] || []), { name: newLesson.name, lesson_id: data.lesson_id }]
       }));
       setNewLesson({ name: '' });
       setError(null);
@@ -257,8 +309,8 @@ const EditCourse = () => {
       const response = await fetch(url, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
-        },
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        }
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -281,7 +333,7 @@ const EditCourse = () => {
       } else if (deleteType === 'lesson') {
         setLessons((prev) => ({
           ...prev,
-          [deleteModuleId]: prev[deleteModuleId].filter((lesson) => lesson.lesson_id !== deleteId),
+          [deleteModuleId]: prev[deleteModuleId].filter((lesson) => lesson.lesson_id !== deleteId)
         }));
       }
       setShowDeleteModal(false);
@@ -297,16 +349,11 @@ const EditCourse = () => {
     <div className="max-w-[90%] mx-auto p-8 bg-gradient-to-b from-gray-50 to-white min-h-screen">
       <h2 className="text-3xl font-extrabold text-gray-900 mb-8 text-center">Edit Course</h2>
       {error && (
-        <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg shadow-md">
-          {error}
-        </div>
+        <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg shadow-md">{error}</div>
       )}
-
       <form onSubmit={handleCourseSubmit} className="space-y-6 bg-white p-8 rounded-xl shadow-lg">
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-            Course Title
-          </label>
+          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">Course Title</label>
           <input
             type="text"
             id="title"
@@ -318,9 +365,7 @@ const EditCourse = () => {
           />
         </div>
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-            Description
-          </label>
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">Description</label>
           <textarea
             id="description"
             value={courseData.description}
@@ -331,24 +376,74 @@ const EditCourse = () => {
             disabled={isSubmitting}
           />
         </div>
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <label htmlFor="durationValue" className="block text-sm font-medium text-gray-700 mb-2">Duration Value</label>
+            <select
+              id="durationValue"
+              value={courseData.durationValue}
+              onChange={(e) => setCourseData({ ...courseData, durationValue: e.target.value })}
+              className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+              required
+              disabled={isSubmitting}
+            >
+              <option value="" disabled>Select duration value</option>
+              {durationValues.map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label htmlFor="durationUnit" className="block text-sm font-medium text-gray-700 mb-2">Duration Unit</label>
+            <select
+              id="durationUnit"
+              value={courseData.durationUnit}
+              onChange={(e) => setCourseData({ ...courseData, durationUnit: e.target.value })}
+              className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+              required
+              disabled={isSubmitting}
+            >
+              <option value="" disabled>Select duration unit</option>
+              {courseDurationUnits.map((unit) => (
+                <option key={unit} value={unit}>{unit}</option>
+              ))}
+            </select>
+          </div>
+        </div>
         <div>
-          <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-2">
-            Duration
-          </label>
-          <input
-            type="text"
-            id="duration"
-            value={courseData.duration}
-            onChange={(e) => setCourseData({ ...courseData, duration: e.target.value })}
+          <label htmlFor="language" className="block text-sm font-medium text-gray-700 mb-2">Programming Language</label>
+          <select
+            id="language"
+            value={courseData.language}
+            onChange={(e) => setCourseData({ ...courseData, language: e.target.value })}
             className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
             required
             disabled={isSubmitting}
-          />
+          >
+            <option value="" disabled>Select a programming language</option>
+            {programmingLanguages.map((lang) => (
+              <option key={lang} value={lang}>{lang}</option>
+            ))}
+          </select>
         </div>
         <div>
-          <label htmlFor="courseImage" className="block text-sm font-medium text-gray-700 mb-2">
-            Course Image
-          </label>
+          <label htmlFor="level" className="block text-sm font-medium text-gray-700 mb-2">Course Level</label>
+          <select
+            id="level"
+            value={courseData.level}
+            onChange={(e) => setCourseData({ ...courseData, level: e.target.value })}
+            className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+            required
+            disabled={isSubmitting}
+          >
+            <option value="" disabled>Select course level</option>
+            {courseLevels.map((level) => (
+              <option key={level} value={level}>{level}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="courseImage" className="block text-sm font-medium text-gray-700 mb-2">Course Image</label>
           <input
             type="file"
             id="courseImage"
@@ -358,11 +453,7 @@ const EditCourse = () => {
             disabled={isSubmitting}
           />
           {imagePreview && (
-            <img
-              src={imagePreview}
-              alt="Course Preview"
-              className="mt-4 max-w-xs rounded-lg shadow-md"
-            />
+            <img src={imagePreview} alt="Course Preview" className="mt-4 max-w-xs rounded-lg shadow-md" />
           )}
         </div>
         <div className="flex gap-4">
@@ -370,26 +461,19 @@ const EditCourse = () => {
             type="submit"
             className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md disabled:bg-gray-400"
             disabled={isSubmitting}
-          >
-            Save Course
-          </button>
+          >Save Course</button>
           <button
             type="button"
             onClick={() => openDeleteModal('course', courseId)}
             className="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-700 transition-all shadow-md disabled:bg-gray-400"
             disabled={isSubmitting}
-          >
-            Delete Course
-          </button>
+          >Delete Course</button>
         </div>
       </form>
-
       <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">Modules</h3>
       <form onSubmit={handleModuleSubmit} className="space-y-6 bg-white p-8 rounded-xl shadow-lg mb-8">
         <div>
-          <label htmlFor="module" className="block text-sm font-medium text-gray-700 mb-2">
-            Module Name
-          </label>
+          <label htmlFor="module" className="block text-sm font-medium text-gray-700 mb-2">Module Name</label>
           <input
             type="text"
             id="module"
@@ -400,33 +484,48 @@ const EditCourse = () => {
             disabled={isSubmitting}
           />
         </div>
-        <div>
-          <label htmlFor="moduleDuration" className="block text-sm font-medium text-gray-700 mb-2">
-            Duration
-          </label>
-          <input
-            type="text"
-            id="moduleDuration"
-            value={newModule.duration}
-            onChange={(e) => setNewModule({ ...newModule, duration: e.target.value })}
-            className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
-            required
-            disabled={isSubmitting}
-          />
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <label htmlFor="moduleDurationValue" className="block text-sm font-medium text-gray-700 mb-2">Duration Value</label>
+            <select
+              id="moduleDurationValue"
+              value={newModule.durationValue}
+              onChange={(e) => setNewModule({ ...newModule, durationValue: e.target.value })}
+              className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+              required
+              disabled={isSubmitting}
+            >
+              <option value="" disabled>Select duration value</option>
+              {durationValues.map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label htmlFor="moduleDurationUnit" className="block text-sm font-medium text-gray-700 mb-2">Duration Unit</label>
+            <select
+              id="moduleDurationUnit"
+              value={newModule.durationUnit}
+              onChange={(e) => setNewModule({ ...newModule, durationUnit: e.target.value })}
+              className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+              required
+              disabled={isSubmitting}
+            >
+              <option value="" disabled>Select duration unit</option>
+              {moduleDurationUnits.map((unit) => (
+                <option key={unit} value={unit}>{unit}</option>
+              ))}
+            </select>
+          </div>
         </div>
         <button
           type="submit"
           className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md disabled:bg-gray-400"
           disabled={isSubmitting}
-        >
-          Add Module
-        </button>
+        >Add Module</button>
       </form>
-
       {modules.length === 0 ? (
-        <div className="bg-white p-8 rounded-xl shadow-lg text-gray-500 text-center">
-          No modules available.
-        </div>
+        <div className="bg-white p-8 rounded-xl shadow-lg text-gray-500 text-center">No modules available.</div>
       ) : (
         <ul className="space-y-4">
           {modules.map((module) => (
@@ -440,65 +539,74 @@ const EditCourse = () => {
                     className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
                     disabled={isSubmitting}
                   />
-                  <input
-                    type="text"
-                    value={newModule.duration}
-                    onChange={(e) => setNewModule({ ...newModule, duration: e.target.value })}
-                    className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
-                    disabled={isSubmitting}
-                  />
+                  <div className="flex gap-4">
+                    <select
+                      value={newModule.durationValue}
+                      onChange={(e) => setNewModule({ ...newModule, durationValue: e.target.value })}
+                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+                      required
+                      disabled={isSubmitting}
+                    >
+                      <option value="" disabled>Select duration value</option>
+                      {durationValues.map((value) => (
+                        <option key={value} value={value}>{value}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={newModule.durationUnit}
+                      onChange={(e) => setNewModule({ ...newModule, durationUnit: e.target.value })}
+                      className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+                      required
+                      disabled={isSubmitting}
+                    >
+                      <option value="" disabled>Select duration unit</option>
+                      {moduleDurationUnits.map((unit) => (
+                        <option key={unit} value={unit}>{unit}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="flex gap-4">
                     <button
                       onClick={() => handleModuleUpdate(module.module_id)}
                       className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md disabled:bg-gray-400"
                       disabled={isSubmitting}
-                    >
-                      Save
-                    </button>
+                    >Save</button>
                     <button
                       onClick={() => setEditingModule(null)}
                       className="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-all shadow-md disabled:bg-gray-400"
                       disabled={isSubmitting}
-                    >
-                      Cancel
-                    </button>
+                    >Cancel</button>
                   </div>
                 </div>
               ) : (
                 <div>
                   <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-lg font-semibold text-gray-900">
-                      {module.module} ({module.duration})
-                    </h4>
+                    <h4 className="text-lg font-semibold text-gray-900">{module.module} ({module.duration})</h4>
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
                           setEditingModule(module.module_id);
-                          setNewModule({ module: module.module, duration: module.duration });
+                          setNewModule({
+                            module: module.module,
+                            durationValue: module.durationValue,
+                            durationUnit: module.durationUnit
+                          });
                         }}
                         className="text-blue-600 hover:text-blue-800 transition-all"
                         disabled={isSubmitting}
-                      >
-                        <Edit size={20} />
-                      </button>
+                      ><Edit size={20} /></button>
                       <button
                         onClick={() => openDeleteModal('module', module.module_id)}
                         className="text-red-600 hover:text-red-800 transition-all"
                         disabled={isSubmitting}
-                      >
-                        <Trash2 size={20} />
-                      </button>
+                      ><Trash2 size={20} /></button>
                     </div>
                   </div>
-
                   <button
                     onClick={() => fetchLessons(module.module_id)}
                     className="text-blue-600 font-semibold hover:text-blue-800 transition-all"
                     disabled={isSubmitting}
-                  >
-                    {expandedModules.has(module.module_id) ? 'Hide Lessons' : 'Show Lessons'}
-                  </button>
-
+                  >{expandedModules.has(module.module_id) ? 'Hide Lessons' : 'Show Lessons'}</button>
                   {expandedModules.has(module.module_id) && (
                     <div className="mt-6">
                       <form
@@ -509,9 +617,7 @@ const EditCourse = () => {
                           <label
                             htmlFor={`lessonName-${module.module_id}`}
                             className="block text-sm font-medium text-gray-700 mb-2"
-                          >
-                            Lesson Name
-                          </label>
+                          >Lesson Name</label>
                           <input
                             type="text"
                             id={`lessonName-${module.module_id}`}
@@ -526,11 +632,8 @@ const EditCourse = () => {
                           type="submit"
                           className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md disabled:bg-gray-400"
                           disabled={isSubmitting}
-                        >
-                          Add Lesson
-                        </button>
+                        >Add Lesson</button>
                       </form>
-
                       {lessons[module.module_id]?.length === 0 ? (
                         <p className="text-gray-500">No lessons available.</p>
                       ) : (
@@ -549,16 +652,12 @@ const EditCourse = () => {
                                     }
                                     className="text-blue-600 hover:text-blue-800 transition-all"
                                     disabled={isSubmitting}
-                                  >
-                                    <Edit size={20} />
-                                  </button>
+                                  ><Edit size={20} /></button>
                                   <button
                                     onClick={() => openDeleteModal('lesson', lesson.lesson_id, module.module_id)}
                                     className="text-red-600 hover:text-red-800 transition-all"
                                     disabled={isSubmitting}
-                                  >
-                                    <Trash2 size={20} />
-                                  </button>
+                                  ><Trash2 size={20} /></button>
                                 </div>
                               </div>
                             </li>
@@ -573,15 +672,11 @@ const EditCourse = () => {
           ))}
         </ul>
       )}
-
       <button
         onClick={() => navigate('/courses')}
         className="w-full bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-all shadow-md mt-8"
         disabled={isSubmitting}
-      >
-        Back to Courses
-      </button>
-
+      >Back to Courses</button>
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
@@ -606,16 +701,12 @@ const EditCourse = () => {
                 onClick={handleDeleteConfirm}
                 className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition-all disabled:bg-gray-400"
                 disabled={isSubmitting}
-              >
-                Confirm
-              </button>
+              >Confirm</button>
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-all disabled:bg-gray-400"
                 disabled={isSubmitting}
-              >
-                Cancel
-              </button>
+              >Cancel</button>
             </div>
           </div>
         </div>
