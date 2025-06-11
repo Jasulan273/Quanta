@@ -162,7 +162,7 @@ const AiNotes = ({ user }) => {
 
 const handleGeneratePDF = async (chatId) => {
   try {
-    const response = await fetch(`${API_URL}/project_tor/${chatId}/pdf/`, {
+    const response = await fetch(`${API_URL}/conspect/${chatId}/pdf/`, {
       method: 'POST',
       headers: {
         ...(localStorage.getItem('accessToken') ? { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } : {}),
@@ -199,7 +199,7 @@ const handleGeneratePDF = async (chatId) => {
     const downloadUrl = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = downloadUrl;
-    a.download = `project_tor_${chatId}.pdf`;
+    a.download = `conspect_${chatId}.pdf`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

@@ -12,7 +12,7 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId, onHintRequest, hi
   const [isLoadingHint, setIsLoadingHint] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const currentTask = tasks[selectedTaskIndex];
+  const currentTask = tasks[selectedTaskIndex] || null;
 
   const handleRunCode = async () => {
     if (!currentTask?.id) {
@@ -48,11 +48,6 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId, onHintRequest, hi
           : `Incorrect. Output: ${result.submitted_output || 'None'}\nExpected: ${result.expected_output || 'None'}\nError: ${result.stderr || 'None'}`
       );
     } catch (error) {
-      console.error('Submission error:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-      });
       setOutput(
         `Error: ${error.response?.data?.detail || error.message || 'Failed to submit code.'}`
       );
@@ -89,11 +84,6 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId, onHintRequest, hi
         });
       }
     } catch (error) {
-      console.error('Hint error:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-      });
       if (error.response?.status === 500) {
         setHint({
           text: `Unable to fetch hint from server. Please review the task description: "${currentTask.description || 'No description available.'}" or check your code for syntax errors.`,
@@ -140,24 +130,38 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId, onHintRequest, hi
             </select>
           </div>
         )}
-       {currentTask ? (
+        {currentTask ? (
           <div className="mb-6 relative">
             <div className="absolute top-0 right-0 flex items-center space-x-2">
               <span className="text-sm text-gray-600">Hint count:</span>
-              <button
-                onClick={() => fetchHint()}
-                disabled={hintData[currentTask.id]?.remaining === 0 || isLoadingHint}
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-                  hintData[currentTask.id]?.remaining === 0 || isLoadingHint ? 'bg-gray-400' : 'bg-blue-500 hover:bg-blue-600'
-                }`}
-                title={
-                  hintData[currentTask.id]?.remaining === 0
-                    ? `No hints available. Next hint in ${hintData[currentTask.id]?.next_available_in_minutes} minutes.`
-                    : `${hintData[currentTask.id]?.remaining} hints remaining`
-                }
-              >
-                {hintData[currentTask.id]?.remaining || 0}
-              </button>
+              {hintData && currentTask ? (
+                <button
+                  onClick={() => fetchHint()}
+                  disabled={isLoadingHint || !hintData[currentTask.id] || hintData[currentTask.id].remaining === 0}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+                    isLoadingHint || !hintData[currentTask.id] || hintData[currentTask.id].remaining === 0
+                      ? 'bg-gray-400'
+                      : 'bg-blue-500 hover:bg-blue-600'
+                  }`}
+                  title={
+                    !hintData[currentTask.id]
+                      ? 'No hint data available'
+                      : hintData[currentTask.id].remaining === 0
+                      ? `No hints available. Next hint in ${hintData[currentTask.id].next_available_in_minutes || 'unknown'} minutes.`
+                      : `${hintData[currentTask.id].remaining || 0} hints remaining`
+                  }
+                >
+                  {hintData[currentTask.id]?.remaining || 0}
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-gray-400"
+                  title="No hint data available"
+                >
+                  0
+                </button>
+              )}
             </div>
             <h2 className="text-2xl font-bold mb-4 text-orange-500">{currentTask.title}</h2>
             <p className="text-gray-700 mb-4">{currentTask.description}</p>
@@ -242,6 +246,11 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId, onHintRequest, hi
       )}
     </div>
   );
+};
+
+LessonCompiler.defaultProps = {
+  hintData: {},
+  tasks: [],
 };
 
 export default LessonCompiler;
