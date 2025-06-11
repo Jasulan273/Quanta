@@ -35,38 +35,37 @@ const Reviews = ({ reviews, user }) => {
     totalReviews ? ((count / totalReviews) * 100).toFixed(0) : 0
   );
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!rating || !feedback.trim()) {
-      setError('Please provide a rating and feedback.');
-      return;
-    }
-    setSubmitting(true);
-    setError(null);
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!rating || !feedback.trim()) {
+    setError('Please provide a rating and feedback.');
+    return;
+  }
+  setSubmitting(true);
+  setError(null);
 
-    try {
-      const accessToken = localStorage.getItem('accessToken');
-      const response = await axios.post(
-        `${API_URL}/courses/${courseId}/`,
-        { rating, feedback },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+  try {
+    const accessToken = localStorage.getItem('accessToken');
+    await axios.post(
+      `${API_URL}/courses/${courseId}/`,
+      { rating, feedback },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
-      const newReview = response.data;
-      setLocalReviews([newReview, ...localReviews]);
-      setRating(0);
-      setFeedback('');
-    } catch (err) {
-      setError('Failed to submit review.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+
+    window.location.reload();
+  } catch (err) {
+    setError('Failed to submit review.');
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   const handleDelete = async () => {
     if (!userReview) return;

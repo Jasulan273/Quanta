@@ -9,6 +9,7 @@ import MyCourses from './MyCourses';
 import Blogs from './Blogs';
 import Applications from './Applications';
 import ModeratorPanel from './ModeratorPanel';
+import Certificates from './Certificates';
 
 const UserPanel = () => {
   const [activeTab, setActiveTab] = useState('info');
@@ -25,9 +26,10 @@ const UserPanel = () => {
         localStorage.setItem('user', JSON.stringify(profile));
 
         if (
-          profile.role &&
-          ['author', 'author_journalist'].includes(profile.role.toLowerCase())
-        ) {
+  profile.role &&
+  ['author', 'author_journalist'].includes(profile.role.toLowerCase())
+)
+{
           const authorCourses = await fetchAuthorCourses();
           setCourses(authorCourses);
         }
@@ -63,6 +65,7 @@ const UserPanel = () => {
         {activeTab === 'applications' && !isModerator && (
           <Applications user={user} fetchUserProfile={fetchUserProfile} />
         )}
+        {activeTab === 'certificates' && !isModerator && <Certificates user={user} />}
         {activeTab === 'applications' && isModerator && <ModeratorPanel activeTab={activeTab} />}
         {activeTab === 'users' && isModerator && <ModeratorPanel activeTab={activeTab} />}
         {activeTab === 'ads' && isModerator && <ModeratorPanel activeTab={activeTab} />}

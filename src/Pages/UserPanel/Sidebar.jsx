@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings, BookOpen, User, Shield, Image } from 'lucide-react';
+import { Settings, BookOpen, User, Shield, Image, Award } from 'lucide-react';
 
 const Sidebar = ({ setActiveTab, user }) => {
   const [isModeratorOpen, setIsModeratorOpen] = useState(false);
@@ -47,6 +47,12 @@ const Sidebar = ({ setActiveTab, user }) => {
                   <BookOpen size={20} /> Applications
                 </button>
               )}
+              <button
+                onClick={() => { setActiveTab('certificates'); console.log('Set activeTab to certificates'); }}
+                className='flex items-center gap-2 p-2 rounded-md hover:bg-gray-800 w-full'
+              >
+                <Award size={20} /> My Certificates
+              </button>
             </>
           )}
           {user?.role?.toLowerCase() === 'moderator' && (

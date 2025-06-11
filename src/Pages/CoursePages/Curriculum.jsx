@@ -1,29 +1,88 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_URL } from '../../Api/api';
 
 const Curriculum = ({ modules, courseId, enrolled, user }) => {
   const [openModules, setOpenModules] = useState([]);
+  const [courseProgress, setCourseProgress] = useState(0);
+  const [hasFinalExam, setHasFinalExam] = useState(false);
+  const [certificateGenerated, setCertificateGenerated] = useState(false);
+  const [certificateError, setCertificateError] = useState('');
   const navigate = useNavigate();
 
-
-  React.useEffect(() => {
+  useEffect(() => {
     if (!enrolled && modules.length > 0) {
       setOpenModules([modules[0].module_id]);
     }
-  }, [enrolled, modules]);
+
+    const fetchCourseProgress = async () => {
+      if (user && enrolled) {
+        try {
+          const response = await fetch(`${API_URL}/courses/${courseId}/progress/`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setCourseProgress(data.progress_percent || 0);
+          }
+        } catch {}
+      }
+    };
+
+    const checkFinalExam = async () => {
+      try {
+        const response = await fetch(`${API_URL}/courses/${courseId}/final-exam/`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+          }
+        });
+        if (response.ok) {
+          setHasFinalExam(true);
+        }
+      } catch {
+        setHasFinalExam(false);
+      }
+    };
+
+    fetchCourseProgress();
+    checkFinalExam();
+  }, [enrolled, modules, courseId, user]);
 
   const toggleModule = (moduleId) => {
     if (!user) {
       navigate('/Auth');
       return;
     }
-    
+
     if (!enrolled && !openModules.includes(moduleId)) return;
-    
+
     setOpenModules((prev) =>
       prev.includes(moduleId) ? prev.filter((id) => id !== moduleId) : [...prev, moduleId]
     );
+  };
+
+  const handleGenerateCertificate = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${API_URL}/certificates/generate/${courseId}/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        setCertificateGenerated(true);
+        setCertificateError('');
+      } else {
+        const data = await response.json();
+        setCertificateError(data.error || 'You must pass the final exam to receive a certificate.');
+      }
+    } catch {
+      setCertificateError('Failed to generate certificate.');
+    }
   };
 
   if (!Array.isArray(modules) || modules.length === 0) {
@@ -31,8 +90,15 @@ const Curriculum = ({ modules, courseId, enrolled, user }) => {
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Curriculum</h2>
+    <div className="space-y-6 relative">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">Curriculum</h2>
+        {user && enrolled && (
+          <div className="text-sm text-gray-600">
+            Course Progress: {courseProgress.toFixed(1)}%
+          </div>
+        )}
+      </div>
       {!enrolled && (
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
           <p className="text-yellow-700">
@@ -42,7 +108,6 @@ const Curriculum = ({ modules, courseId, enrolled, user }) => {
           </p>
         </div>
       )}
-      
       {modules.map((module, index) => {
         const lessons = Array.isArray(module.lessons) ? module.lessons : [];
         const isLocked = !enrolled && index > 0;
@@ -112,6 +177,36 @@ const Curriculum = ({ modules, courseId, enrolled, user }) => {
           </div>
         );
       })}
+      {hasFinalExam && enrolled && user && (
+        <div className="border rounded-lg p-6 bg-white shadow-sm space-y-4">
+          <Link
+            to={`/courses/${courseId}/final-exam`}
+            target="_blank"
+            className="text-blue-500 hover:underline text-lg font-semibold"
+          >
+            Final Exam
+          </Link>
+          <p className="text-sm text-gray-500">
+            Complete the final exam to earn your certificate.
+          </p>
+          <button
+            onClick={handleGenerateCertificate}
+            className="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            Generate Certificate
+          </button>
+          {certificateGenerated && (
+            <div className="bg-green-100 text-green-800 p-4 rounded-md border border-green-300 shadow">
+              <p className="font-semibold text-sm">Certificate successfully generated and added to your profile.</p>
+            </div>
+          )}
+          {certificateError && (
+            <div className="bg-red-100 text-red-800 p-4 rounded-md border border-red-300 shadow">
+              <p className="font-semibold text-sm">{certificateError}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

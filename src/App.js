@@ -27,6 +27,7 @@ import ChatAssistant from "./Components/СhatAssistant/ChatAssistant";
 import AuthCallback from "./Pages/Auth/AuthCallback";
 import VerifyEmail from "./Pages/Auth/VerifyEmail";
 import Presentation from "./Pages/Presentatiton/Presentation";
+import FinalExam from "./Pages/LessonPage/FinalExam";
 
 function App() {
   const [loading, setLoading] = useState(false);
@@ -38,7 +39,7 @@ function App() {
     if (token) {
       try {
         const userData = await fetchUserProfile();
-        if (userData) {
+        if (userData && userData.username) {
           setUser(userData);
           localStorage.setItem("username", userData.username);
         } else {
@@ -46,7 +47,7 @@ function App() {
           localStorage.removeItem("username");
           localStorage.removeItem("accessToken");
         }
-      } catch {
+      } catch (err) {
         setUser(null);
         localStorage.removeItem("username");
         localStorage.removeItem("accessToken");
@@ -80,13 +81,14 @@ function App() {
     <div className="App relative overflow-hidden">
       {loading && <Loader />}
       <Header user={user} setUser={setUser} />
-      <Routes>
+      <div className="min-h-screen">
+          <Routes>
         <Route path="/home" element={<Home user={user} />} />
         <Route path="/courses" element={<Courses />} />
         <Route
-          path="/courses/:courseId/modules/:moduleId/lesson/:lessonId"
+          path="/courses/:courseId/modules/:moduleId/lesson/:id"
           element={
-            <PrivateRoute user={user}>
+            <PrivateRoute>
               <LessonPage />
             </PrivateRoute>
           }
@@ -95,7 +97,7 @@ function App() {
         <Route
           path="/userpanel"
           element={
-            <PrivateRoute user={user}>
+            <PrivateRoute>
               <UserPanel user={user} setUser={setUser} />
             </PrivateRoute>
           }
@@ -103,7 +105,7 @@ function App() {
         <Route
           path="/create-course"
           element={
-            <PrivateRoute user={user}>
+            <PrivateRoute>
               <CreateCourse user={user} setUser={setUser} />
             </PrivateRoute>
           }
@@ -111,7 +113,7 @@ function App() {
         <Route
           path="/edit-course/:courseId"
           element={
-            <PrivateRoute user={user}>
+            <PrivateRoute>
               <EditCourse user={user} setUser={setUser} />
             </PrivateRoute>
           }
@@ -119,7 +121,7 @@ function App() {
         <Route
           path="/edit-lesson/:courseId/:moduleId/:lessonId"
           element={
-            <PrivateRoute user={user}>
+            <PrivateRoute>
               <EditLesson />
             </PrivateRoute>
           }
@@ -127,7 +129,7 @@ function App() {
         <Route
           path="/create-blog"
           element={
-            <PrivateRoute user={user}>
+            <PrivateRoute>
               <CreateBlog user={user} />
             </PrivateRoute>
           }
@@ -135,7 +137,7 @@ function App() {
         <Route
           path="/edit-blog/:blogId"
           element={
-            <PrivateRoute user={user}>
+            <PrivateRoute>
               <BlogEditor />
             </PrivateRoute>
           }
@@ -143,7 +145,7 @@ function App() {
         <Route
           path="/ai"
           element={
-            <PrivateRoute user={user}>
+            <PrivateRoute>
               <AI user={user} />
             </PrivateRoute>
           }
@@ -157,9 +159,18 @@ function App() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/courses/:courseId" element={<CoursePage user={user} />} />
         <Route path="/blogpage/:id" element={<BlogPage />} />
+        <Route
+          path="/courses/:courseId/final-exam"
+          element={
+            <PrivateRoute>
+              <FinalExam user={user} />
+            </PrivateRoute>
+          }
+        />
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </div>
       <Footer />
       <ChatAssistant user={user} />
     </div>

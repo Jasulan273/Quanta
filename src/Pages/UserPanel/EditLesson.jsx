@@ -21,7 +21,7 @@ const LessonEditor = () => {
     title: '',
     description: '',
     options: [{ text: '', is_correct: false }],
-    solution: { sample_input: '', expected_output: '', initial_code: '', language: 'javascript' },
+    solution: { sample_input: '', expected_output: '', initial_code: '', language: 'javascript', hint: '' },
   });
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,6 +76,10 @@ const LessonEditor = () => {
       setError('Exercise title and description are required');
       return;
     }
+    if (newExercise.type === 'mcq' && newExercise.options.some(option => !option.text.trim())) {
+      setError('All MCQ options must have text');
+      return;
+    }
     try {
       setIsSubmitting(true);
       const payload = {
@@ -92,7 +96,7 @@ const LessonEditor = () => {
         title: '',
         description: '',
         options: [{ text: '', is_correct: false }],
-        solution: { sample_input: '', expected_output: '', initial_code: '', language: 'javascript' },
+        solution: { sample_input: '', expected_output: '', initial_code: '', language: 'javascript', hint: '' },
       });
       setError(null);
     } catch (err) {
@@ -106,7 +110,7 @@ const LessonEditor = () => {
     setEditingExercise({
       ...exercise,
       options: exercise.type === 'mcq' ? [...exercise.options] : [{ text: '', is_correct: false }],
-      solution: exercise.type === 'code' ? { ...exercise.solution, language: exercise.solution.language || 'javascript' } : { sample_input: '', expected_output: '', initial_code: '', language: 'javascript' },
+      solution: exercise.type === 'code' ? { ...exercise.solution, language: exercise.solution.language || 'javascript', hint: exercise.solution.hint || '' } : { sample_input: '', expected_output: '', initial_code: '', language: 'javascript', hint: '' },
     });
   };
 
@@ -152,6 +156,10 @@ const LessonEditor = () => {
   const handleExerciseUpdate = async () => {
     if (!editingExercise.title.trim() || !editingExercise.description.trim()) {
       setError('Exercise title and description are required');
+      return;
+    }
+    if (editingExercise.type === 'mcq' && editingExercise.options.some(option => !option.text.trim())) {
+      setError('All MCQ options must have text');
       return;
     }
     try {
@@ -204,6 +212,15 @@ const LessonEditor = () => {
     const updatedOptions = [...newExercise.options];
     updatedOptions[index] = { ...updatedOptions[index], [field]: value };
     setNewExercise({ ...newExercise, options: updatedOptions });
+  };
+
+  const removeOption = (index) => {
+    if (newExercise.options.length > 1) {
+      setNewExercise({
+        ...newExercise,
+        options: newExercise.options.filter((_, i) => i !== index),
+      });
+    }
   };
 
   const uploadAdapter = (loader) => {
@@ -375,8 +392,10 @@ const LessonEditor = () => {
               </ul>
             ) : (
               <div>
+                <p className="text-gray-700">Sample Input: {exercise.solution.sample_input}</p>
                 <p className="text-gray-700">Expected Output: {exercise.solution.expected_output}</p>
                 <p className="text-gray-700">Initial Code: {exercise.solution.initial_code}</p>
+                <p className="text-gray-700">Hint: {exercise.solution.hint}</p>
               </div>
             )}
             <div className="mt-4 flex gap-2">
@@ -399,6 +418,173 @@ const LessonEditor = () => {
         ))}
       </div>
 
+      <form onSubmit={handleExerciseSubmit} className="mt-12 space-y-6 bg-white p-8 rounded-xl shadow-lg">
+        <h3 className="text-2xl font-bold text-gray-900 mb-6">Add New Exercise</h3>
+        <div>
+          <label htmlFor="exerciseType" className="block text-sm font-medium text-gray-700 mb-2">
+            Exercise Type
+          </label>
+          <select
+            id="exerciseType"
+            value={newExercise.type}
+            onChange={(e) => setNewExercise({ ...newExercise, type: e.target.value })}
+            className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-lg"
+            disabled={isSubmitting}
+          >
+            <option value="mcq">Multiple Choice Question</option>
+            <option value="code">Code Exercise</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="exerciseTitle" className="block text-sm font-medium text-gray-700 mb-2">
+            Title
+          </label>
+          <input
+            type="text"
+            id="exerciseTitle"
+            value={newExercise.title}
+            onChange={(e) => setNewExercise({ ...newExercise, title: e.target.value })}
+            className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-lg"
+            required
+            disabled={isSubmitting}
+          />
+        </div>
+        <div>
+          <label htmlFor="exerciseDescription" className="block text-sm font-medium text-gray-700 mb-2">
+            Description
+          </label>
+          <textarea
+            id="exerciseDescription"
+            value={newExercise.description}
+            onChange={(e) => setNewExercise({ ...newExercise, description: e.target.value })}
+            className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-lg"
+            rows="4"
+            required
+            disabled={isSubmitting}
+          />
+        </div>
+        {newExercise.type === 'mcq' ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Options</label>
+            {newExercise.options.map((option, index) => (
+              <div key={index} className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={option.text}
+                  onChange={(e) => updateOption(index, 'text', e.target.value)}
+                  className="flex-1 p-2 border border-gray-300 rounded-lg"
+                  placeholder="Option text"
+                  required
+                  disabled={isSubmitting}
+                />
+                <input
+                  type="checkbox"
+                  checked={option.is_correct}
+                  onChange={(e) => updateOption(index, 'is_correct', e.target.checked)}
+                  className="h-6 w-6 text-blue-600"
+                  disabled={isSubmitting}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeOption(index)}
+                  className="bg-red-500 text-white px-2 py-1 rounded-lg"
+                  disabled={isSubmitting || newExercise.options.length <= 1}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addOption}
+              className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+              disabled={isSubmitting}
+            >
+              Add Option
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="sampleInput" className="block text-sm font-medium text-gray-700 mb-2">
+                Sample Input
+              </label>
+              <textarea
+                id="sampleInput"
+                value={newExercise.solution.sample_input}
+                onChange={(e) => setNewExercise({ ...newExercise, solution: { ...newExercise.solution, sample_input: e.target.value } })}
+                className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-lg"
+                rows="4"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div>
+              <label htmlFor="expectedOutput" className="block text-sm font-medium text-gray-700 mb-2">
+                Expected Output
+              </label>
+              <textarea
+                id="expectedOutput"
+                value={newExercise.solution.expected_output}
+                onChange={(e) => setNewExercise({ ...newExercise, solution: { ...newExercise.solution, expected_output: e.target.value } })}
+                className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-lg"
+                rows="4"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div>
+              <label htmlFor="initialCode" className="block text-sm font-medium text-gray-700 mb-2">
+                Initial Code
+              </label>
+              <textarea
+                id="initialCode"
+                value={newExercise.solution.initial_code}
+                onChange={(e) => setNewExercise({ ...newExercise, solution: { ...newExercise.solution, initial_code: e.target.value } })}
+                className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-lg"
+                rows="6"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div>
+              <label htmlFor="hint" className="block text-sm font-medium text-gray-700 mb-2">
+                Hint
+              </label>
+              <textarea
+                id="hint"
+                value={newExercise.solution.hint}
+                onChange={(e) => setNewExercise({ ...newExercise, solution: { ...newExercise.solution, hint: e.target.value } })}
+                className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-lg"
+                rows="4"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div>
+              <label htmlFor="language" className="block text-sm font-medium text-gray-700 mb-2">
+                Programming Language
+              </label>
+              <select
+                id="language"
+                value={newExercise.solution.language}
+                onChange={(e) => setNewExercise({ ...newExercise, solution: { ...newExercise.solution, language: e.target.value } })}
+                className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-lg"
+                disabled={isSubmitting}
+              >
+                <option value="javascript">JavaScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+                <option value="cpp">C++</option>
+              </select>
+            </div>
+          </div>
+        )}
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-md disabled:bg-gray-400"
+          disabled={isSubmitting}
+        >
+          Add Exercise
+        </button>
+      </form>
+
       {editingExercise && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
           <div className="bg-white p-8 rounded-xl shadow-xl max-w-4xl w-full">
@@ -410,7 +596,8 @@ const LessonEditor = () => {
                   type="text"
                   value={editingExercise.title}
                   onChange={(e) => handleEditChange('title', e.target.value)}
-                  className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-lg"
+                  required
                   disabled={isSubmitting}
                 />
               </div>
@@ -419,8 +606,9 @@ const LessonEditor = () => {
                 <textarea
                   value={editingExercise.description}
                   onChange={(e) => handleEditChange('description', e.target.value)}
-                  className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-lg"
                   rows="4"
+                  required
                   disabled={isSubmitting}
                 />
               </div>
@@ -433,8 +621,9 @@ const LessonEditor = () => {
                         type="text"
                         value={option.text}
                         onChange={(e) => handleEditOptionChange(index, 'text', e.target.value)}
-                        className="flex-1 p-2 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="flex-1 p-2 border border-gray-300 rounded-lg"
                         placeholder="Option text"
+                        required
                         disabled={isSubmitting}
                       />
                       <input
@@ -448,7 +637,7 @@ const LessonEditor = () => {
                         type="button"
                         onClick={() => handleRemoveEditOption(index)}
                         className="bg-red-500 text-white px-2 py-1 rounded-lg"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || editingExercise.options.length <= 1}
                       >
                         Remove
                       </button>
@@ -457,53 +646,83 @@ const LessonEditor = () => {
                   <button
                     type="button"
                     onClick={handleAddEditOption}
-                    className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-200"
+                    className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
                     disabled={isSubmitting}
                   >
                     Add Option
                   </button>
                 </div>
               ) : (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Solution</label>
-                  <input
-                    type="text"
-                    value={editingExercise.solution.expected_output}
-                    onChange={(e) => handleEditSolutionChange('expected_output', e.target.value)}
-                    className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Expected output"
-                    disabled={isSubmitting}
-                  />
-                  <textarea
-                    value={editingExercise.solution.initial_code}
-                    onChange={(e) => handleEditSolutionChange('initial_code', e.target.value)}
-                    className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mt-2"
-                    placeholder="Initial code"
-                    rows="4"
-                    disabled={isSubmitting}
-                  />
-                  <select
-                    value={editingExercise.solution.language}
-                    onChange={(e) => handleEditSolutionChange('language', e.target.value)}
-                    className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mt-2"
-                    disabled={isSubmitting}
-                  >
-                    <option value="javascript">JavaScript</option>
-                    <option value="python">Python</option>
-                  </select>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Sample Input</label>
+                    <textarea
+                      value={editingExercise.solution.sample_input}
+                      onChange={(e) => handleEditSolutionChange('sample_input', e.target.value)}
+                      className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-lg"
+                      rows="4"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Expected Output</label>
+                    <textarea
+                      value={editingExercise.solution.expected_output}
+                      onChange={(e) => handleEditSolutionChange('expected_output', e.target.value)}
+                      className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-lg"
+                      rows="4"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Initial Code</label>
+                    <textarea
+                      value={editingExercise.solution.initial_code}
+                      onChange={(e) => handleEditSolutionChange('initial_code', e.target.value)}
+                      className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-lg"
+                      rows="6"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Hint</label>
+                    <textarea
+                      value={editingExercise.solution.hint}
+                      onChange={(e) => handleEditSolutionChange('hint', e.target.value)}
+                      className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 text-lg"
+                      rows="4"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Programming Language</label>
+                    <select
+                      value={editingExercise.solution.language}
+                      onChange={(e) => handleEditSolutionChange('language', e.target.value)}
+                      className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-lg"
+                      disabled={isSubmitting}
+                    >
+                      <option value="javascript">JavaScript</option>
+                      <option value="python">Python</option>
+                      <option value="java">Java</option>
+                      <option value="cpp">C++</option>
+                    </select>
+                  </div>
                 </div>
               )}
               <div className="flex gap-4 mt-6">
                 <button
+                  type="button"
                   onClick={handleExerciseUpdate}
-                  className="bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-600 transition-all duration-300 shadow-md disabled:bg-gray-400"
+                  className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-md disabled:bg-gray-400"
                   disabled={isSubmitting}
                 >
                   Save Changes
                 </button>
                 <button
+                  type="button"
                   onClick={() => setEditingExercise(null)}
-                  className="bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all duration-300 shadow-md disabled:bg-gray-400"
+                  className="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-all duration-300 shadow-md disabled:bg-gray-400"
                   disabled={isSubmitting}
                 >
                   Cancel
@@ -513,129 +732,6 @@ const LessonEditor = () => {
           </div>
         </div>
       )}
-
-      <form onSubmit={handleExerciseSubmit} className="mt-8 bg-white p-8 rounded-xl shadow-lg">
-        <h3 className="text-xl font-bold text-gray-900 mb-6">Create New Exercise</h3>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Exercise Type</label>
-          <select
-            value={newExercise.type}
-            onChange={(e) => setNewExercise({ ...newExercise, type: e.target.value })}
-            className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            disabled={isSubmitting}
-          >
-            <option value="mcq">MCQ</option>
-            <option value="code">Code</option>
-          </select>
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-          <input
-            type="text"
-            value={newExercise.title}
-            onChange={(e) => setNewExercise({ ...newExercise, title: e.target.value })}
-            className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
-            disabled={isSubmitting}
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-          <textarea
-            value={newExercise.description}
-            onChange={(e) => setNewExercise({ ...newExercise, description: e.target.value })}
-            className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            rows="4"
-            required
-            disabled={isSubmitting}
-          />
-        </div>
-        {newExercise.type === 'mcq' ? (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Options</label>
-            {newExercise.options.map((option, index) => (
-              <div key={index} className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={option.text}
-                  onChange={(e) => updateOption(index, 'text', e.target.value)}
-                  className="flex-1 p-2 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Option text"
-                  required
-                  disabled={isSubmitting}
-                />
-                <input
-                  type="checkbox"
-                  checked={option.is_correct}
-                  onChange={(e) => updateOption(index, 'is_correct', e.target.checked)}
-                  className="h-6 w-6 text-blue-600"
-                  disabled={isSubmitting}
-                />
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={addOption}
-              className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-all duration-200"
-              disabled={isSubmitting}
-            >
-              Add Option
-            </button>
-          </div>
-        ) : (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Solution</label>
-            <input
-              type="text"
-              value={newExercise.solution.expected_output}
-              onChange={(e) =>
-                setNewExercise({
-                  ...newExercise,
-                  solution: { ...newExercise.solution, expected_output: e.target.value },
-                })
-              }
-              className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Expected output"
-              required
-              disabled={isSubmitting}
-            />
-            <textarea
-              value={newExercise.solution.initial_code}
-              onChange={(e) =>
-                setNewExercise({
-                  ...newExercise,
-                  solution: { ...newExercise.solution, initial_code: e.target.value },
-                })
-              }
-              className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mt-2"
-              placeholder="Initial code"
-              rows="4"
-              disabled={isSubmitting}
-            />
-            <select
-              value={newExercise.solution.language}
-              onChange={(e) =>
-                setNewExercise({
-                  ...newExercise,
-                  solution: { ...newExercise.solution, language: e.target.value },
-                })
-              }
-              className="w-full p-4 rounded-lg border-gray-100 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mt-2"
-              disabled={isSubmitting}
-            >
-              <option value="javascript">JavaScript</option>
-              <option value="python">Python</option>
-            </select>
-          </div>
-        )}
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-300 shadow-md disabled:bg-gray-400"
-          disabled={isSubmitting}
-        >
-          Create Exercise
-        </button>
-      </form>
     </div>
   );
 };

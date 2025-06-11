@@ -21,6 +21,14 @@ const EditCourse = () => {
   const [editingModule, setEditingModule] = useState(null);
   const [lessons, setLessons] = useState({});
   const [newLesson, setNewLesson] = useState({ name: '' });
+  const [finalExam, setFinalExam] = useState({
+    title: '',
+    description: '',
+    duration_minutes: '',
+    max_attempts: '',
+    questions: [{ text: '', options: [{ text: '', is_correct: false }] }]
+  });
+  const [editingFinalExam, setEditingFinalExam] = useState(false);
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedModules, setExpandedModules] = useState(new Set());
@@ -88,8 +96,38 @@ const EditCourse = () => {
       }
     };
 
+    const fetchFinalExam = async () => {
+      try {
+        const response = await fetch(`${API_URL}/courses/${courseId}/final-exam`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setFinalExam({
+            title: data.title || '',
+            description: data.description || '',
+            duration_minutes: data.duration_minutes || '',
+            max_attempts: data.max_attempts || '',
+            questions: data.questions || [{ text: '', options: [{ text: '', is_correct: false }] }]
+          });
+          setEditingFinalExam(!!data.id);
+        }
+      } catch (err) {
+        setFinalExam({
+          title: '',
+          description: '',
+          duration_minutes: '',
+          max_attempts: '',
+          questions: [{ text: '', options: [{ text: '', is_correct: false }] }]
+        });
+      }
+    };
+
     fetchCourse();
     fetchModules();
+    fetchFinalExam();
   }, [courseId, navigate]);
 
   const fetchLessons = async (moduleId) => {
@@ -279,6 +317,74 @@ const EditCourse = () => {
       setError(`Failed to create lesson: ${err.message}`);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleFinalExamSubmit = async (e) => {
+    e.preventDefault();
+    if (!finalExam.title.trim() || !finalExam.description.trim() || !finalExam.duration_minutes || !finalExam.max_attempts || !finalExam.questions[0].text) {
+      setError('All final exam fields are required');
+      return;
+    }
+    try {
+      setIsSubmitting(true);
+      const response = await fetch(`${API_URL}/courses/${courseId}/final-exam/create/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify(finalExam)
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create/update final exam');
+      }
+      setError(null);
+      setEditingFinalExam(true);
+    } catch (err) {
+      setError(`Failed to create/update final exam: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const addQuestion = () => {
+    setFinalExam({
+      ...finalExam,
+      questions: [...finalExam.questions, { text: '', options: [{ text: '', is_correct: false }] }]
+    });
+  };
+
+  const updateQuestion = (index, field, value) => {
+    const updatedQuestions = [...finalExam.questions];
+    updatedQuestions[index] = { ...updatedQuestions[index], [field]: value };
+    setFinalExam({ ...finalExam, questions: updatedQuestions });
+  };
+
+  const addOption = (questionIndex) => {
+    const updatedQuestions = [...finalExam.questions];
+    updatedQuestions[questionIndex].options = [
+      ...updatedQuestions[questionIndex].options,
+      { text: '', is_correct: false }
+    ];
+    setFinalExam({ ...finalExam, questions: updatedQuestions });
+  };
+
+  const updateOption = (questionIndex, optionIndex, field, value) => {
+    const updatedQuestions = [...finalExam.questions];
+    updatedQuestions[questionIndex].options[optionIndex] = {
+      ...updatedQuestions[questionIndex].options[optionIndex],
+      [field]: value
+    };
+    setFinalExam({ ...finalExam, questions: updatedQuestions });
+  };
+
+  const removeOption = (questionIndex, optionIndex) => {
+    const updatedQuestions = [...finalExam.questions];
+    if (updatedQuestions[questionIndex].options.length > 1) {
+      updatedQuestions[questionIndex].options = updatedQuestions[questionIndex].options.filter((_, i) => i !== optionIndex);
+      setFinalExam({ ...finalExam, questions: updatedQuestions });
     }
   };
 
@@ -672,6 +778,126 @@ const EditCourse = () => {
           ))}
         </ul>
       )}
+      <h3 className="text-xl font-semibold text-gray-900 mt-8 mb-4">Final Exam</h3>
+      <form onSubmit={handleFinalExamSubmit} className="space-y-6 bg-white p-8 rounded-xl shadow-lg mb-8">
+        <div>
+          <label htmlFor="examTitle" className="block text-sm font-medium text-gray-700 mb-2">Exam Title</label>
+          <input
+            type="text"
+            id="examTitle"
+            value={finalExam.title}
+            onChange={(e) => setFinalExam({ ...finalExam, title: e.target.value })}
+            className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+            required
+            disabled={isSubmitting}
+          />
+        </div>
+        <div>
+          <label htmlFor="examDescription" className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+          <textarea
+            id="examDescription"
+            value={finalExam.description}
+            onChange={(e) => setFinalExam({ ...finalExam, description: e.target.value })}
+            className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+            rows="4"
+            required
+            disabled={isSubmitting}
+          />
+        </div>
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <label htmlFor="durationMinutes" className="block text-sm font-medium text-gray-700 mb-2">Duration (Minutes)</label>
+            <input
+              type="number"
+              id="durationMinutes"
+              value={finalExam.duration_minutes}
+              onChange={(e) => setFinalExam({ ...finalExam, duration_minutes: e.target.value })}
+              className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+              required
+              disabled={isSubmitting}
+            />
+          </div>
+          <div className="flex-1">
+            <label htmlFor="maxAttempts" className="block text-sm font-medium text-gray-700 mb-2">Max Attempts</label>
+            <input
+              type="number"
+              id="maxAttempts"
+              value={finalExam.max_attempts}
+              onChange={(e) => setFinalExam({ ...finalExam, max_attempts: e.target.value })}
+              className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+              required
+              disabled={isSubmitting}
+            />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Questions</label>
+          {finalExam.questions.map((question, qIndex) => (
+            <div key={qIndex} className="mb-4 p-4 border rounded-lg">
+              <input
+                type="text"
+                value={question.text}
+                onChange={(e) => updateQuestion(qIndex, 'text', e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-lg mb-2"
+                placeholder="Question text"
+                required
+                disabled={isSubmitting}
+              />
+              {question.options.map((option, oIndex) => (
+                <div key={oIndex} className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={option.text}
+                    onChange={(e) => updateOption(qIndex, oIndex, 'text', e.target.value)}
+                    className="flex-1 p-2 border border-gray-300 rounded-lg"
+                    placeholder="Option text"
+                    required
+                    disabled={isSubmitting}
+                  />
+                  <input
+                    type="checkbox"
+                    checked={option.is_correct}
+                    onChange={(e) => updateOption(qIndex, oIndex, 'is_correct', e.target.checked)}
+                    className="h-6 w-6 text-blue-600"
+                    disabled={isSubmitting}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeOption(qIndex, oIndex)}
+                    className="bg-red-500 text-white px-2 py-1 rounded-lg"
+                    disabled={isSubmitting}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => addOption(qIndex)}
+                className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                disabled={isSubmitting}
+              >
+                Add Option
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addQuestion}
+            className="mt-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+            disabled={isSubmitting}
+          >
+            Add Question
+          </button>
+        </div>
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md disabled:bg-gray-400"
+          disabled={isSubmitting}
+        >
+          {editingFinalExam ? 'Update Final Exam' : 'Create Final Exam'}
+        </button>
+      </form>
       <button
         onClick={() => navigate('/courses')}
         className="w-full bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-all shadow-md mt-8"
