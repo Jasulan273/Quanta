@@ -296,7 +296,9 @@ const LessonPage = () => {
           )}
         </div>
       </div>
+         <Chat/>
     </div>
+    
   );
 };
 
@@ -344,7 +346,7 @@ function QuizTask({ task, onAnswerChange, result }) {
           );
         })}
       </div>
-      <Chat/>
+
     </div>
   );
 }
