@@ -86,7 +86,7 @@ function App() {
         <Route path="/home" element={<Home user={user} />} />
         <Route path="/courses" element={<Courses />} />
         <Route
-          path="/courses/:courseId/modules/:moduleId/lesson/:id"
+          path="/courses/:courseId/modules/:moduleId/lesson/:lessonId"
           element={
             <PrivateRoute>
               <LessonPage />

@@ -19,6 +19,7 @@ const LessonPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+     console.log('Params:', { courseId, moduleId, lessonId });
     const fetchData = async () => {
       const accessToken = localStorage.getItem('accessToken');
       try {
