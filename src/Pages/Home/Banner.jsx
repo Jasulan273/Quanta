@@ -29,7 +29,7 @@ const Banner = () => {
           <button
             className={`bg-primary text-white font-semibold mt-6 py-3 px-6 sm:py-4 sm:px-8 rounded-3xl transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-lightgrey focus:ring-opacity-50 text-sm sm:text-base ${isLoaded ? styles.fadeInLeftActive : styles.fadeInLeft}`}
           >
-            Explore Course
+            Presentation
           </button>
        </NavLink>
         </div>

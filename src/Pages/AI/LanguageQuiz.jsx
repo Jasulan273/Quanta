@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { API_URL } from '../../Api/api';
+import { useNavigate } from 'react-router-dom';
 
 const LanguageQuiz = () => {
+  const navigate = useNavigate();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [result, setResult] = useState(null);
@@ -76,32 +77,25 @@ const LanguageQuiz = () => {
       const formattedAnswers = Object.keys(answers).map((key, index) => 
         `${parseInt(key) + 1}) ${questions[key].question} ${answers[key]}`
       ).join('\n');
-      const token = localStorage.getItem('accessToken');
-      console.log('API_URL:', API_URL);
-      console.log('Request URL:', `${API_URL}/survey/`);
-      console.log('Payload:', { answers: formattedAnswers });
-      
-      const response = await fetch(`${API_URL}/survey/`, {
+
+      const response = await fetch(`${process.env.REACT_APP_AI_URL}/recomend`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          answers: formattedAnswers,
+          question: formattedAnswers,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Network response was not ok');
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, ${errorText}`);
       }
 
       const data = await response.json();
-      setResult(data);
+      setResult(data || { result: 'No recommendation received.', courses: {} });
     } catch (error) {
-      console.error('Error:', error.message);
-      console.error('Error details:', error);
       setResult({ result: `Sorry, something went wrong: ${error.message}`, courses: {} });
     } finally {
       setIsLoading(false);
@@ -111,48 +105,33 @@ const LanguageQuiz = () => {
   const parseResult = () => {
     if (!result) return { textAnswer: '', courses: [] };
     const textAnswer = result.result || 'No recommendation received.';
-    const courses = Object.entries(result.courses || {}).flatMap(([lang, courseList]) => 
-      courseList.map(course => ({ ...course, language: lang }))
-    );
+    const courses = result.courses 
+      ? Object.entries(result.courses).flatMap(([lang, courseList]) => 
+          courseList ? courseList.map(course => ({ ...course, language: lang })) : []
+        ) 
+      : [];
     return { textAnswer, courses };
+  };
+
+  const handleCourseClick = (courseId) => {
+    navigate(`/courses/${courseId}`);
   };
 
   const { textAnswer, courses } = parseResult();
 
   const cardVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { 
-        duration: 0.5, 
-        ease: [0.2, 0.8, 0.2, 1],
-        staggerChildren: 0.1
-      } 
-    },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.2, 0.8, 0.2, 1], staggerChildren: 0.1 } },
     exit: { opacity: 0, y: -20, transition: { duration: 0.3 } },
   };
 
   const optionVariants = {
     hidden: { opacity: 0, y: 10 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: { 
-        duration: 0.3,
-        ease: "easeOut"
-      }
-    }
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
   };
 
   const buttonVariants = {
-    hover: { 
-      scale: 1.03, 
-      boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.1)',
-      transition: {
-        duration: 0.2
-      }
-    },
+    hover: { scale: 1.03, boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.1)', transition: { duration: 0.2 } },
     tap: { scale: 0.98 },
   };
 
@@ -169,26 +148,14 @@ const LanguageQuiz = () => {
               className="flex flex-col items-center justify-center h-64"
             >
               <motion.div
-                animate={{ 
-                  rotate: 360,
-                  scale: [1, 1.1, 1]
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
+                animate={{ rotate: 360, scale: [1, 1.1, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                 className="rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"
               ></motion.div>
               <motion.p 
                 className="mt-6 text-gray-600 text-lg font-medium"
-                animate={{
-                  opacity: [0.6, 1, 0.6],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity
-                }}
+                animate={{ opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 2, repeat: Infinity }}
               >
                 Finding your perfect languages...
               </motion.p>
@@ -217,26 +184,23 @@ const LanguageQuiz = () => {
                 ))}
               </div>
               
-              {courses.length > 0 && (
+              {courses && courses.length > 0 && (
                 <div className="mb-8">
                   <h3 className="text-xl font-semibold mb-4 text-gray-800">Recommended Courses</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {courses.slice(0, 3).map((course, index) => (
                       <motion.div
-                        key={course.id}
-                        className="p-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl text-center text-orange-800 font-semibold text-lg border border-orange-100"
-                        whileHover={{ 
-                          scale: 1.05, 
-                          boxShadow: '0px 10px 25px rgba(245, 158, 11, 0.2)',
-                          y: -5
-                        }}
+                        key={index}
+                        className="p-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl text-center text-orange-800 font-semibold text-lg border border-orange-100 cursor-pointer"
+                        whileHover={{ scale: 1.05, boxShadow: '0px 10px 25px rgba(245, 158, 11, 0.2)', y: -5 }}
                         transition={{ type: 'spring', stiffness: 300 }}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
+                        onClick={() => handleCourseClick(course.id)}
                       >
-                        <p>{course.title}</p>
-                        <p className="text-sm text-orange-600">{course.language}</p>
+                        <p>{course?.title || 'Course Title'}</p>
+                        <p className="text-sm text-orange-600">{course?.language || 'Language'}</p>
                       </motion.div>
                     ))}
                   </div>
@@ -295,10 +259,7 @@ const LanguageQuiz = () => {
                 <motion.div 
                   className="bg-gradient-to-r from-orange-500 to-amber-500 h-2.5 rounded-full" 
                   initial={{ width: 0 }}
-                  animate={{ 
-                    width: `${((currentQuestion + 1) / questions.length) * 100}%`,
-                    transition: { duration: 0.6 }
-                  }}
+                  animate={{ width: `${((currentQuestion + 1) / questions.length) * 100}%`, transition: { duration: 0.6 } }}
                 />
               </div>
               <p className="mt-2 text-right text-gray-500 text-sm font-medium">

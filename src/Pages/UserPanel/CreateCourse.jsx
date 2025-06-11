@@ -44,6 +44,10 @@ const CreateCourse = () => {
       formData.append('duration', duration);
       formData.append('language', courseData.language);
       formData.append('level', courseData.level);
+      console.log('FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
       if (courseImage) {
         formData.append('course_image', courseImage);
       }

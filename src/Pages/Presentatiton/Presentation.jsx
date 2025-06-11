@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import Introduction from './videos/introduction.gif'
+import Introduction from '../../Materials/videos/1.mp4'
+import Authentication from '../../Materials/videos/2.mp4'
+import Courses from '../../Materials/videos/3.mp4'
+import Lessons from '../../Materials/videos/4.mp4'
+import Blogs from '../../Materials/videos/5.mp4'
+import Connect  from '../../Materials/videos/6.mp4'
+import AI from '../../Materials/videos/7.mp4'
+import Tools from '../../Materials/videos/8.mp4'
+
 
 const Presentation = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -14,7 +22,7 @@ const slides = useMemo(() => [
       layout: 'center',
       infographic: 'users',
       videoPath: Introduction,
-      speed: 2.0,
+      speed: 1.25,
     },
     {
       title: 'Seamless Authentication',
@@ -22,7 +30,7 @@ const slides = useMemo(() => [
       video: true,
       layout: 'left',
       infographic: 'lock',
-      videoPath: '',
+      videoPath: Authentication,
       speed: 1.0,
     },
     {
@@ -31,7 +39,7 @@ const slides = useMemo(() => [
       video: true,
       layout: 'right',
       infographic: 'book',
-      videoPath: './course-video.mp4',
+      videoPath: Courses,
       speed: 1.5,
     },
     {
@@ -40,7 +48,7 @@ const slides = useMemo(() => [
       video: true,
       layout: 'left',
       infographic: 'code',
-      videoPath: '',
+      videoPath: Lessons,
       speed: 1.0,
     },
     {
@@ -49,7 +57,7 @@ const slides = useMemo(() => [
       video: true,
       layout: 'center',
       infographic: 'pen',
-      videoPath: './blog-video.mp4',
+      videoPath: Blogs,
       speed: 2.0,
     },
     {
@@ -58,7 +66,7 @@ const slides = useMemo(() => [
       video: true,
       layout: 'right',
       infographic: 'network',
-      videoPath: '',
+      videoPath: Connect,
       speed: 1.0,
     },
     {
@@ -67,7 +75,7 @@ const slides = useMemo(() => [
       video: true,
       layout: 'left',
       infographic: 'brain',
-      videoPath: './ai-video.mp4',
+      videoPath: AI,
       speed: 1.5,
     },
     {
@@ -76,7 +84,7 @@ const slides = useMemo(() => [
       video: true,
       layout: 'center',
       infographic: 'tools',
-      videoPath: '',
+      videoPath: Tools,
       speed: 1.0,
     },
   ], []);
