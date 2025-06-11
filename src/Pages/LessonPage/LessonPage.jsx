@@ -4,6 +4,7 @@ import axios from 'axios';
 import ScrollProgress from '../../Components/ScrollProgress';
 import LessonCompiler from '../../AI/Compiler/LessonCompiler';
 import HighlightChat from './HighlightChat';
+import Chat from '../../AI/Сhat/Chat'
 import { API_URL } from '../../Api/api';
 
 const LessonPage = () => {
@@ -343,6 +344,7 @@ function QuizTask({ task, onAnswerChange, result }) {
           );
         })}
       </div>
+      <Chat/>
     </div>
   );
 }
