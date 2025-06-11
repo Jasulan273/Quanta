@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
-import { refreshToken } from '../../Api/auth';
+import { refreshToken } from '../../Api/auth'; 
 import { API_URL } from '../../Api/api';
-import { deleteComment } from '../../Api/moderator';
-import { Trash2 } from 'lucide-react';
 
 const Comments = ({ postId }) => {
   const [comments, setComments] = useState([]);
@@ -14,12 +12,14 @@ const Comments = ({ postId }) => {
   const [error, setError] = useState(null);
   const [visibleComments, setVisibleComments] = useState(2);
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('accessToken'));
-  const [user] = useState(JSON.parse(localStorage.getItem('user') || '{}'));
 
   const fetchComments = useCallback(async () => {
     try {
-      const config = {};
+      const token = localStorage.getItem('accessToken');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+
       const response = await axios.get(`${API_URL}/blog/posts/${postId}/comments/`, config);
+      console.log('Fetch comments response:', response.data);
       setComments(response.data.comments || []);
     } catch (err) {
       if (err.response?.status === 401 && isAuthenticated) {
@@ -56,13 +56,17 @@ const Comments = ({ postId }) => {
 
     setSubmitting(true);
     try {
-      const config = {};
+      const token = localStorage.getItem('accessToken');
+      if (!token) throw new Error('No access token found');
+
       const payload = { post: postId, content: text, parent: parentId };
-      await axios.post(
+      console.log('Posting comment:', { url: `${API_URL}/blog/posts/${postId}/comments/`, payload });
+      const response = await axios.post(
         `${API_URL}/blog/posts/${postId}/comments/`,
         payload,
-        config
+        { headers: { Authorization: `Bearer ${token}` } }
       );
+      console.log('Comment posted:', response.data);
 
       if (parentId) {
         setReplyContent({ ...replyContent, [parentId]: '' });
@@ -71,6 +75,11 @@ const Comments = ({ postId }) => {
       }
       fetchComments();
     } catch (err) {
+      console.error('Comment post failed:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
       if (err.response?.status === 401) {
         try {
           const refreshData = await refreshToken();
@@ -91,15 +100,6 @@ const Comments = ({ postId }) => {
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
-    try {
-      await deleteComment(commentId);
-      setComments(prev => prev.filter(comment => comment.id !== commentId));
-    } catch (error) {
-      setError('Error deleting comment: ' + (error.response?.data?.detail || error.message));
-    }
-  };
-
   const toggleShowMore = () => {
     setVisibleComments(comments.length);
   };
@@ -110,27 +110,16 @@ const Comments = ({ postId }) => {
 
   const renderComment = (comment, level = 0) => {
     const isReply = comment.parent !== null;
-    const isModerator = user.role === 'moderator';
     return (
       <li
+        key={comment.id}
         className={`border p-4 rounded-md shadow-sm bg-white ${isReply ? `ml-${level * 4}` : ''}`}
       >
         <div className="flex items-center justify-between mb-2">
-          <span className="font-semibold">{comment.user_username}</span>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">
-              {new Date(comment.created_at).toLocaleString()}
-            </span>
-            {isModerator && (
-              <button
-                onClick={() => handleDeleteComment(comment.id)}
-                className="text-red-500 hover:text-red-800"
-                title="Delete comment"
-              >
-                <Trash2 size={16} />
-              </button>
-            )}
-          </div>
+          <span className="font-semibold">{comment.username}</span>
+          <span className="text-sm text-gray-500">
+            {new Date(comment.created_at).toLocaleString()}
+          </span>
         </div>
         <p className="text-gray-800">{comment.content}</p>
         <div className="mt-2 text-sm text-gray-500">
@@ -175,7 +164,7 @@ const Comments = ({ postId }) => {
             </div>
           </form>
         )}
-        {comment.replies?.length > 0 && (
+        {comment.replies.length > 0 && (
           <ul className="mt-4 space-y-4">
             {comment.replies.map((reply) => renderComment(reply, level + 1))}
           </ul>
