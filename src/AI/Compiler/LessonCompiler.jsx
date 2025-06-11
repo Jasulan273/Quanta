@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import Editor from '@monaco-editor/react';
 import { API_URL } from '../../Api/api';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-const LessonCompiler = ({ tasks, courseId, moduleId, lessonId, onHintRequest, hintData }) => {
+const LessonCompiler = ({ tasks = [], courseId, moduleId, lessonId, onHintRequest, hintData = {} }) => {
   const [selectedTaskIndex, setSelectedTaskIndex] = useState(0);
   const [code, setCode] = useState(tasks[0]?.solution?.initial_code || '// Write your code here...');
   const [output, setOutput] = useState('');
@@ -84,7 +88,12 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId, onHintRequest, hi
         });
       }
     } catch (error) {
-      if (error.response?.status === 500) {
+      if (error.response?.status === 429) {
+        setHint({
+          text: 'You have made too many hint requests. Please try again later.',
+          code: '',
+        });
+      } else if (error.response?.status === 500) {
         setHint({
           text: `Unable to fetch hint from server. Please review the task description: "${currentTask.description || 'No description available.'}" or check your code for syntax errors.`,
           code: currentTask.solution?.initial_code || '',
@@ -133,35 +142,25 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId, onHintRequest, hi
         {currentTask ? (
           <div className="mb-6 relative">
             <div className="absolute top-0 right-0 flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Hint count:</span>
-              {hintData && currentTask ? (
-                <button
-                  onClick={() => fetchHint()}
-                  disabled={isLoadingHint || !hintData[currentTask.id] || hintData[currentTask.id].remaining === 0}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-                    isLoadingHint || !hintData[currentTask.id] || hintData[currentTask.id].remaining === 0
-                      ? 'bg-gray-400'
-                      : 'bg-blue-500 hover:bg-blue-600'
-                  }`}
-                  title={
-                    !hintData[currentTask.id]
-                      ? 'No hint data available'
-                      : hintData[currentTask.id].remaining === 0
-                      ? `No hints available. Next hint in ${hintData[currentTask.id].next_available_in_minutes || 'unknown'} minutes.`
-                      : `${hintData[currentTask.id].remaining || 0} hints remaining`
-                  }
-                >
-                  {hintData[currentTask.id]?.remaining || 0}
-                </button>
-              ) : (
-                <button
-                  disabled
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-gray-400"
-                  title="No hint data available"
-                >
-                  0
-                </button>
-              )}
+              <span className="text-sm text-gray-600">
+                Hint count: {hintData && currentTask && hintData[currentTask.id] ? hintData[currentTask.id].remaining : '0'}
+              </span>
+              <button
+                onClick={() => fetchHint()}
+                disabled={(isLoadingHint || (hintData && currentTask && hintData[currentTask.id]?.remaining === 0))}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+                  (isLoadingHint || (hintData && currentTask && hintData[currentTask.id]?.remaining === 0))
+                    ? 'bg-gray-400'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                }`}
+                title={
+                  (hintData && currentTask && hintData[currentTask.id]?.remaining === 0)
+                    ? `No hints available. Next hint in ${hintData[currentTask.id].next_available_in_minutes || 'unknown'} minutes.`
+                    : `${(hintData && currentTask && hintData[currentTask.id]?.remaining) || 0} hints remaining`
+                }
+              >
+                ?
+              </button>
             </div>
             <h2 className="text-2xl font-bold mb-4 text-orange-500">{currentTask.title}</h2>
             <p className="text-gray-700 mb-4">{currentTask.description}</p>
@@ -219,20 +218,44 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId, onHintRequest, hi
             style={{ boxSizing: 'border-box' }}
           >
             <h3 className="text-xl font-bold mb-4">Hint from Backend</h3>
-            <div className="mb-4 text-gray-700">
-              {hint.text.split('\n').map((line, index) => (
-                <p key={index}>{line}</p>
-              ))}
-            </div>
+            <ReactMarkdown
+              children={hint.text}
+              remarkPlugins={[remarkGfm]}
+              components={{
+                code({ node, inline, className, children, ...props }) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  return !inline ? (
+                    <SyntaxHighlighter
+                      language={match?.[1] || language}
+                      style={atomDark}
+                      PreTag="div"
+                      className="rounded-lg text-sm my-2"
+                      {...props}
+                    >
+                      {String(children).replace(/\n$/, '')}
+                    </SyntaxHighlighter>
+                  ) : (
+                    <code className="bg-gray-200 px-1.5 py-0.5 rounded text-sm font-mono">
+                      {children}
+                    </code>
+                  );
+                },
+                p({ node, children }) {
+                  return <div className="mb-2 text-gray-800 leading-relaxed">{children}</div>;
+                },
+              }}
+            />
             {hint.code && (
               <div className="mb-4">
                 <h4 className="text-lg font-semibold mb-2">Suggested Code:</h4>
-                <pre
-                  className="whitespace-pre-wrap font-mono p-4 bg-gray-100 rounded-md max-h-[60vh] overflow-auto"
-                  style={{ fontSize: '14px' }}
+                <SyntaxHighlighter
+                  language={language}
+                  style={atomDark}
+                  PreTag="div"
+                  className="rounded-lg text-sm my-2"
                 >
                   {hint.code}
-                </pre>
+                </SyntaxHighlighter>
               </div>
             )}
             <button
@@ -246,11 +269,6 @@ const LessonCompiler = ({ tasks, courseId, moduleId, lessonId, onHintRequest, hi
       )}
     </div>
   );
-};
-
-LessonCompiler.defaultProps = {
-  hintData: {},
-  tasks: [],
 };
 
 export default LessonCompiler;

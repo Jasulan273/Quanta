@@ -11,6 +11,7 @@ const LessonPage = () => {
   const [lessonData, setLessonData] = useState(null);
   const [courseData, setCourseData] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [hintData, setHintData] = useState({});
   const [answers, setAnswers] = useState([]);
   const [results, setResults] = useState({});
   const [loading, setLoading] = useState(true);
@@ -37,9 +38,25 @@ const LessonPage = () => {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
+        const codeTasks = tasksRes.data.filter(task => task.type === 'code');
+        const hintData = {};
+        const hintPromises = codeTasks.map(async (task) => {
+          try {
+            const hintRes = await axios.get(
+              `${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/${task.id}/hint`,
+              { headers: { Authorization: `Bearer ${accessToken}` } }
+            );
+            hintData[task.id] = hintRes.data;
+          } catch (err) {
+            hintData[task.id] = { remaining: 0, limit: 0, next_available_in_minutes: 0 };
+          }
+        });
+        await Promise.all(hintPromises);
+
         setCourseData(courseRes.data);
         setLessonData(lessonRes.data);
         setTasks(tasksRes.data || []);
+        setHintData(hintData);
       } catch (err) {
         if (err.response?.status === 401) {
           navigate('/Auth');
@@ -153,6 +170,28 @@ const LessonPage = () => {
     }
   };
 
+  const handleHintRequest = async (taskId, includeCode, submittedCode) => {
+    const accessToken = localStorage.getItem('accessToken');
+    try {
+      const response = await axios.post(
+        `${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/exercises/${taskId}/hint/`,
+        { include_code: includeCode, submitted_code: submittedCode },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      setHintData((prev) => ({
+        ...prev,
+        [taskId]: {
+          remaining: response.data.remaining || prev[taskId]?.remaining,
+          limit: response.data.limit || prev[taskId]?.limit,
+          next_available_in_minutes: response.data.next_available_in_minutes || prev[taskId]?.next_available_in_minutes,
+        },
+      }));
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const codeTasks = tasks.filter(task => task.type === 'code');
   const mcqTasks = tasks.filter(task => task.type === 'mcq');
   const { prev, next } = getLessonNavigation();
@@ -211,6 +250,8 @@ const LessonPage = () => {
                   courseId={courseId}
                   moduleId={moduleId}
                   lessonId={lessonId}
+                  hintData={hintData}
+                  onHintRequest={handleHintRequest}
                 />
               </div>
             )}
