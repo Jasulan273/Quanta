@@ -11,6 +11,8 @@ const LessonPage = () => {
   const [lessonData, setLessonData] = useState(null);
   const [courseData, setCourseData] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [answers, setAnswers] = useState([]);
+  const [results, setResults] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [videoError, setVideoError] = useState(null);
@@ -19,7 +21,6 @@ const LessonPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-     console.log('Params:', { courseId, moduleId, lessonId });
     const fetchData = async () => {
       const accessToken = localStorage.getItem('accessToken');
       try {
@@ -99,7 +100,7 @@ const LessonPage = () => {
 
   const getYouTubeEmbedUrl = (url) => {
     if (!url) return null;
-    const match = url.match(/(?:youtube\.com\/(?:.*v=|v\/|embed\/)|youtu\.be\/)([\w-]{11})/);
+    const match = url.match(/(?:youtube\.com\/(?:.*v=|v\/|embed\/)||youtu\.be\/)([\w-]{11})/);
     return match ? `https://www.youtube.com/embed/${match[1]}` : null;
   };
 
@@ -125,6 +126,32 @@ const LessonPage = () => {
   };
 
   const handleVideoError = () => setVideoError('Failed to load video. Please try again later.');
+
+  const handleAnswerChange = (exercise_id, selected_option) => {
+    setAnswers(prev => {
+      const filtered = prev.filter(a => a.exercise_id !== exercise_id);
+      return [...filtered, { exercise_id, selected_option }];
+    });
+  };
+
+  const handleBulkSubmit = async () => {
+    const token = localStorage.getItem('accessToken');
+    try {
+      const res = await axios.post(
+        `${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/submit-answer/`,
+        { answers },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = res.data.results || [];
+      const resultMap = {};
+      data.forEach(r => {
+        resultMap[r.exercise_id] = r;
+      });
+      setResults(resultMap);
+    } catch (err) {
+      console.error('Bulk submission failed', err);
+    }
+  };
 
   const codeTasks = tasks.filter(task => task.type === 'code');
   const mcqTasks = tasks.filter(task => task.type === 'mcq');
@@ -194,9 +221,15 @@ const LessonPage = () => {
                   <div key={task.id} className="bg-gray-100 p-6 rounded-xl shadow mb-6">
                     <h3 className="text-lg font-bold mb-2">{task.title}</h3>
                     {task.description && <p className="mb-4">{task.description}</p>}
-                    <QuizTask task={task} courseId={courseId} moduleId={moduleId} lessonId={lessonId} />
+                    <QuizTask task={task} onAnswerChange={handleAnswerChange} result={results[task.id]} />
                   </div>
                 ))}
+                <button
+                  onClick={handleBulkSubmit}
+                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold"
+                >
+                  Submit All Answers
+                </button>
               </div>
             )}
           </div>
@@ -225,62 +258,50 @@ const LessonPage = () => {
   );
 };
 
-function QuizTask({ task, courseId, moduleId, lessonId }) {
+function QuizTask({ task, onAnswerChange, result }) {
   const [selected, setSelected] = useState(null);
   const [submitted, setSubmitted] = useState(false);
 
   const handleSelect = (id) => {
-    if (!submitted) setSelected(id);
-  };
-
-  const handleSubmit = async () => {
-    setSubmitted(true);
-    try {
-      await axios.post(
-        `${API_URL}/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/submit-answer/`,
-        {
-          answers: [{ exercise_id: task.id, selected_option: selected }],
-        },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
-      );
-    } catch (err) {
-      console.error('Submission error:', err);
+    if (!submitted) {
+      setSelected(id);
+      onAnswerChange(task.id, id);
     }
   };
+
+  useEffect(() => {
+    if (result) setSubmitted(true);
+  }, [result]);
 
   return (
     <div>
       <div className="mb-4">
-        {task.options.map((option) => (
-          <button
-            key={option.id}
-            className={`block w-full text-left mb-2 p-3 rounded border ${
-              submitted
-                ? option.is_correct
-                  ? 'bg-green-200 border-green-500'
-                  : selected === option.id
-                  ? 'bg-red-200 border-red-500'
-                  : ''
-                : selected === option.id
-                ? 'bg-blue-100 border-blue-400'
-                : 'border-gray-300'
-            }`}
-            onClick={() => handleSelect(option.id)}
-            disabled={submitted}
-          >
-            {option.text}
-          </button>
-        ))}
+        {task.options.map((option) => {
+          let className = 'block w-full text-left mb-2 p-3 rounded border ';
+          if (submitted) {
+            if (option.id === result?.selected_option && !result?.is_correct) {
+              className += 'bg-red-200 border-red-500';
+            } else if (option.is_correct) {
+              className += 'bg-green-200 border-green-500';
+            } else {
+              className += 'border-gray-300';
+            }
+          } else {
+            className += selected === option.id ? 'bg-blue-100 border-blue-400' : 'border-gray-300';
+          }
+
+          return (
+            <button
+              key={option.id}
+              className={className}
+              onClick={() => handleSelect(option.id)}
+              disabled={submitted}
+            >
+              {option.text}
+            </button>
+          );
+        })}
       </div>
-      {!submitted && (
-        <button
-          onClick={handleSubmit}
-          disabled={selected == null}
-          className="bg-orange-500 text-white px-4 py-2 rounded font-bold"
-        >
-          Submit
-        </button>
-      )}
     </div>
   );
 }
