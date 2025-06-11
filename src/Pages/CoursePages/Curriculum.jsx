@@ -177,7 +177,8 @@ const Curriculum = ({ modules, courseId, enrolled, user }) => {
           </div>
         );
       })}
-      {hasFinalExam && enrolled && user && (
+     {hasFinalExam && enrolled && user && courseProgress === 100 && (
+
         <div className="border rounded-lg p-6 bg-white shadow-sm space-y-4">
           <Link
             to={`/courses/${courseId}/final-exam`}
